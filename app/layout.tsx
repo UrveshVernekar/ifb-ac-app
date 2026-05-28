@@ -17,7 +17,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "FactoryOS - Manufacturing Management System",
+  title: "IIOT Portal - Manufacturing Platform",
   description: "Modern Manufacturing Operations Platform",
   icons: {
     icon: "/favicon.ico",
