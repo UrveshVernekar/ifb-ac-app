@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 export default function LoginPage() {
     const router = useRouter();
 
-    const [email, setEmail] = useState("admin@factoryos.com");
+    const [email, setEmail] = useState("urvesh_vernekar@ifbglobal.com");
     const [password, setPassword] = useState("admin123");
     const [showPassword, setShowPassword] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -18,7 +18,7 @@ export default function LoginPage() {
     const handleLogin = (e: React.FormEvent) => {
         e.preventDefault();
         setIsSubmitting(true);
-        
+
         // Mock authentication timeout
         setTimeout(() => {
             localStorage.setItem("isAuthenticated", "true");

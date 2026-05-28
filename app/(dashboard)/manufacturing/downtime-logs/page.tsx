@@ -587,7 +587,7 @@ export default function DowntimeLogsPage() {
                             <div className="space-y-1">
                                 <Label className="text-[10px] font-bold uppercase text-muted-foreground ml-0.5">Line *</Label>
                                 <Select value={formLine} onValueChange={(v: any) => setFormLine(v)}>
-                                    <SelectTrigger className="bg-background border-border h-9 text-xs">
+                                    <SelectTrigger className="w-full bg-background border-border h-9 text-xs">
                                         <SelectValue placeholder="Line" />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -602,7 +602,7 @@ export default function DowntimeLogsPage() {
                             <div className="space-y-1">
                                 <Label className="text-[10px] font-bold uppercase text-muted-foreground ml-0.5">Downtime Type *</Label>
                                 <Select value={formType} onValueChange={setFormType}>
-                                    <SelectTrigger className="bg-background border-border h-9 text-xs">
+                                    <SelectTrigger className="w-full bg-background border-border h-9 text-xs">
                                         <SelectValue placeholder="Type" />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -616,7 +616,7 @@ export default function DowntimeLogsPage() {
                             <div className="space-y-1">
                                 <Label className="text-[10px] font-bold uppercase text-muted-foreground ml-0.5">Hour Slot *</Label>
                                 <Select value={formHourSlot} onValueChange={setFormHourSlot}>
-                                    <SelectTrigger className="bg-background border-border h-9 text-xs">
+                                    <SelectTrigger className="w-full bg-background border-border h-9 text-xs">
                                         <SelectValue placeholder="Slot" />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -636,7 +636,7 @@ export default function DowntimeLogsPage() {
                             <div className="space-y-1">
                                 <Label className="text-[10px] font-bold uppercase text-muted-foreground ml-0.5">Downtime Reason *</Label>
                                 <Select value={formReason} onValueChange={setFormReason}>
-                                    <SelectTrigger className="bg-background border-border h-9 text-xs">
+                                    <SelectTrigger className="w-full bg-background border-border h-9 text-xs">
                                         <SelectValue placeholder="Reason" />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -669,7 +669,7 @@ export default function DowntimeLogsPage() {
                             <div className="space-y-1">
                                 <Label className="text-[10px] font-bold uppercase text-muted-foreground ml-0.5">Person In-charge</Label>
                                 <Select value={formIncharge} onValueChange={setFormIncharge}>
-                                    <SelectTrigger className="bg-background border-border h-9 text-xs">
+                                    <SelectTrigger className="w-full bg-background border-border h-9 text-xs">
                                         <SelectValue placeholder="Select Incharge" />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -683,7 +683,7 @@ export default function DowntimeLogsPage() {
                             <div className="space-y-1">
                                 <Label className="text-[10px] font-bold uppercase text-muted-foreground ml-0.5">HOD</Label>
                                 <Select value={formHod} onValueChange={setFormHod}>
-                                    <SelectTrigger className="bg-background border-border h-9 text-xs">
+                                    <SelectTrigger className="w-full bg-background border-border h-9 text-xs">
                                         <SelectValue placeholder="Select HOD" />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -706,7 +706,12 @@ export default function DowntimeLogsPage() {
                         </div>
 
                         <DialogFooter className="pt-2">
-                            <Button type="button" variant="outline" size="sm" onClick={() => setModalOpen(false)} className="text-xs">
+                            <Button
+                                type="button"
+                                size="sm"
+                                onClick={() => setModalOpen(false)}
+                                className="font-semibold text-xs text-white h-9 bg-rose-500 hover:bg-rose-600 hover:text-white dark:bg-rose-500 dark:hover:bg-rose-600"
+                            >
                                 Cancel
                             </Button>
                             <Button type="submit" disabled={formSubmitting} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs h-9">

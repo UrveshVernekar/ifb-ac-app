@@ -51,15 +51,15 @@ const API_HOST = "http://10.0.7.26:3003";
 
 interface AccessoryMappingItem {
     id: number;
-    modelname: string;
-    modelcode: string;
-    modeldescription: string;
-    bagpartcode: string;
-    remotepartcode: string;
-    vendorprefix: string;
-    assemblycode: string;
-    created_at: string;
-    updated_by: string;
+    modelName: string;
+    modelCode: string;
+    modelDescription: string;
+    bagPartcode: string;
+    remotePartcode: string;
+    vendorPrefix: string;
+    assemblyCode: string;
+    createdAt: string;
+    updatedBy: string;
 }
 
 export default function AccessoryValidationPage() {
@@ -249,13 +249,13 @@ export default function AccessoryValidationPage() {
 
     const handleEditClick = (item: AccessoryMappingItem) => {
         setEditingItem(item);
-        setEditModelName(item.modelname || "");
-        setEditModelCode(item.modelcode || "");
-        setEditModelDescription(item.modeldescription || "");
-        setEditBagPartcode(item.bagpartcode || "");
-        setEditRemotePartcode(item.remotepartcode || "");
-        setEditAssemblyCode(item.assemblycode || "");
-        setEditVendorPrefix(item.vendorprefix || "");
+        setEditModelName(item.modelName || "");
+        setEditModelCode(item.modelCode || "");
+        setEditModelDescription(item.modelDescription || "");
+        setEditBagPartcode(item.bagPartcode || "");
+        setEditRemotePartcode(item.remotePartcode || "");
+        setEditAssemblyCode(item.assemblyCode || "");
+        setEditVendorPrefix(item.vendorPrefix || "");
 
         setEditErrors({});
         setEditFeedback({ type: "", message: "" });
@@ -351,7 +351,7 @@ export default function AccessoryValidationPage() {
 
     return (
         <div className="space-y-6 max-w-7xl mx-auto p-2">
-            {/* Header action bar */}
+            {/* HEADER */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div className="flex items-center gap-3">
                     <Link href="/manufacturing">
@@ -388,7 +388,7 @@ export default function AccessoryValidationPage() {
                 </div>
             </div>
 
-            {/* Creation Form Collapse */}
+            {/* CREATION FORM */}
             {formExpanded && (
                 <Card className="border-border/60 bg-card shadow-sm transition-all duration-300">
                     <CardHeader className="pb-3">
@@ -498,8 +498,6 @@ export default function AccessoryValidationPage() {
                             <div className="flex justify-end gap-3 pt-4 border-t border-border/40">
                                 <Button
                                     type="button"
-                                    variant="outline"
-                                    size="sm"
                                     onClick={() => {
                                         setModelName("");
                                         setModelCode("");
@@ -510,7 +508,7 @@ export default function AccessoryValidationPage() {
                                         setVendorPrefix("");
                                         setCreateErrors({});
                                     }}
-                                    className="text-xs"
+                                    className="font-semibold text-xs text-white h-9 bg-rose-500 hover:bg-rose-600 hover:text-white dark:bg-rose-500 dark:hover:bg-rose-600"
                                 >
                                     Reset
                                 </Button>
@@ -527,7 +525,7 @@ export default function AccessoryValidationPage() {
                 </Card>
             )}
 
-            {/* List Table */}
+            {/* LIST TABLE */}
             <Card className="border-border/60 bg-card shadow-sm">
                 <CardHeader>
                     <CardTitle className="text-md font-bold uppercase tracking-tight">Active Mappings</CardTitle>
@@ -567,15 +565,15 @@ export default function AccessoryValidationPage() {
                                     <TableBody>
                                         {paginatedData.map((row) => (
                                             <TableRow key={row.id} className="hover:bg-muted/40 text-xs">
-                                                <TableCell className="py-2.5 font-bold">{row.modelname}</TableCell>
-                                                <TableCell className="py-2.5 font-semibold text-blue-600">{row.modelcode}</TableCell>
-                                                <TableCell className="py-2.5 text-muted-foreground max-w-[150px] truncate" title={row.modeldescription}>{row.modeldescription}</TableCell>
-                                                <TableCell className="py-2.5">{row.bagpartcode}</TableCell>
-                                                <TableCell className="py-2.5">{row.remotepartcode}</TableCell>
-                                                <TableCell className="py-2.5">{row.assemblycode}</TableCell>
-                                                <TableCell className="py-2.5 text-center font-semibold text-foreground/80">{row.vendorprefix}</TableCell>
-                                                <TableCell className="py-2.5 whitespace-nowrap text-muted-foreground">{formatDate(row.created_at)}</TableCell>
-                                                <TableCell className="py-2.5">{row.updated_by}</TableCell>
+                                                <TableCell className="py-2.5 font-bold">{row.modelName}</TableCell>
+                                                <TableCell className="py-2.5 font-semibold text-blue-600">{row.modelCode}</TableCell>
+                                                <TableCell className="py-2.5 text-muted-foreground max-w-[150px] truncate" title={row.modelDescription}>{row.modelDescription}</TableCell>
+                                                <TableCell className="py-2.5">{row.bagPartcode}</TableCell>
+                                                <TableCell className="py-2.5">{row.remotePartcode}</TableCell>
+                                                <TableCell className="py-2.5">{row.assemblyCode}</TableCell>
+                                                <TableCell className="py-2.5 text-center font-semibold text-foreground/80">{row.vendorPrefix}</TableCell>
+                                                <TableCell className="py-2.5 whitespace-nowrap text-muted-foreground">{formatDate(row.createdAt)}</TableCell>
+                                                <TableCell className="py-2.5">{row.updatedBy}</TableCell>
                                                 <TableCell className="py-2.5 text-center">
                                                     <div className="flex gap-1 justify-center">
                                                         <Button
@@ -777,8 +775,8 @@ export default function AccessoryValidationPage() {
                     </DialogHeader>
                     {deletingItem && (
                         <div className="text-xs py-2 bg-muted/40 p-3 rounded-lg border">
-                            <div><span className="font-bold">Model Name:</span> {deletingItem.modelname}</div>
-                            <div><span className="font-bold">Model Code:</span> {deletingItem.modelcode}</div>
+                            <div><span className="font-bold">Model Name:</span> {deletingItem.modelName}</div>
+                            <div><span className="font-bold">Model Code:</span> {deletingItem.modelCode}</div>
                         </div>
                     )}
                     <DialogFooter className="pt-2">
