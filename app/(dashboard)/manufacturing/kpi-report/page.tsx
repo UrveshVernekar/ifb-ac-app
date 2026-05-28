@@ -250,6 +250,7 @@ export default function KPIReportPage() {
                 {
                     name: "Achievement",
                     type: "line",
+                    smooth: true,
                     yAxisIndex: 1,
                     data: pData.achievement,
                     itemStyle: { color: "#10b981" },
@@ -296,8 +297,8 @@ export default function KPIReportPage() {
             series: [
                 { name: "UPH Plan", type: "bar", data: uphData.uphTarget, itemStyle: { color: "#3b82f6", borderRadius: [3, 3, 0, 0] } },
                 { name: "UPH Actual", type: "bar", data: uphData.uph, itemStyle: { color: "#f87171", borderRadius: [3, 3, 0, 0] } },
-                { name: "UPPH Plan", type: "line", yAxisIndex: 1, data: uphData.upphTarget, itemStyle: { color: "#10b981" } },
-                { name: "UPPH Actual", type: "line", yAxisIndex: 1, data: uphData.upph, itemStyle: { color: "#8b5cf6" } }
+                { name: "UPPH Plan", type: "line", smooth: true, yAxisIndex: 1, data: uphData.upphTarget, itemStyle: { color: "#10b981" } },
+                { name: "UPPH Actual", type: "line", smooth: true, yAxisIndex: 1, data: uphData.upph, itemStyle: { color: "#8b5cf6" } }
             ]
         };
     };
@@ -324,6 +325,7 @@ export default function KPIReportPage() {
             series: [{
                 name: title,
                 type: isLine ? "line" : "bar",
+                smooth: isLine,
                 data: rData.rates,
                 itemStyle: { color: color, borderRadius: isLine ? [0] : [3, 3, 0, 0] },
                 lineStyle: { width: 3 }
@@ -351,8 +353,8 @@ export default function KPIReportPage() {
                 splitLine: { lineStyle: { color: splitLineColor } }
             },
             series: [
-                { name: "OEE Plan", type: "line", data: oeeData.target, itemStyle: { color: "#3b82f6" }, lineStyle: { width: 3 } },
-                { name: "OEE Actual", type: "line", data: oeeData.oee, itemStyle: { color: "#ec4899" }, lineStyle: { width: 3 } }
+                { name: "OEE Plan", type: "line", smooth: true, data: oeeData.target, itemStyle: { color: "#3b82f6" }, lineStyle: { width: 3 } },
+                { name: "OEE Actual", type: "line", smooth: true, data: oeeData.oee, itemStyle: { color: "#ec4899" }, lineStyle: { width: 3 } }
             ]
         };
     };
@@ -392,7 +394,7 @@ export default function KPIReportPage() {
                 bottom: 0, 
                 textStyle: { color: textColor } 
             },
-            grid: { top: 30, left: 55, right: 55, bottom: 45 },
+            grid: { top: 30, left: 55, right: 55, bottom: 80 },
             xAxis: {
                 type: "category",
                 data: labels,
@@ -449,6 +451,7 @@ export default function KPIReportPage() {
                 { 
                     name: "Target Cost/Unit", 
                     type: "line", 
+                    smooth: true,
                     yAxisIndex: 1, 
                     data: targetData, 
                     itemStyle: { color: "#10b981" }, 
@@ -457,6 +460,7 @@ export default function KPIReportPage() {
                 { 
                     name: "Actual Cost/Unit", 
                     type: "line", 
+                    smooth: true,
                     yAxisIndex: 1, 
                     data: unitCostData, 
                     itemStyle: { color: "#f87171" }, 
