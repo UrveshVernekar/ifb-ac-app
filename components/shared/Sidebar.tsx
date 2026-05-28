@@ -47,15 +47,23 @@ const menuItems = [
 export default function Sidebar({ collapsed, onCollapse }: SidebarProps) {
     return (
         <TooltipProvider delayDuration={0}>
+            {!collapsed && (
+                <div 
+                    className="fixed inset-0 bg-background/80 backdrop-blur-sm z-40 md:hidden animate-in fade-in duration-200"
+                    onClick={onCollapse}
+                />
+            )}
             <aside
-                className={`flex-shrink-0 border-r border-border bg-card/95 backdrop-blur-xl h-full flex flex-col transition-all duration-300 ease-in-out relative z-50 ${
-                    collapsed ? 'w-16' : 'w-72'
+                className={`fixed inset-y-0 left-0 md:relative md:flex flex-shrink-0 border-r border-border bg-card/95 backdrop-blur-xl h-full flex flex-col transition-all duration-300 ease-in-out z-50 ${
+                    collapsed 
+                        ? '-translate-x-full md:translate-x-0 md:w-16' 
+                        : 'translate-x-0 md:w-72 w-72'
                 }`}
             >
                 {/* Collapse Toggle Button */}
                 <button
                     onClick={onCollapse}
-                    className="absolute -right-3 top-20 bg-background border border-border rounded-full p-1.5 text-muted-foreground hover:text-foreground shadow-md hover:shadow-lg transition-all z-20 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="absolute -right-3 top-20 bg-background border border-border rounded-full p-1.5 text-muted-foreground hover:text-foreground shadow-md hover:shadow-lg transition-all z-20 focus:outline-none focus:ring-2 focus:ring-blue-500 md:block hidden"
                     aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
                 >
                     {collapsed ? (

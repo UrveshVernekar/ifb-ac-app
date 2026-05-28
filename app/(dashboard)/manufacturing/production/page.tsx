@@ -781,7 +781,7 @@ export default function ProductionDashboardPage() {
                                                                 <YAxis tick={{ fontSize: 10, fill: isDark ? "#a1a1aa" : "#71717a" }} stroke={isDark ? "#27272a" : "#e4e4e7"} />
                                                                 <ChartTooltip content={<ChartTooltipContent />} />
                                                                 <Bar dataKey="actual" name="Actual" fill="#10b981" radius={[3, 3, 0, 0]} />
-                                                                <Line dataKey="target" name="Target" stroke="#3b82f6" strokeWidth={2} activeDot={{ r: 4 }} />
+                                                                <Line type="monotone" dataKey="target" name="Target" stroke="#3b82f6" strokeWidth={2} activeDot={{ r: 4 }} />
                                                             </ComposedChart>
                                                         </ChartContainer>
                                                     </div>

@@ -536,7 +536,7 @@ export default function ProcessValidationListPage() {
                         </DialogDescription>
                     </DialogHeader>
 
-                    <div className="grid grid-cols-3 gap-3 py-4">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 py-4">
                         {[
                             { name: "IFB", icon: "❄️" },
                             { name: "CRUISE", icon: "❄️" },

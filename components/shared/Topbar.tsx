@@ -18,13 +18,13 @@ export default function Topbar({ onToggleSidebar, collapsed }: TopbarProps) {
                 <div className="flex items-center gap-4">
                     <button
                         onClick={onToggleSidebar}
-                        className="lg:hidden text-muted-foreground hover:text-foreground"
+                        className="md:hidden text-muted-foreground hover:text-foreground"
                     >
                         <Menu className="w-5 h-5" />
                     </button>
                     <div className="hidden md:flex items-center gap-3">
                         <h1 className="text-lg font-semibold tracking-tight text-foreground">
-                            FactoryOS • Manufacturing Platform
+                            IIOT Portal • Manufacturing Platform
                         </h1>
                     </div>
                 </div>
@@ -32,7 +32,7 @@ export default function Topbar({ onToggleSidebar, collapsed }: TopbarProps) {
                 {/* Right Side */}
                 <div className="flex items-center gap-3">
                     <ThemeToggle />
-                    
+
                     {/* Vertical Divider */}
                     <div className="w-px h-8 bg-border mx-2 hidden md:block" />
 
