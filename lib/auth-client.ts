@@ -18,8 +18,9 @@ export const getApiBaseUrl = () => {
 
   if (typeof window !== "undefined") {
     const hostname = window.location.hostname;
-    if (hostname === "localhost" || hostname === "127.0.0.1") {
-      return "http://localhost:3003/api";
+    // Route API requests to the same hostname if testing on local or private networks
+    if (hostname === "localhost" || hostname === "127.0.0.1" || /^10\./.test(hostname) || /^192\.168\./.test(hostname) || /^172\.(1[6-9]|2\d|3[0-1])\./.test(hostname) || INTERNAL_IPS.includes(hostname)) {
+      return `http://${hostname}:3003/api`;
     }
   }
   return "https://iot.oneifb.co.in/api";
