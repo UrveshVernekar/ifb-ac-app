@@ -381,17 +381,28 @@ export default function DowntimeDetailsPage({ params }: { params: Promise<{ id: 
                             <span className="text-muted-foreground block font-medium uppercase tracking-wider text-[10px]">Duration</span>
                             <span className="font-bold text-rose-500">{record.duration} Minutes</span>
                         </div>
-                        <div className="col-span-2">
+                        <div className="col-span-2 md:col-span-full lg:col-span-2">
                             <span className="text-muted-foreground block font-medium uppercase tracking-wider text-[10px]">Downtime Reason</span>
                             <span className="font-semibold text-foreground">{record.reason}</span>
                         </div>
                         <div>
                             <span className="text-muted-foreground block font-medium uppercase tracking-wider text-[10px]">Person In-charge</span>
-                            <span className="font-semibold text-foreground">{record.person_incharge || "N/A"}</span>
+                            <span className="font-semibold text-foreground block leading-tight">{record.person_incharge || "N/A"}</span>
+                            {record.person_incharge_email && <span className="text-muted-foreground text-[10px] block">{record.person_incharge_email}</span>}
                         </div>
                         <div>
+                            <span className="text-muted-foreground block font-medium uppercase tracking-wider text-[10px]">Dept In-charge</span>
+                            <span className="font-semibold text-foreground block leading-tight">{record.department_incharge || "N/A"}</span>
+                            {record.department_incharge_email && <span className="text-muted-foreground text-[10px] block">{record.department_incharge_email}</span>}
+                        </div>
+                        <div>
+                            <span className="text-muted-foreground block font-medium uppercase tracking-wider text-[10px]">Raised By</span>
+                            <span className="font-semibold text-foreground block leading-tight">{record.created_by || "N/A"}</span>
+                            {record.created_by_email && <span className="text-muted-foreground text-[10px] block">{record.created_by_email}</span>}
+                        </div>
+                        <div className="col-span-2 md:col-span-1">
                             <span className="text-muted-foreground block font-medium uppercase tracking-wider text-[10px]">Status</span>
-                            <span className={`px-1.5 py-0.5 rounded font-bold text-[9px] inline-block ${
+                            <span className={`px-1.5 py-0.5 rounded font-bold text-[9px] inline-block mt-0.5 ${
                                 isApproved 
                                     ? "bg-blue-500/10 text-blue-500 border border-blue-500/20" 
                                     : isRejected 

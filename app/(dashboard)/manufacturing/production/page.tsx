@@ -27,6 +27,8 @@ import {
     Layers,
     Cpu,
     Calendar,
+    CheckCircle2,
+    Edit,
     ChevronLeft,
     ChevronRight,
 } from "lucide-react";
@@ -49,6 +51,10 @@ interface ProductionStatus {
     value: number;
     target: number;
     type: "text" | "rate";
+    onClick?: {
+        status: boolean;
+        url: string;
+    };
 }
 
 interface HourlyData {
@@ -64,6 +70,7 @@ interface ApiResponse {
         oee?: number;
         oeeTarget?: number;
         efficiencyStatus?: ProductionStatus[];
+        dailyStatus?: ProductionStatus[];
         modelDetails?: any[];
         runningModel?: number;
         dailyData?: { date: string; count: number }[];
@@ -349,8 +356,21 @@ export default function ProductionDashboardPage() {
     const renderKpiCard = (item: ProductionStatus, icon: React.ReactNode) => {
         const isRate = item.type === "rate";
         const value = isRate ? `${item.value}%` : Number(item.value).toLocaleString();
+        const isClickable = item.onClick?.status;
+        const handleClick = () => {
+            if (isClickable && item.onClick?.url) {
+                // replace /ac prefix with empty string if present
+                const targetUrl = item.onClick.url.replace(/^\/ac/, "");
+                router.push(targetUrl);
+            }
+        };
+
         return (
-            <Card key={item.label} className="hover:shadow-md transition-shadow bg-card border-border/60">
+            <Card 
+                key={item.label} 
+                className={`transition-all bg-card border-border/60 ${isClickable ? "cursor-pointer hover:shadow-md hover:border-blue-500/50 hover:-translate-y-0.5" : "hover:shadow-sm"}`}
+                onClick={handleClick}
+            >
                 <CardHeader className="pb-2 pt-4 px-4 flex flex-row items-center justify-between space-y-0">
                     <CardTitle className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
                         {item.label}
@@ -358,7 +378,7 @@ export default function ProductionDashboardPage() {
                     {icon}
                 </CardHeader>
                 <CardContent className="px-4 pb-4">
-                    <div className="text-2xl font-bold text-foreground">
+                    <div className="text-xl sm:text-2xl font-bold text-foreground">
                         {value}
                     </div>
                 </CardContent>
@@ -368,11 +388,11 @@ export default function ProductionDashboardPage() {
 
     // Chart Configuration for Assembly Lines hourly
     const hourlyChartData = useMemo(() => {
-        if (!data?.hourlyData) return [];
+        if (!data?.hourlyData?.labels) return [];
         return data.hourlyData.labels.map((label, i) => ({
             hour: label,
-            actual: Number(data.hourlyData?.actuals[i]) || 0,
-            target: Number(data.hourlyData?.targets[i]) || 0,
+            actual: Number(data.hourlyData?.actuals?.[i]) || 0,
+            target: Number(data.hourlyData?.targets?.[i]) || 0,
         }));
     }, [data]);
 
@@ -380,10 +400,11 @@ export default function ProductionDashboardPage() {
     const stampingHourlyChartData = useMemo(() => {
         if (!data?.hourlyChartData || !stampingActiveMachine || !data.hourlyChartData[stampingActiveMachine]) return [];
         const mData = data.hourlyChartData[stampingActiveMachine];
+        if (!mData?.labels) return [];
         return mData.labels.map((label, i) => ({
             hour: label,
-            actual: Number(mData.counts[i]) || 0,
-            target: Number(mData.hourlyTarget[i]) || 0,
+            actual: Number(mData.counts?.[i]) || 0,
+            target: Number(mData.hourlyTarget?.[i]) || 0,
         }));
     }, [data, stampingActiveMachine]);
 
@@ -539,7 +560,7 @@ export default function ProductionDashboardPage() {
                 data && (
                     <div className="space-y-6">
                         {/* KPI Status Cards */}
-                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+                        <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-6 gap-4">
                             {data.productionStatus?.map((item) => {
                                 const icons: Record<string, React.ReactNode> = {
                                     ACTUAL: <Package className="h-4 w-4 text-blue-500" />,
@@ -615,6 +636,25 @@ export default function ProductionDashboardPage() {
                                             </CardContent>
                                         </Card>
                                     ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Daily Status (Assembly lines) */}
+                        {area === "ASSEMBLY LINES" && data.dailyStatus && data.dailyStatus.length > 0 && (
+                            <div className="space-y-3">
+                                <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest pl-1">Daily Status</h3>
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                    {data.dailyStatus.map((item) => {
+                                        const icons: Record<string, React.ReactNode> = {
+                                            "OK": <CheckCircle2 className="h-4 w-4 text-emerald-500" />,
+                                            "REWORK": <Edit className="h-4 w-4 text-amber-500" />,
+                                            "REJECT": <AlertCircle className="h-4 w-4 text-rose-500" />,
+                                            "TOTAL DEFECT": <AlertCircle className="h-4 w-4 text-rose-400" />,
+                                            "YIELD %": <TrendingUp className="h-4 w-4 text-blue-500" />,
+                                        };
+                                        return renderKpiCard(item, icons[item.label.toUpperCase()] || <Star className="h-4 w-4 text-blue-500" />);
+                                    })}
                                 </div>
                             </div>
                         )}
@@ -751,74 +791,84 @@ export default function ProductionDashboardPage() {
                         {/* SECTION: STAMPING TRENDS & MACHINE WISE VIEWS */}
                         {area === "STAMPING" && (
                             <>
-                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                    {/* Hourly validation line trend for selected Stamping Machine */}
-                                    {data.hourlyChartData && Object.keys(data.hourlyChartData).length > 0 && (
-                                        <Card className="border-border/60 shadow-sm bg-card col-span-1">
-                                            <CardHeader className="pb-2 flex flex-row items-center justify-between space-y-0">
-                                                <div>
-                                                    <CardTitle className="text-md font-bold uppercase tracking-tight">Machine Hourly Trend</CardTitle>
-                                                    <CardDescription className="text-xs">Hour-by-hour output vs targets</CardDescription>
-                                                </div>
-                                                <Select value={stampingActiveMachine} onValueChange={setStampingActiveMachine}>
-                                                    <SelectTrigger className="w-[120px] h-8 text-[11px] bg-background">
-                                                        <SelectValue placeholder="Select Machine" />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        {Object.keys(data.hourlyChartData).map((mName) => (
-                                                            <SelectItem key={mName} value={mName}>{mName}</SelectItem>
-                                                        ))}
-                                                    </SelectContent>
-                                                </Select>
-                                            </CardHeader>
-                                            <CardContent className="pt-2">
-                                                {stampingHourlyChartData.length > 0 ? (
+                                {/* Stamping charts – expand to full width when only one chart has data */}
+                                {(data.hourlyChartData && Object.keys(data.hourlyChartData).length > 0) ||
+                                    (data.machineTrendData && data.machineTrendData.length > 0) ? (
+                                    <div className={`grid gap-6 ${
+                                        (data.hourlyChartData && Object.keys(data.hourlyChartData).length > 0) &&
+                                        (data.machineTrendData && data.machineTrendData.length > 0)
+                                            ? "grid-cols-1 lg:grid-cols-2"
+                                            : "grid-cols-1"
+                                    }`}>
+                                        {/* Machine Hourly Trend */}
+                                        {data.hourlyChartData && Object.keys(data.hourlyChartData).length > 0 && (
+                                            <Card className="border-border/60 shadow-sm bg-card">
+                                                <CardHeader className="pb-2 flex flex-row items-center justify-between space-y-0 flex-wrap gap-2">
+                                                    <div>
+                                                        <CardTitle className="text-md font-bold uppercase tracking-tight">Machine Hourly Trend</CardTitle>
+                                                        <CardDescription className="text-xs">Hour-by-hour output vs targets</CardDescription>
+                                                    </div>
+                                                    <Select value={stampingActiveMachine} onValueChange={setStampingActiveMachine}>
+                                                        <SelectTrigger className="w-[130px] h-8 text-[11px] bg-background border-border">
+                                                            <SelectValue placeholder="Select Machine" />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            {Object.keys(data.hourlyChartData).map((mName) => (
+                                                                <SelectItem key={mName} value={mName}>{mName}</SelectItem>
+                                                            ))}
+                                                        </SelectContent>
+                                                    </Select>
+                                                </CardHeader>
+                                                <CardContent className="pt-2">
+                                                    {stampingHourlyChartData.length > 0 ? (
+                                                        <div className="h-64 w-full">
+                                                            <ChartContainer config={{}} className="h-full w-full">
+                                                                <ComposedChart data={stampingHourlyChartData} margin={{ top: 15, right: 10, left: -10, bottom: 0 }}>
+                                                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDark ? "#27272a" : "#f4f4f5"} />
+                                                                    <XAxis dataKey="hour" tick={{ fontSize: 10, fill: isDark ? "#a1a1aa" : "#71717a" }} stroke={isDark ? "#27272a" : "#e4e4e7"} />
+                                                                    <YAxis tick={{ fontSize: 10, fill: isDark ? "#a1a1aa" : "#71717a" }} stroke={isDark ? "#27272a" : "#e4e4e7"} />
+                                                                    <ChartTooltip content={<ChartTooltipContent />} />
+                                                                    <Bar dataKey="actual" name="Actual" fill="#10b981" radius={[3, 3, 0, 0]} />
+                                                                    <Line type="monotone" dataKey="target" name="Target" stroke="#3b82f6" strokeWidth={2} dot={{ r: 3 }} activeDot={{ r: 5 }} />
+                                                                </ComposedChart>
+                                                            </ChartContainer>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="flex items-center justify-center h-64 text-sm text-muted-foreground">
+                                                            No hourly data available for the selected machine
+                                                        </div>
+                                                    )}
+                                                </CardContent>
+                                            </Card>
+                                        )}
+
+                                        {/* Machine-wise production overview */}
+                                        {data.machineTrendData && data.machineTrendData.length > 0 && (
+                                            <Card className="border-border/60 shadow-sm bg-card">
+                                                <CardHeader className="pb-2">
+                                                    <CardTitle className="text-md font-bold uppercase tracking-tight">Machine-Wise Production</CardTitle>
+                                                    <CardDescription className="text-xs">Comparative machine outputs</CardDescription>
+                                                </CardHeader>
+                                                <CardContent className="pt-2">
                                                     <div className="h-64 w-full">
                                                         <ChartContainer config={{}} className="h-full w-full">
-                                                            <ComposedChart data={stampingHourlyChartData} margin={{ top: 15, right: 10, left: -10, bottom: 0 }}>
+                                                            <BarChart data={data.machineTrendData} margin={{ top: 15, right: 10, left: -10, bottom: 0 }}>
                                                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDark ? "#27272a" : "#f4f4f5"} />
-                                                                <XAxis dataKey="hour" tick={{ fontSize: 10, fill: isDark ? "#a1a1aa" : "#71717a" }} stroke={isDark ? "#27272a" : "#e4e4e7"} />
+                                                                <XAxis dataKey="machine" tick={{ fontSize: 10, fill: isDark ? "#a1a1aa" : "#71717a" }} stroke={isDark ? "#27272a" : "#e4e4e7"} />
                                                                 <YAxis tick={{ fontSize: 10, fill: isDark ? "#a1a1aa" : "#71717a" }} stroke={isDark ? "#27272a" : "#e4e4e7"} />
                                                                 <ChartTooltip content={<ChartTooltipContent />} />
-                                                                <Bar dataKey="actual" name="Actual" fill="#10b981" radius={[3, 3, 0, 0]} />
-                                                                <Line type="monotone" dataKey="target" name="Target" stroke="#3b82f6" strokeWidth={2} activeDot={{ r: 4 }} />
-                                                            </ComposedChart>
+                                                                <Bar dataKey="count" name="Output" fill="#8b5cf6" radius={[3, 3, 0, 0]}>
+                                                                    <LabelList dataKey="count" position="top" style={{ fontSize: 8, fill: isDark ? "#f4f4f5" : "#18181b" }} />
+                                                                </Bar>
+                                                            </BarChart>
                                                         </ChartContainer>
                                                     </div>
-                                                ) : (
-                                                    <div className="flex items-center justify-center h-64 text-sm text-muted-foreground">
-                                                        No hourly data available
-                                                    </div>
-                                                )}
-                                            </CardContent>
-                                        </Card>
-                                    )}
+                                                </CardContent>
+                                            </Card>
+                                        )}
+                                    </div>
+                                ) : null}
 
-                                    {/* Machine-wise production overview */}
-                                    {data.machineTrendData && data.machineTrendData.length > 0 && (
-                                        <Card className="border-border/60 shadow-sm bg-card col-span-1">
-                                            <CardHeader className="pb-2">
-                                                <CardTitle className="text-md font-bold uppercase tracking-tight">Machine-Wise Production</CardTitle>
-                                                <CardDescription className="text-xs">Comparative machine outputs</CardDescription>
-                                            </CardHeader>
-                                            <CardContent className="pt-2">
-                                                <div className="h-64 w-full">
-                                                    <ChartContainer config={{}} className="h-full w-full">
-                                                        <BarChart data={data.machineTrendData} margin={{ top: 15, right: 10, left: -10, bottom: 0 }}>
-                                                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDark ? "#27272a" : "#f4f4f5"} />
-                                                            <XAxis dataKey="machine" tick={{ fontSize: 10, fill: isDark ? "#a1a1aa" : "#71717a" }} stroke={isDark ? "#27272a" : "#e4e4e7"} />
-                                                            <YAxis tick={{ fontSize: 10, fill: isDark ? "#a1a1aa" : "#71717a" }} stroke={isDark ? "#27272a" : "#e4e4e7"} />
-                                                            <ChartTooltip content={<ChartTooltipContent />} />
-                                                            <Bar dataKey="count" name="Output" fill="#8b5cf6" radius={[3, 3, 0, 0]}>
-                                                                <LabelList dataKey="count" position="top" style={{ fontSize: 8, fill: isDark ? "#f4f4f5" : "#18181b" }} />
-                                                            </Bar>
-                                                        </BarChart>
-                                                    </ChartContainer>
-                                                </div>
-                                            </CardContent>
-                                        </Card>
-                                    )}
-                                </div>
 
                                 {/* Model-wise production log */}
                                 {data.modelData && data.modelData.length > 0 && (
