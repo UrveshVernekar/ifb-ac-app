@@ -1,7 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import {
     Table,
     TableBody,
@@ -31,6 +40,8 @@ interface Props {
 
 export default function DowntimeTable({ data }: Props) {
     const [searchTerm, setSearchTerm] = useState("");
+    const [currentPage, setCurrentPage] = useState(1);
+    const [pageSize, setPageSize] = useState(5);
 
     const filtered = data.filter(
         (i) =>
@@ -38,6 +49,14 @@ export default function DowntimeTable({ data }: Props) {
             i.remarks.toLowerCase().includes(searchTerm.toLowerCase()) ||
             i.type.toLowerCase().includes(searchTerm.toLowerCase()),
     );
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchTerm]);
+
+    const totalPages = Math.ceil(filtered.length / pageSize);
+    const startIndex = (currentPage - 1) * pageSize;
+    const paginatedData = filtered.slice(startIndex, startIndex + pageSize);
 
     const totalDowntime = filtered.reduce((total, item) => {
         const match = item.duration.match(/\d+/);
@@ -95,13 +114,13 @@ export default function DowntimeTable({ data }: Props) {
                         <TableBody>
                             {filtered.length > 0 ? (
                                 <>
-                                    {filtered.map((item, index) => (
+                                    {paginatedData.map((item, index) => (
                                         <TableRow
                                             key={item.id}
                                             className="dark:border-gray-700 transition-colors duration-200 hover:bg-gray-50 dark:hover:bg-gray-800"
                                         >
                                             <TableCell className="font-medium text-gray-900 dark:text-white whitespace-nowrap">
-                                                {index + 1}
+                                                {startIndex + index + 1}
                                             </TableCell>
                                             <TableCell className="font-medium text-gray-900 dark:text-white whitespace-nowrap">
                                                 {formatDate(item.date)}
@@ -151,6 +170,51 @@ export default function DowntimeTable({ data }: Props) {
                         </TableBody>
                     </Table>
                 </div>
+
+                {/* Pagination UI */}
+                {filtered.length > 0 && (
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 text-xs">
+                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                            Showing {filtered.length > 0 ? startIndex + 1 : 0} to {Math.min(startIndex + pageSize, filtered.length)} of {filtered.length} entries
+                        </span>
+                        <div className="flex flex-wrap items-center gap-4">
+                            <div className="flex items-center gap-2">
+                                <span className="text-xs text-gray-500 dark:text-gray-400">Rows per page:</span>
+                                <Select value={String(pageSize)} onValueChange={(v) => { setPageSize(Number(v)); setCurrentPage(1); }}>
+                                    <SelectTrigger className="w-16 h-8 text-xs bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white">
+                                        <SelectValue placeholder={String(pageSize)} />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {[5, 10, 20, 50, 100].map((size) => (
+                                            <SelectItem key={size} value={String(size)}>{size}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                                <Button
+                                    variant="outline"
+                                    size="icon"
+                                    className="h-8 w-8 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700"
+                                    onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+                                    disabled={currentPage === 1}
+                                >
+                                    <ChevronLeft className="h-4 w-4" />
+                                </Button>
+                                <span className="text-xs font-semibold px-2 text-gray-900 dark:text-white">Page {currentPage} of {totalPages || 1}</span>
+                                <Button
+                                    variant="outline"
+                                    size="icon"
+                                    className="h-8 w-8 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700"
+                                    onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+                                    disabled={currentPage === totalPages || totalPages === 0}
+                                >
+                                    <ChevronRight className="h-4 w-4" />
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         </Card>
     );

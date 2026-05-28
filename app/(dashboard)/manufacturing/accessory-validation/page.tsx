@@ -35,8 +35,17 @@ import {
     AlertCircle,
     CheckCircle2,
     ChevronDown,
-    ChevronUp
+    ChevronUp,
+    ChevronLeft,
+    ChevronRight
 } from "lucide-react";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 
 const API_HOST = "http://10.0.7.26:3003";
 
@@ -59,6 +68,13 @@ export default function AccessoryValidationPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [refreshTrigger, setRefreshTrigger] = useState(false);
+
+    const [currentPage, setCurrentPage] = useState(1);
+    const [pageSize, setPageSize] = useState(5);
+
+    const totalPages = Math.ceil(tableData.length / pageSize);
+    const startIndex = (currentPage - 1) * pageSize;
+    const paginatedData = tableData.slice(startIndex, startIndex + pageSize);
 
     // Form inputs (Create)
     const [formExpanded, setFormExpanded] = useState(true);
@@ -107,8 +123,10 @@ export default function AccessoryValidationPage() {
             const response = await axios.get(`${API_HOST}/api/production/data/accessory-mapping/get-data`);
             if (response.data && response.data.success) {
                 setTableData(response.data.data || []);
+                setCurrentPage(1);
             } else {
                 setTableData([]);
+                setCurrentPage(1);
             }
         } catch (err) {
             console.error("Error fetching accessory validation list:", err);
@@ -381,7 +399,7 @@ export default function AccessoryValidationPage() {
                             <Alert variant={formFeedback.type === "success" ? "default" : "destructive"} className="text-xs py-2 px-3 mb-4">
                                 <div className="flex gap-2 items-center">
                                     {formFeedback.type === "success" ? (
-                                        <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                                        <CheckCircle2 className="w-4 h-4 text-blue-500" />
                                     ) : (
                                         <AlertCircle className="w-4 h-4" />
                                     )}
@@ -499,7 +517,7 @@ export default function AccessoryValidationPage() {
                                 <Button
                                     type="submit"
                                     disabled={formLoading}
-                                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs h-9"
+                                    className="bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs h-9"
                                 >
                                     {formLoading ? "Saving..." : "Submit Mapping"}
                                 </Button>
@@ -529,58 +547,103 @@ export default function AccessoryValidationPage() {
                             ))}
                         </div>
                     ) : tableData.length > 0 ? (
-                        <div className="overflow-x-auto border border-border/40 rounded-lg">
-                            <Table>
-                                <TableHeader className="bg-slate-900/50">
-                                    <TableRow>
-                                        <TableHead className="text-xs font-bold py-2.5">Model Name</TableHead>
-                                        <TableHead className="text-xs font-bold py-2.5">Model Code</TableHead>
-                                        <TableHead className="text-xs font-bold py-2.5">Description</TableHead>
-                                        <TableHead className="text-xs font-bold py-2.5">Bag Partcode</TableHead>
-                                        <TableHead className="text-xs font-bold py-2.5">Remote Partcode</TableHead>
-                                        <TableHead className="text-xs font-bold py-2.5">Assembly Code</TableHead>
-                                        <TableHead className="text-xs font-bold py-2.5 text-center">Vendor Prefix</TableHead>
-                                        <TableHead className="text-xs font-bold py-2.5">Created At</TableHead>
-                                        <TableHead className="text-xs font-bold py-2.5">Updated By</TableHead>
-                                        <TableHead className="text-xs font-bold py-2.5 text-center">Actions</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {tableData.map((row) => (
-                                        <TableRow key={row.id} className="hover:bg-muted/40 text-xs">
-                                            <TableCell className="py-2.5 font-bold">{row.modelname}</TableCell>
-                                            <TableCell className="py-2.5 font-semibold text-blue-600">{row.modelcode}</TableCell>
-                                            <TableCell className="py-2.5 text-muted-foreground max-w-[150px] truncate" title={row.modeldescription}>{row.modeldescription}</TableCell>
-                                            <TableCell className="py-2.5">{row.bagpartcode}</TableCell>
-                                            <TableCell className="py-2.5">{row.remotepartcode}</TableCell>
-                                            <TableCell className="py-2.5">{row.assemblycode}</TableCell>
-                                            <TableCell className="py-2.5 text-center font-semibold text-foreground/80">{row.vendorprefix}</TableCell>
-                                            <TableCell className="py-2.5 whitespace-nowrap text-muted-foreground">{formatDate(row.created_at)}</TableCell>
-                                            <TableCell className="py-2.5">{row.updated_by}</TableCell>
-                                            <TableCell className="py-2.5 text-center">
-                                                <div className="flex gap-1 justify-center">
-                                                    <Button
-                                                        onClick={() => handleEditClick(row)}
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="h-7 w-7 text-blue-500 hover:text-blue-600 hover:bg-blue-500/10"
-                                                    >
-                                                        <Edit className="w-3.5 h-3.5" />
-                                                    </Button>
-                                                    <Button
-                                                        onClick={() => handleDeleteClick(row)}
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="h-7 w-7 text-rose-500 hover:text-rose-600 hover:bg-rose-500/10"
-                                                    >
-                                                        <Trash2 className="w-3.5 h-3.5" />
-                                                    </Button>
-                                                </div>
-                                            </TableCell>
+                        <div className="space-y-4">
+                            <div className="overflow-x-auto border border-border/40 rounded-lg bg-background">
+                                <Table>
+                                    <TableHeader className="bg-slate-900/50">
+                                        <TableRow>
+                                            <TableHead className="text-xs font-bold py-2.5">Model Name</TableHead>
+                                            <TableHead className="text-xs font-bold py-2.5">Model Code</TableHead>
+                                            <TableHead className="text-xs font-bold py-2.5">Description</TableHead>
+                                            <TableHead className="text-xs font-bold py-2.5">Bag Partcode</TableHead>
+                                            <TableHead className="text-xs font-bold py-2.5">Remote Partcode</TableHead>
+                                            <TableHead className="text-xs font-bold py-2.5">Assembly Code</TableHead>
+                                            <TableHead className="text-xs font-bold py-2.5 text-center">Vendor Prefix</TableHead>
+                                            <TableHead className="text-xs font-bold py-2.5">Created At</TableHead>
+                                            <TableHead className="text-xs font-bold py-2.5">Updated By</TableHead>
+                                            <TableHead className="text-xs font-bold py-2.5 text-center">Actions</TableHead>
                                         </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {paginatedData.map((row) => (
+                                            <TableRow key={row.id} className="hover:bg-muted/40 text-xs">
+                                                <TableCell className="py-2.5 font-bold">{row.modelname}</TableCell>
+                                                <TableCell className="py-2.5 font-semibold text-blue-600">{row.modelcode}</TableCell>
+                                                <TableCell className="py-2.5 text-muted-foreground max-w-[150px] truncate" title={row.modeldescription}>{row.modeldescription}</TableCell>
+                                                <TableCell className="py-2.5">{row.bagpartcode}</TableCell>
+                                                <TableCell className="py-2.5">{row.remotepartcode}</TableCell>
+                                                <TableCell className="py-2.5">{row.assemblycode}</TableCell>
+                                                <TableCell className="py-2.5 text-center font-semibold text-foreground/80">{row.vendorprefix}</TableCell>
+                                                <TableCell className="py-2.5 whitespace-nowrap text-muted-foreground">{formatDate(row.created_at)}</TableCell>
+                                                <TableCell className="py-2.5">{row.updated_by}</TableCell>
+                                                <TableCell className="py-2.5 text-center">
+                                                    <div className="flex gap-1 justify-center">
+                                                        <Button
+                                                            onClick={() => handleEditClick(row)}
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            className="h-7 w-7 text-blue-500 hover:text-blue-600 hover:bg-blue-500/10"
+                                                        >
+                                                            <Edit className="w-3.5 h-3.5" />
+                                                        </Button>
+                                                        <Button
+                                                            onClick={() => handleDeleteClick(row)}
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            className="h-7 w-7 text-rose-500 hover:text-rose-600 hover:bg-rose-500/10"
+                                                        >
+                                                            <Trash2 className="w-3.5 h-3.5" />
+                                                        </Button>
+                                                    </div>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </div>
+
+                            {/* Pagination UI */}
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-2 pt-2 border-t">
+                                <span className="text-xs text-muted-foreground">
+                                    Showing {tableData.length > 0 ? startIndex + 1 : 0} to {Math.min(startIndex + pageSize, tableData.length)} of {tableData.length} entries
+                                </span>
+                                <div className="flex flex-wrap items-center gap-4">
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-xs text-muted-foreground">Rows per page:</span>
+                                        <Select value={String(pageSize)} onValueChange={(v) => { setPageSize(Number(v)); setCurrentPage(1); }}>
+                                            <SelectTrigger className="w-16 h-8 text-xs bg-background border-border">
+                                                <SelectValue placeholder={String(pageSize)} />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {[5, 10, 20, 50, 100].map((size) => (
+                                                    <SelectItem key={size} value={String(size)}>{size}</SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div className="flex items-center gap-1.5">
+                                        <Button
+                                            variant="outline"
+                                            size="icon"
+                                            className="h-8 w-8"
+                                            onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+                                            disabled={currentPage === 1}
+                                        >
+                                            <ChevronLeft className="h-4 w-4" />
+                                        </Button>
+                                        <span className="text-xs font-semibold px-2">Page {currentPage} of {totalPages || 1}</span>
+                                        <Button
+                                            variant="outline"
+                                            size="icon"
+                                            className="h-8 w-8"
+                                            onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+                                            disabled={currentPage === totalPages || totalPages === 0}
+                                        >
+                                            <ChevronRight className="h-4 w-4" />
+                                        </Button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     ) : (
                         <div className="text-center py-12 text-sm text-muted-foreground italic">
@@ -603,7 +666,7 @@ export default function AccessoryValidationPage() {
                     {editFeedback.message && (
                         <Alert variant={editFeedback.type === "success" ? "default" : "destructive"} className="text-xs py-2 px-3 mb-2">
                             <div className="flex gap-2 items-center">
-                                {editFeedback.type === "success" ? <CheckCircle2 className="w-4 h-4 text-emerald-500" /> : <AlertCircle className="w-4 h-4" />}
+                                {editFeedback.type === "success" ? <CheckCircle2 className="w-4 h-4 text-blue-500" /> : <AlertCircle className="w-4 h-4" />}
                                 <span className="text-xs font-semibold">{editFeedback.message}</span>
                             </div>
                         </Alert>
@@ -695,7 +758,7 @@ export default function AccessoryValidationPage() {
                             <Button type="button" variant="outline" size="sm" onClick={() => setEditDialogOpen(false)} className="text-xs">
                                 Cancel
                             </Button>
-                            <Button type="submit" disabled={editLoading} className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs h-9">
+                            <Button type="submit" disabled={editLoading} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs h-9">
                                 {editLoading ? "Updating..." : "Save Changes"}
                             </Button>
                         </DialogFooter>

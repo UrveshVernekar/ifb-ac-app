@@ -2,6 +2,7 @@
 'use client';
 
 import ReactECharts from 'echarts-for-react';
+import * as React from 'react';
 import { Card } from '@/components/ui/card';
 import { useTheme } from 'next-themes';
 
@@ -12,8 +13,12 @@ interface ChartProps {
 }
 
 export function PerformanceTrendChart({ data, title, className }: ChartProps) {
-    const { theme } = useTheme();
-    const isDark = theme === 'dark';
+    const { resolvedTheme } = useTheme();
+    const [mounted, setMounted] = React.useState(false);
+    React.useEffect(() => {
+        setMounted(true);
+    }, []);
+    const isDark = mounted && resolvedTheme === 'dark';
 
     if (!data) return null;
 
@@ -84,8 +89,12 @@ export function PerformanceTrendChart({ data, title, className }: ChartProps) {
 }
 
 export function DailyEfficiencyChart({ data, title, className }: ChartProps) {
-    const { theme } = useTheme();
-    const isDark = theme === 'dark';
+    const { resolvedTheme } = useTheme();
+    const [mounted, setMounted] = React.useState(false);
+    React.useEffect(() => {
+        setMounted(true);
+    }, []);
+    const isDark = mounted && resolvedTheme === 'dark';
 
     if (!data || !data.data) return null;
 
@@ -132,8 +141,12 @@ export function DailyEfficiencyChart({ data, title, className }: ChartProps) {
 }
 
 export function TopDefectsChart({ data, title, className }: ChartProps) {
-    const { theme } = useTheme();
-    const isDark = theme === 'dark';
+    const { resolvedTheme } = useTheme();
+    const [mounted, setMounted] = React.useState(false);
+    React.useEffect(() => {
+        setMounted(true);
+    }, []);
+    const isDark = mounted && resolvedTheme === 'dark';
 
     if (!data) return null;
 
@@ -202,8 +215,12 @@ export function TopDefectsChart({ data, title, className }: ChartProps) {
 }
 
 export function OEEGaugeChart({ value, target, className }: { value: number, target: number, className?: string }) {
-    const { theme } = useTheme();
-    const isDark = theme === 'dark';
+    const { resolvedTheme } = useTheme();
+    const [mounted, setMounted] = React.useState(false);
+    React.useEffect(() => {
+        setMounted(true);
+    }, []);
+    const isDark = mounted && resolvedTheme === 'dark';
 
     const option = {
         backgroundColor: 'transparent',
@@ -261,7 +278,7 @@ export function OEEGaugeChart({ value, target, className }: { value: number, tar
                 <div className="flex gap-4 mt-2">
                     <div className="flex flex-col items-center">
                         <span className="text-[10px] text-muted-foreground uppercase font-bold">Target</span>
-                        <span className="text-lg font-bold text-emerald-500">{target}%</span>
+                        <span className="text-lg font-bold text-blue-500">{target}%</span>
                     </div>
                     <div className="w-px h-8 bg-border" />
                     <div className="flex flex-col items-center">

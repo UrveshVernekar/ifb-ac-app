@@ -3,6 +3,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import axios from "axios";
+import { useTheme } from "next-themes";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import {
     Select,
@@ -25,6 +26,8 @@ import {
     Target,
     Layers,
     Cpu,
+    ChevronLeft,
+    ChevronRight,
 } from "lucide-react";
 import {
     ChartContainer,
@@ -87,6 +90,8 @@ interface ApiResponse {
 }
 
 export default function PerformanceDashboardPage() {
+    const { resolvedTheme } = useTheme();
+    const isDark = resolvedTheme === "dark";
     const [mounted, setMounted] = useState(false);
 
     // Filters from session storage
@@ -100,6 +105,21 @@ export default function PerformanceDashboardPage() {
     const [data, setData] = useState<ApiResponse | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+
+    // Pagination controls
+    const [currentPage, setCurrentPage] = useState(1);
+    const [pageSize, setPageSize] = useState(5);
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [area, fromDate, toDate, selectedLines, selectedSubMachines]);
+
+    const totalPages = Math.ceil((data?.performanceLoss?.length || 0) / pageSize);
+    const startIndex = (currentPage - 1) * pageSize;
+    const paginatedPerformanceLoss = useMemo(() => {
+        if (!data?.performanceLoss) return [];
+        return data.performanceLoss.slice(startIndex, startIndex + pageSize);
+    }, [data?.performanceLoss, startIndex, pageSize]);
 
     // Load filters from session storage
     useEffect(() => {
@@ -302,7 +322,7 @@ export default function PerformanceDashboardPage() {
     }, [data]);
 
     const getOeeColor = (val: number, target: number = 85) => {
-        if (val >= target) return "text-emerald-500 border-emerald-500/20 bg-emerald-500/5";
+        if (val >= target) return "text-blue-500 border-blue-500/20 bg-blue-500/5";
         if (val >= 80) return "text-amber-500 border-amber-500/20 bg-amber-500/5";
         return "text-rose-500 border-rose-500/20 bg-rose-500/5";
     };
@@ -322,7 +342,7 @@ export default function PerformanceDashboardPage() {
                             Performance (P)
                         </h1>
                         <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
-                            <Activity className="w-3.5 h-3.5 text-emerald-500" />
+                            <Activity className="w-3.5 h-3.5 text-blue-500" />
                             Production output speed, plan deviations and performance losses
                         </p>
                     </div>
@@ -385,7 +405,7 @@ export default function PerformanceDashboardPage() {
                         {/* Main Lines selection */}
                         <div className="space-y-2">
                             <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider block flex items-center gap-1.5">
-                                <Layers className="w-4 h-4 text-emerald-500" />
+                                <Layers className="w-4 h-4 text-blue-500" />
                                 {area === "ASSEMBLY LINES" ? "Select Assembly Line" : area === "STAMPING" ? "Select Main Lines" : "Select Coilshop Types"}
                             </span>
                             <div className="flex flex-wrap gap-2">
@@ -397,7 +417,7 @@ export default function PerformanceDashboardPage() {
                                             variant={active ? "default" : "outline"}
                                             size="sm"
                                             onClick={() => handleLineSelect(line.value)}
-                                            className={active ? "bg-emerald-600 hover:bg-emerald-700 text-white" : "border-border text-muted-foreground hover:text-foreground"}
+                                            className={active ? "bg-blue-600 hover:bg-blue-700 text-white" : "border-border text-muted-foreground hover:text-foreground"}
                                         >
                                             {line.label}
                                         </Button>
@@ -410,7 +430,7 @@ export default function PerformanceDashboardPage() {
                         {subOptions.length > 0 && (
                             <div className="space-y-2">
                                 <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider block flex items-center gap-1.5">
-                                    <Cpu className="w-4 h-4 text-emerald-500" />
+                                    <Cpu className="w-4 h-4 text-blue-500" />
                                     {area === "STAMPING" ? "Select Stamping Machines" : "Select Coilshop Machines"}
                                 </span>
                                 <div className="flex flex-wrap gap-2 max-h-[120px] overflow-y-auto p-1 border border-border/30 rounded-lg bg-background">
@@ -422,7 +442,7 @@ export default function PerformanceDashboardPage() {
                                                 variant={active ? "secondary" : "ghost"}
                                                 size="sm"
                                                 onClick={() => handleSubMachineToggle(sub.value)}
-                                                className={`text-[10px] font-bold h-7 py-1 px-2.5 rounded-md ${active ? "bg-emerald-500/10 text-emerald-600 border border-emerald-500/30" : "text-muted-foreground hover:bg-muted"}`}
+                                                className={`text-[10px] font-bold h-7 py-1 px-2.5 rounded-md ${active ? "bg-blue-500/10 text-blue-600 border border-blue-500/30" : "text-muted-foreground hover:bg-muted"}`}
                                             >
                                                 {sub.label}
                                             </Button>
@@ -479,7 +499,7 @@ export default function PerformanceDashboardPage() {
                                 <Card className="border border-border/60 shadow-sm bg-card">
                                     <CardHeader className="pb-2">
                                         <CardTitle className="text-sm font-bold uppercase tracking-tight flex items-center gap-1.5">
-                                            <TrendingUp className="w-4 h-4 text-emerald-500" />
+                                            <TrendingUp className="w-4 h-4 text-blue-500" />
                                             Daily Performance Trend
                                         </CardTitle>
                                         <CardDescription className="text-xs">Day-wise output performance rating</CardDescription>
@@ -488,9 +508,9 @@ export default function PerformanceDashboardPage() {
                                         <div className="h-72 w-full">
                                             <ChartContainer config={{}} className="h-full w-full">
                                                 <BarChart data={data.dailyPerformance} margin={{ top: 20, right: 10, left: -10, bottom: 0 }}>
-                                                    <CartesianGrid strokeDasharray="3 3" vertical={false} className="stroke-muted-foreground/15" />
-                                                    <XAxis dataKey="date" tick={{ fontSize: 9 }} stroke="var(--border)" className="text-muted-foreground" />
-                                                    <YAxis domain={[0, 100]} tick={{ fontSize: 9 }} stroke="var(--border)" className="text-muted-foreground" />
+                                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDark ? "#27272a" : "#f4f4f5"} />
+                                                    <XAxis dataKey="date" tick={{ fontSize: 9, fill: isDark ? "#a1a1aa" : "#71717a" }} stroke={isDark ? "#27272a" : "#e4e4e7"} />
+                                                    <YAxis domain={[0, 100]} tick={{ fontSize: 9, fill: isDark ? "#a1a1aa" : "#71717a" }} stroke={isDark ? "#27272a" : "#e4e4e7"} />
                                                     <ChartTooltip content={<ChartTooltipContent />} />
                                                     <Bar dataKey="value" name="Performance" fill="#f59e0b" radius={[3, 3, 0, 0]}>
                                                         {data.dailyPerformance.map((entry, index) => {
@@ -498,7 +518,7 @@ export default function PerformanceDashboardPage() {
                                                             const fillColor = val >= 90 ? "#10b981" : (val >= 80 ? "#f59e0b" : "#ef4444");
                                                             return <Cell key={`cell-${index}`} fill={fillColor} />;
                                                         })}
-                                                        <LabelList dataKey="value" position="top" style={{ fontSize: 8, fill: "var(--foreground)" }} />
+                                                        <LabelList dataKey="value" position="top" style={{ fontSize: 8, fill: isDark ? "#f4f4f5" : "#18181b" }} />
                                                     </Bar>
                                                 </BarChart>
                                             </ChartContainer>
@@ -512,7 +532,7 @@ export default function PerformanceDashboardPage() {
                                 <Card className="border border-border/60 shadow-sm bg-card">
                                     <CardHeader className="pb-2">
                                         <CardTitle className="text-sm font-bold uppercase tracking-tight flex items-center gap-1.5">
-                                            <Activity className="w-4 h-4 text-emerald-500" />
+                                            <Activity className="w-4 h-4 text-blue-500" />
                                             Volume output & Plans Trend
                                         </CardTitle>
                                         <CardDescription className="text-xs">Composed plan vs actual performance volume comparison</CardDescription>
@@ -522,9 +542,9 @@ export default function PerformanceDashboardPage() {
                                             <div className="h-72 w-full">
                                                 <ChartContainer config={{}} className="h-full w-full">
                                                     <ComposedChart data={composedTrendData} margin={{ top: 20, right: 10, left: -10, bottom: 0 }}>
-                                                        <CartesianGrid strokeDasharray="3 3" vertical={false} className="stroke-muted-foreground/15" />
-                                                        <XAxis dataKey="name" tick={{ fontSize: 9 }} stroke="var(--border)" className="text-muted-foreground" />
-                                                        <YAxis tick={{ fontSize: 9 }} stroke="var(--border)" className="text-muted-foreground" />
+                                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDark ? "#27272a" : "#f4f4f5"} />
+                                                        <XAxis dataKey="name" tick={{ fontSize: 9, fill: isDark ? "#a1a1aa" : "#71717a" }} stroke={isDark ? "#27272a" : "#e4e4e7"} />
+                                                        <YAxis tick={{ fontSize: 9, fill: isDark ? "#a1a1aa" : "#71717a" }} stroke={isDark ? "#27272a" : "#e4e4e7"} />
                                                         <ChartTooltip content={<ChartTooltipContent />} />
                                                         <Legend verticalAlign="top" height={36} wrapperStyle={{ fontSize: 10 }} />
                                                         {data.performanceTrend.seriesData.map((s, idx) => {
@@ -558,7 +578,7 @@ export default function PerformanceDashboardPage() {
                             <Card className="border border-border/60 shadow-sm bg-card mt-6">
                                 <CardHeader className="pb-2">
                                     <CardTitle className="text-sm font-bold uppercase tracking-tight flex items-center gap-1.5">
-                                        <Activity className="w-4 h-4 text-emerald-500" />
+                                        <Activity className="w-4 h-4 text-blue-500" />
                                         Performance Losses Log
                                     </CardTitle>
                                     <CardDescription className="text-xs">Summary of volume targets and actual logs</CardDescription>
@@ -577,8 +597,8 @@ export default function PerformanceDashboardPage() {
                                                 </TableRow>
                                             </TableHeader>
                                             <TableBody>
-                                                {data.performanceLoss.map((row, idx) => {
-                                                    const sr = row.SRNO || row.srNo || (idx + 1);
+                                                {paginatedPerformanceLoss.map((row, idx) => {
+                                                    const sr = row.SRNO || row.srNo || (startIndex + idx + 1);
                                                     const dt = row.DATE || row.date || "";
                                                     const plan = row.PLAN || row.plan || 0;
                                                     const actual = row.ACTUAL_PRODUCTION || row.actualProduction || 0;
@@ -598,6 +618,49 @@ export default function PerformanceDashboardPage() {
                                                 })}
                                             </TableBody>
                                         </Table>
+                                    </div>
+
+                                    {/* Pagination UI */}
+                                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-4 pt-4 border-t text-xs">
+                                        <span className="text-xs text-muted-foreground">
+                                            Showing {data.performanceLoss.length > 0 ? startIndex + 1 : 0} to {Math.min(startIndex + pageSize, data.performanceLoss.length)} of {data.performanceLoss.length} entries
+                                        </span>
+                                        <div className="flex flex-wrap items-center gap-4">
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-xs text-muted-foreground">Rows per page:</span>
+                                                <Select value={String(pageSize)} onValueChange={(v) => { setPageSize(Number(v)); setCurrentPage(1); }}>
+                                                    <SelectTrigger className="w-16 h-8 text-xs bg-background border-border">
+                                                        <SelectValue placeholder={String(pageSize)} />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {[5, 10, 20, 50, 100].map((size) => (
+                                                            <SelectItem key={size} value={String(size)}>{size}</SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
+                                            <div className="flex items-center gap-1.5">
+                                                <Button
+                                                    variant="outline"
+                                                    size="icon"
+                                                    className="h-8 w-8"
+                                                    onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+                                                    disabled={currentPage === 1}
+                                                >
+                                                    <ChevronLeft className="h-4 w-4" />
+                                                </Button>
+                                                <span className="text-xs font-semibold px-2">Page {currentPage} of {totalPages || 1}</span>
+                                                <Button
+                                                    variant="outline"
+                                                    size="icon"
+                                                    className="h-8 w-8"
+                                                    onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+                                                    disabled={currentPage === totalPages || totalPages === 0}
+                                                >
+                                                    <ChevronRight className="h-4 w-4" />
+                                                </Button>
+                                            </div>
+                                        </div>
                                     </div>
                                 </CardContent>
                             </Card>

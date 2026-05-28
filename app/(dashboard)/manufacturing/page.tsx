@@ -99,13 +99,13 @@ export default function ManufacturingHub() {
         },
         {
             title: "Quality & Validation",
-            icon: <ShieldCheck className="w-5 h-5 text-emerald-500" />,
+            icon: <ShieldCheck className="w-5 h-5 text-blue-500" />,
             tiles: [
                 {
                     title: "Process Validation",
                     icon: CheckCircle2,
-                    iconColor: "text-emerald-500",
-                    bgColor: "bg-emerald-500/10 border-emerald-500/20",
+                    iconColor: "text-blue-500",
+                    bgColor: "bg-blue-500/10 border-blue-500/20",
                     path: "/manufacturing/process-validation",
                     description: "Validate manufacturing trial runs and process parameters"
                 },
@@ -128,7 +128,7 @@ export default function ManufacturingHub() {
             {/* Header */}
             <div className="flex flex-col gap-2">
                 <div className="flex items-center gap-2">
-                    <Badge className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20">Module</Badge>
+                    <Badge className="bg-blue-500/10 text-blue-500 border-blue-500/20">Module</Badge>
                     <span className="text-xs text-muted-foreground font-semibold tracking-wider uppercase">AC Manufacturing Division</span>
                 </div>
                 <h1 className="text-4xl font-extrabold text-foreground tracking-tight sm:text-5xl">
@@ -153,20 +153,20 @@ export default function ManufacturingHub() {
                                 const IconComp = tile.icon;
                                 return (
                                     <Link key={tile.title} href={tile.path} className="group block h-full">
-                                        <Card className="h-full border border-border/50 bg-card hover:border-emerald-500/40 hover:shadow-lg transition-all duration-300 relative overflow-hidden flex flex-col">
+                                        <Card className="h-full border border-border/50 bg-card hover:border-blue-500/40 hover:shadow-lg transition-all duration-300 relative overflow-hidden flex flex-col">
                                             {/* Micro gradient background glow */}
-                                            <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+                                            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
                                             
                                             <CardHeader className="pb-3 flex flex-row items-center justify-between space-y-0">
                                                 <div className={`p-2.5 rounded-xl border ${tile.bgColor}`}>
                                                     <IconComp className={`w-5 h-5 ${tile.iconColor}`} />
                                                 </div>
-                                                <ArrowRight className="w-4 h-4 text-muted-foreground/60 group-hover:text-emerald-500 group-hover:translate-x-1 transition-all duration-300" />
+                                                <ArrowRight className="w-4 h-4 text-muted-foreground/60 group-hover:text-blue-500 group-hover:translate-x-1 transition-all duration-300" />
                                             </CardHeader>
                                             
                                             <CardContent className="pt-2 flex-grow flex flex-col justify-between">
                                                 <div className="space-y-1.5">
-                                                    <CardTitle className="text-lg font-bold group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-300">
+                                                    <CardTitle className="text-lg font-bold group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-300">
                                                         {tile.title}
                                                     </CardTitle>
                                                     <CardDescription className="text-sm text-muted-foreground leading-relaxed">

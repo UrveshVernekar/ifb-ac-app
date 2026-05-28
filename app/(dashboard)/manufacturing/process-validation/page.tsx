@@ -90,7 +90,7 @@ export default function ProcessValidationListPage() {
 
     // Pagination
     const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 20;
+    const [pageSize, setPageSize] = useState(5);
 
     // Modal
     const [openInitiateModal, setOpenInitiateModal] = useState(false);
@@ -194,11 +194,11 @@ export default function ProcessValidationListPage() {
     }, [searchTerm, filters]);
 
     // Pagination calculations
-    const totalPages = Math.ceil(sortedAndFilteredData.length / itemsPerPage);
+    const totalPages = Math.ceil(sortedAndFilteredData.length / pageSize);
     const displayedData = useMemo(() => {
-        const startIndex = (currentPage - 1) * itemsPerPage;
-        return sortedAndFilteredData.slice(startIndex, startIndex + itemsPerPage);
-    }, [sortedAndFilteredData, currentPage]);
+        const startIndex = (currentPage - 1) * pageSize;
+        return sortedAndFilteredData.slice(startIndex, startIndex + pageSize);
+    }, [sortedAndFilteredData, currentPage, pageSize]);
 
     // Date Format Helpers
     const formatDateTime = (dateString: string) => {
@@ -243,7 +243,7 @@ export default function ProcessValidationListPage() {
                         <RefreshCw className="w-4 h-4" />
                     </Button>
 
-                    <Button onClick={() => setOpenInitiateModal(true)} className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs h-9 gap-1.5 shadow-md">
+                    <Button onClick={() => setOpenInitiateModal(true)} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs h-9 gap-1.5 shadow-md">
                         <Plus className="w-4 h-4" /> Initiate PV
                     </Button>
                 </div>
@@ -400,7 +400,7 @@ export default function ProcessValidationListPage() {
                                         const isUserApproved = userApproval && String(userApproval.status) === "1";
 
                                         // Global SR.NO (not per-page)
-                                        const globalSrNo = (currentPage - 1) * itemsPerPage + i + 1;
+                                        const globalSrNo = (currentPage - 1) * pageSize + i + 1;
 
                                         // Calculate percentage approval
                                         const validApprovals = (item.approvals || []).filter((a: any) => a.name !== "NA");
@@ -414,7 +414,7 @@ export default function ProcessValidationListPage() {
                                         // Styling classes
                                         let rowBgClass = "hover:bg-muted/50 transition-colors cursor-pointer text-xs";
                                         if (isUserApproved) {
-                                            rowBgClass = "bg-emerald-500/10 hover:bg-emerald-500/15 border-l-4 border-l-emerald-500 text-emerald-950 dark:text-emerald-300 transition-colors cursor-pointer text-xs";
+                                            rowBgClass = "bg-blue-500/10 hover:bg-blue-500/15 border-l-4 border-l-emerald-500 text-emerald-950 dark:text-emerald-300 transition-colors cursor-pointer text-xs";
                                         } else if (isUserInCharge) {
                                             rowBgClass = "bg-amber-500/10 hover:bg-amber-500/15 border-l-4 border-l-amber-500 text-amber-950 dark:text-amber-300 transition-colors cursor-pointer text-xs";
                                         }
@@ -449,7 +449,7 @@ export default function ProcessValidationListPage() {
                                                         </span>
                                                         <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-1.5">
                                                             <div
-                                                                className={`h-1.5 rounded-full ${allApproved ? 'bg-emerald-500' : 'bg-blue-500'}`}
+                                                                className={`h-1.5 rounded-full ${allApproved ? 'bg-blue-500' : 'bg-blue-500'}`}
                                                                 style={{ width: `${approvalPercent}%` }}
                                                             />
                                                         </div>
@@ -480,43 +480,46 @@ export default function ProcessValidationListPage() {
                     </div>
 
                     {/* Pagination Controls */}
-                    {totalPages > 1 && (
-                        <div className="flex justify-between items-center pt-4 text-xs">
-                            <div className="text-muted-foreground font-medium">
-                                Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, sortedAndFilteredData.length)} of {sortedAndFilteredData.length} entries
-                            </div>
-
-                            <div className="flex items-center gap-1">
-                                <Button
-                                    variant="outline"
-                                    size="icon"
-                                    className="h-8 w-8"
-                                    onClick={() => setCurrentPage(currentPage - 1)}
-                                    disabled={currentPage <= 1}
-                                >
-                                    <ChevronLeft className="h-4 w-4" />
-                                </Button>
-
-                                {[...Array(totalPages)].map((_, i) => (
+                    {sortedAndFilteredData.length > 0 && (
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-4 pt-4 border-t text-xs">
+                            <span className="text-xs text-muted-foreground">
+                                Showing {sortedAndFilteredData.length > 0 ? (currentPage - 1) * pageSize + 1 : 0} to {Math.min(currentPage * pageSize, sortedAndFilteredData.length)} of {sortedAndFilteredData.length} entries
+                            </span>
+                            <div className="flex flex-wrap items-center gap-4">
+                                <div className="flex items-center gap-2">
+                                    <span className="text-xs text-muted-foreground">Rows per page:</span>
+                                    <Select value={String(pageSize)} onValueChange={(v) => { setPageSize(Number(v)); setCurrentPage(1); }}>
+                                        <SelectTrigger className="w-16 h-8 text-xs bg-background border-border">
+                                            <SelectValue placeholder={String(pageSize)} />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {[5, 10, 20, 50, 100].map((size) => (
+                                                <SelectItem key={size} value={String(size)}>{size}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div className="flex items-center gap-1.5">
                                     <Button
-                                        key={i}
-                                        variant={currentPage === i + 1 ? "default" : "outline"}
-                                        className="h-8 w-8 text-xs"
-                                        onClick={() => setCurrentPage(i + 1)}
+                                        variant="outline"
+                                        size="icon"
+                                        className="h-8 w-8"
+                                        onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+                                        disabled={currentPage === 1}
                                     >
-                                        {i + 1}
+                                        <ChevronLeft className="h-4 w-4" />
                                     </Button>
-                                ))}
-
-                                <Button
-                                    variant="outline"
-                                    size="icon"
-                                    className="h-8 w-8"
-                                    onClick={() => setCurrentPage(currentPage + 1)}
-                                    disabled={currentPage >= totalPages}
-                                >
-                                    <ChevronRight className="h-4 w-4" />
-                                </Button>
+                                    <span className="text-xs font-semibold px-2">Page {currentPage} of {totalPages || 1}</span>
+                                    <Button
+                                        variant="outline"
+                                        size="icon"
+                                        className="h-8 w-8"
+                                        onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+                                        disabled={currentPage === totalPages || totalPages === 0}
+                                    >
+                                        <ChevronRight className="h-4 w-4" />
+                                    </Button>
+                                </div>
                             </div>
                         </div>
                     )}

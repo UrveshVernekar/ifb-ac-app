@@ -21,12 +21,12 @@ export default function SidebarProfile({ collapsed }: SidebarProfileProps) {
                 <DropdownMenuTrigger asChild>
                     <div className={`flex items-center gap-3 cursor-pointer hover:bg-accent rounded-xl transition-colors ${collapsed ? 'p-2 justify-center' : 'p-3'}`}>
                         <Avatar className="w-9 h-9 border border-border flex-shrink-0">
-                            <AvatarFallback className="bg-emerald-600 text-foreground font-semibold">UV</AvatarFallback>
+                            <AvatarFallback className="bg-blue-600 text-foreground font-semibold">UV</AvatarFallback>
                         </Avatar>
                         {!collapsed && (
                             <div className="flex-1 min-w-0 transition-opacity duration-300">
                                 <p className="font-medium text-sm truncate">Urvesh Vernekar</p>
-                                <p className="text-xs text-emerald-500">Admin</p>
+                                <p className="text-xs text-blue-500">Admin</p>
                             </div>
                         )}
                     </div>

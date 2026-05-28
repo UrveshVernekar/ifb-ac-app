@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { ArrowLeft, Calendar, Clock, RefreshCw, Send, CheckCircle2, AlertCircle } from "lucide-react";
+import { ArrowLeft, Calendar, Clock, RefreshCw, Send, CheckCircle2, AlertCircle, ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
 
 const API_HOST = "http://10.0.7.26:3003";
@@ -64,6 +64,14 @@ export default function ShiftConfigPage() {
     const [error, setError] = useState<string | null>(null);
     const [refreshTrigger, setRefreshTrigger] = useState(false);
 
+    // Pagination controls
+    const [currentPage, setCurrentPage] = useState(1);
+    const [pageSize, setPageSize] = useState(5);
+
+    const totalPages = Math.ceil(logs.length / pageSize);
+    const startIndex = (currentPage - 1) * pageSize;
+    const paginatedLogs = logs.slice(startIndex, startIndex + pageSize);
+
     useEffect(() => {
         setMounted(true);
         const todayStr = new Date().toISOString().split("T")[0];
@@ -100,8 +108,10 @@ export default function ShiftConfigPage() {
                     updatedat: item.updated_at
                 }));
                 setLogs(mapped);
+                setCurrentPage(1);
             } else {
                 setError(response.data.message || "Failed to fetch shift configuration.");
+                setCurrentPage(1);
             }
         } catch (err) {
             console.error("Fetch shift config error:", err);
@@ -191,7 +201,7 @@ export default function ShiftConfigPage() {
                         {formStatus.message && (
                             <Alert variant={formStatus.type === "success" ? "default" : "destructive"} className="mb-4 text-xs py-2 px-3">
                                 <div className="flex gap-2 items-center">
-                                    {formStatus.type === "success" ? <CheckCircle2 className="w-4 h-4 text-emerald-500" /> : <AlertCircle className="w-4 h-4" />}
+                                    {formStatus.type === "success" ? <CheckCircle2 className="w-4 h-4 text-blue-500" /> : <AlertCircle className="w-4 h-4" />}
                                     <AlertDescription className="text-xs font-medium">{formStatus.message}</AlertDescription>
                                 </div>
                             </Alert>
@@ -255,7 +265,7 @@ export default function ShiftConfigPage() {
                                 />
                             </div>
 
-                            <Button type="submit" disabled={formSubmitting} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs h-9">
+                            <Button type="submit" disabled={formSubmitting} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs h-9">
                                 {formSubmitting ? (
                                     <span className="flex items-center gap-1.5 justify-center">
                                         <RefreshCw className="w-3.5 h-3.5 animate-spin" /> Submitting...
@@ -321,45 +331,90 @@ export default function ShiftConfigPage() {
                                 ))}
                             </div>
                         ) : logs.length > 0 ? (
-                            <div className="overflow-x-auto border rounded-lg bg-background border-border/40">
-                                <Table>
-                                    <TableHeader>
-                                        <TableRow>
-                                            <TableHead className="text-xs font-bold py-2.5">Date</TableHead>
-                                            <TableHead className="text-xs font-bold py-2.5">Line</TableHead>
-                                            <TableHead className="text-xs font-bold py-2.5">Start</TableHead>
-                                            <TableHead className="text-xs font-bold py-2.5">End</TableHead>
-                                            <TableHead className="text-xs font-bold py-2.5 text-right">Hours</TableHead>
-                                            <TableHead className="text-xs font-bold py-2.5 text-right">Ext</TableHead>
-                                            <TableHead className="text-xs font-bold py-2.5">Reason</TableHead>
-                                            <TableHead className="text-xs font-bold py-2.5">Updated By</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {logs.map((log) => {
-                                            // Format Date to DD-MMM-YYYY
-                                            let displayDate = log.date;
-                                            try {
-                                                const d = new Date(log.date);
-                                                const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-                                                displayDate = `${d.getDate().toString().padStart(2, '0')}-${months[d.getMonth()]}-${d.getFullYear()}`;
-                                            } catch (e) { }
+                            <div className="space-y-4">
+                                <div className="overflow-x-auto border rounded-lg bg-background border-border/40">
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow>
+                                                <TableHead className="text-xs font-bold py-2.5">Date</TableHead>
+                                                <TableHead className="text-xs font-bold py-2.5">Line</TableHead>
+                                                <TableHead className="text-xs font-bold py-2.5">Start</TableHead>
+                                                <TableHead className="text-xs font-bold py-2.5">End</TableHead>
+                                                <TableHead className="text-xs font-bold py-2.5 text-right">Hours</TableHead>
+                                                <TableHead className="text-xs font-bold py-2.5 text-right">Ext</TableHead>
+                                                <TableHead className="text-xs font-bold py-2.5">Reason</TableHead>
+                                                <TableHead className="text-xs font-bold py-2.5">Updated By</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {paginatedLogs.map((log) => {
+                                                // Format Date to DD-MMM-YYYY
+                                                let displayDate = log.date;
+                                                try {
+                                                    const d = new Date(log.date);
+                                                    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+                                                    displayDate = `${d.getDate().toString().padStart(2, '0')}-${months[d.getMonth()]}-${d.getFullYear()}`;
+                                                } catch (e) { }
 
-                                            return (
-                                                <TableRow key={log.id}>
-                                                    <TableCell className="text-xs py-2 font-medium">{displayDate}</TableCell>
-                                                    <TableCell className="text-xs py-2">{log.line}</TableCell>
-                                                    <TableCell className="text-xs py-2">{log.shiftstart || "08:00"}</TableCell>
-                                                    <TableCell className="text-xs py-2">{log.shiftend || "16:30"}</TableCell>
-                                                    <TableCell className="text-xs py-2 text-right font-medium">{log.totalhours || 8}</TableCell>
-                                                    <TableCell className="text-xs py-2 text-right text-amber-600 dark:text-amber-400 font-bold">+{log.extensionhours}</TableCell>
-                                                    <TableCell className="text-xs py-2 max-w-[120px] truncate" title={log.reason}>{log.reason || "N/A"}</TableCell>
-                                                    <TableCell className="text-xs py-2">{log.updatedby}</TableCell>
-                                                </TableRow>
-                                            );
-                                        })}
-                                    </TableBody>
-                                </Table>
+                                                return (
+                                                    <TableRow key={log.id}>
+                                                        <TableCell className="text-xs py-2 font-medium">{displayDate}</TableCell>
+                                                        <TableCell className="text-xs py-2">{log.line}</TableCell>
+                                                        <TableCell className="text-xs py-2">{log.shiftstart || "08:00"}</TableCell>
+                                                        <TableCell className="text-xs py-2">{log.shiftend || "16:30"}</TableCell>
+                                                        <TableCell className="text-xs py-2 text-right font-medium">{log.totalhours || 8}</TableCell>
+                                                        <TableCell className="text-xs py-2 text-right text-amber-600 dark:text-amber-400 font-bold">+{log.extensionhours}</TableCell>
+                                                        <TableCell className="text-xs py-2 max-w-[120px] truncate" title={log.reason}>{log.reason || "N/A"}</TableCell>
+                                                        <TableCell className="text-xs py-2">{log.updatedby}</TableCell>
+                                                    </TableRow>
+                                                );
+                                            })}
+                                        </TableBody>
+                                    </Table>
+                                </div>
+
+                                {/* Pagination UI */}
+                                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-2 pt-2 border-t">
+                                    <span className="text-xs text-muted-foreground">
+                                        Showing {logs.length > 0 ? startIndex + 1 : 0} to {Math.min(startIndex + pageSize, logs.length)} of {logs.length} entries
+                                    </span>
+                                    <div className="flex flex-wrap items-center gap-4">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-xs text-muted-foreground">Rows per page:</span>
+                                            <Select value={String(pageSize)} onValueChange={(v) => { setPageSize(Number(v)); setCurrentPage(1); }}>
+                                                <SelectTrigger className="w-16 h-8 text-xs bg-background border-border">
+                                                    <SelectValue placeholder={String(pageSize)} />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {[5, 10, 20, 50, 100].map((size) => (
+                                                        <SelectItem key={size} value={String(size)}>{size}</SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                        <div className="flex items-center gap-1.5">
+                                            <Button
+                                                variant="outline"
+                                                size="icon"
+                                                className="h-8 w-8"
+                                                onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+                                                disabled={currentPage === 1}
+                                            >
+                                                <ChevronLeft className="h-4 w-4" />
+                                            </Button>
+                                            <span className="text-xs font-semibold px-2">Page {currentPage} of {totalPages || 1}</span>
+                                            <Button
+                                                variant="outline"
+                                                size="icon"
+                                                className="h-8 w-8"
+                                                onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+                                                disabled={currentPage === totalPages || totalPages === 0}
+                                            >
+                                                <ChevronRight className="h-4 w-4" />
+                                            </Button>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         ) : (
                             <div className="flex flex-col items-center justify-center py-12 text-sm text-muted-foreground">

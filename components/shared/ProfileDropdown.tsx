@@ -6,6 +6,8 @@ import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { LogOut, Settings, User } from 'lucide-react';
@@ -14,28 +16,39 @@ export default function ProfileDropdown() {
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                <Avatar className="w-8 h-8 cursor-pointer border border-border hover:border-emerald-500 transition-colors">
-                    <AvatarFallback className="bg-emerald-600 text-foreground text-xs font-bold">UV</AvatarFallback>
-                </Avatar>
+                <div className="flex items-center gap-3 cursor-pointer pl-2">
+                    <div className="hidden sm:block text-right">
+                        <div className="text-sm font-semibold text-foreground">Urvesh Vernekar</div>
+                        <div className="text-xs text-muted-foreground font-medium">Admin</div>
+                    </div>
+                    <Avatar className="h-9 w-9 border border-border flex-shrink-0">
+                        <AvatarFallback className="bg-gradient-to-br from-blue-600 to-indigo-600 text-white font-bold text-sm">
+                            UV
+                        </AvatarFallback>
+                    </Avatar>
+                </div>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56 bg-card border border-border">
-                <DropdownMenuItem>
+                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem className="cursor-pointer">
                     <User className="mr-2 h-4 w-4" />
                     Profile
                 </DropdownMenuItem>
-                <DropdownMenuItem>
+                <DropdownMenuItem className="cursor-pointer">
                     <Settings className="mr-2 h-4 w-4" />
                     Settings
                 </DropdownMenuItem>
+                <DropdownMenuSeparator />
                 <DropdownMenuItem
-                    className="text-red-400 focus:text-red-400"
+                    className="text-red-600 cursor-pointer focus:text-red-600"
                     onClick={() => {
                         localStorage.removeItem('isAuthenticated');
                         window.location.href = '/login';
                     }}
                 >
                     <LogOut className="mr-2 h-4 w-4" />
-                    Logout
+                    Sign out
                 </DropdownMenuItem>
             </DropdownMenuContent>
         </DropdownMenu>

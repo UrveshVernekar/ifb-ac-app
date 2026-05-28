@@ -3,6 +3,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { useTheme } from "next-themes";
+import { useRouter } from "next/navigation";
 import axios from "axios";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import {
@@ -26,6 +27,7 @@ import {
     Layers,
     Cpu,
     Calendar,
+    ChevronLeft,
     ChevronRight,
 } from "lucide-react";
 import {
@@ -73,6 +75,9 @@ interface ApiResponse {
 }
 
 export default function ProductionDashboardPage() {
+    const router = useRouter();
+    const { resolvedTheme } = useTheme();
+    const isDark = resolvedTheme === "dark";
     const [mounted, setMounted] = useState(false);
 
     // Filters & Navigation controls
@@ -88,6 +93,44 @@ export default function ProductionDashboardPage() {
     const [downtimeData, setDowntimeData] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+
+    // Pagination states
+    const [modelDetailsPage, setModelDetailsPage] = useState(1);
+    const [modelDetailsPageSize, setModelDetailsPageSize] = useState(5);
+    const [modelDataPage, setModelDataPage] = useState(1);
+    const [modelDataPageSize, setModelDataPageSize] = useState(5);
+    const [downtimePage, setDowntimePage] = useState(1);
+    const [downtimePageSize, setDowntimePageSize] = useState(5);
+
+    useEffect(() => {
+        setModelDetailsPage(1);
+        setModelDataPage(1);
+        setDowntimePage(1);
+    }, [area, fromDate, toDate, selectedLines, selectedSubMachines]);
+
+    const paginatedModelDetails = useMemo(() => {
+        if (!data?.modelDetails) return [];
+        const startIndex = (modelDetailsPage - 1) * modelDetailsPageSize;
+        return data.modelDetails.slice(startIndex, startIndex + modelDetailsPageSize);
+    }, [data?.modelDetails, modelDetailsPage, modelDetailsPageSize]);
+
+    const totalModelDetailsPages = Math.ceil((data?.modelDetails?.length || 0) / modelDetailsPageSize);
+
+    const paginatedModelData = useMemo(() => {
+        if (!data?.modelData) return [];
+        const startIndex = (modelDataPage - 1) * modelDataPageSize;
+        return data.modelData.slice(startIndex, startIndex + modelDataPageSize);
+    }, [data?.modelData, modelDataPage, modelDataPageSize]);
+
+    const totalModelDataPages = Math.ceil((data?.modelData?.length || 0) / modelDataPageSize);
+
+    const paginatedDowntimeData = useMemo(() => {
+        if (!downtimeData) return [];
+        const startIndex = (downtimePage - 1) * downtimePageSize;
+        return downtimeData.slice(startIndex, startIndex + downtimePageSize);
+    }, [downtimeData, downtimePage, downtimePageSize]);
+
+    const totalDowntimePages = Math.ceil(downtimeData.length / downtimePageSize);
 
     // Initial default dates and session restore
     useEffect(() => {
@@ -359,7 +402,7 @@ export default function ProductionDashboardPage() {
                             Production Dashboard
                         </h1>
                         <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1.5">
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                            <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
                             Live shopfloor performance tracking
                         </p>
                     </div>
@@ -422,7 +465,7 @@ export default function ProductionDashboardPage() {
                         {/* Main Lines selection */}
                         <div className="space-y-2">
                             <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider block flex items-center gap-1.5">
-                                <Layers className="w-4 h-4 text-emerald-500" />
+                                <Layers className="w-4 h-4 text-blue-500" />
                                 {area === "ASSEMBLY LINES" ? "Select Assembly Line" : area === "STAMPING" ? "Select Main Lines" : "Select Coilshop Types"}
                             </span>
                             <div className="flex flex-wrap gap-2">
@@ -434,7 +477,7 @@ export default function ProductionDashboardPage() {
                                             variant={active ? "default" : "outline"}
                                             size="sm"
                                             onClick={() => handleLineSelect(line.value)}
-                                            className={active ? "bg-emerald-600 hover:bg-emerald-700 text-white" : "border-border text-muted-foreground hover:text-foreground"}
+                                            className={active ? "bg-blue-600 hover:bg-blue-700 text-white" : "border-border text-muted-foreground hover:text-foreground"}
                                         >
                                             {line.label}
                                         </Button>
@@ -447,7 +490,7 @@ export default function ProductionDashboardPage() {
                         {subOptions.length > 0 && (
                             <div className="space-y-2">
                                 <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider block flex items-center gap-1.5">
-                                    <Cpu className="w-4 h-4 text-emerald-500" />
+                                    <Cpu className="w-4 h-4 text-blue-500" />
                                     {area === "STAMPING" ? "Select Stamping Machines" : "Select Coilshop Machines"}
                                 </span>
                                 <div className="flex flex-wrap gap-2 max-h-[120px] overflow-y-auto p-1 border border-border/30 rounded-lg bg-background">
@@ -459,7 +502,7 @@ export default function ProductionDashboardPage() {
                                                 variant={active ? "secondary" : "ghost"}
                                                 size="xs"
                                                 onClick={() => handleSubMachineToggle(sub.value)}
-                                                className={`text-[10px] font-bold h-7 py-1 px-2.5 rounded-md ${active ? "bg-emerald-500/10 text-emerald-600 border border-emerald-500/30" : "text-muted-foreground hover:bg-muted"}`}
+                                                className={`text-[10px] font-bold h-7 py-1 px-2.5 rounded-md ${active ? "bg-blue-500/10 text-blue-600 border border-blue-500/30" : "text-muted-foreground hover:bg-muted"}`}
                                             >
                                                 {sub.label}
                                             </Button>
@@ -502,7 +545,7 @@ export default function ProductionDashboardPage() {
                                     ACTUAL: <Package className="h-4 w-4 text-blue-500" />,
                                     PLAN: <Target className="h-4 w-4 text-purple-500" />,
                                     BACKFLUSH: <Package className="h-4 w-4 text-indigo-500" />,
-                                    COMPLETE: <TrendingUp className="h-4 w-4 text-emerald-500" />,
+                                    COMPLETE: <TrendingUp className="h-4 w-4 text-blue-500" />,
                                     LOSS: <Clock className="h-4 w-4 text-orange-500" />,
                                     EXPECTED: <Star className="h-4 w-4 text-red-500" />,
                                     DISPATCH: <LogOut className="h-4 w-4 text-emerald-400" />,
@@ -517,19 +560,19 @@ export default function ProductionDashboardPage() {
                             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                                 <Card
                                     className={`cursor-pointer hover:shadow-md transition-shadow relative overflow-hidden ${data.oee >= (data.oeeTarget || 85)
-                                        ? "bg-emerald-500/5 border-emerald-500/20"
+                                        ? "bg-blue-500/5 border-blue-500/20"
                                         : data.oee >= 80
                                             ? "bg-amber-500/5 border-amber-500/20"
                                             : "bg-rose-500/5 border-rose-500/20"
                                         }`}
-                                    onClick={() => window.location.href = "/manufacturing/production/efficiency"}
+                                    onClick={() => router.push("/manufacturing/production/efficiency")}
                                 >
                                     <CardHeader className="pb-1 pt-4 text-center">
                                         <CardTitle className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Overall OEE</CardTitle>
                                     </CardHeader>
                                     <CardContent className="pb-4 pt-1 flex flex-col items-center justify-center">
                                         <div className={`text-4xl font-extrabold ${Number(data.oee) >= (data.oeeTarget || 85)
-                                            ? "text-emerald-500"
+                                            ? "text-blue-500"
                                             : Number(data.oee) >= 80
                                                 ? "text-amber-500"
                                                 : "text-rose-500"
@@ -546,21 +589,20 @@ export default function ProductionDashboardPage() {
                                     {data.efficiencyStatus?.map((eff) => (
                                         <Card
                                             key={eff.label}
-                                            className={`cursor-pointer hover:shadow-md transition-shadow ${
-                                                eff.value >= eff.target
-                                                    ? "bg-emerald-500/5 border-emerald-500/20"
-                                                    : eff.value >= 80
-                                                        ? "bg-amber-500/5 border-amber-500/20"
-                                                        : "bg-rose-500/5 border-rose-500/20"
-                                            }`}
-                                            onClick={() => window.location.href = `/manufacturing/production/${eff.label.toLowerCase()}`}
+                                            className={`cursor-pointer hover:shadow-md transition-shadow ${eff.value >= eff.target
+                                                ? "bg-blue-500/5 border-blue-500/20"
+                                                : eff.value >= 80
+                                                    ? "bg-amber-500/5 border-amber-500/20"
+                                                    : "bg-rose-500/5 border-rose-500/20"
+                                                }`}
+                                            onClick={() => router.push(`/manufacturing/production/${eff.label.toLowerCase()}`)}
                                         >
                                             <CardHeader className="pb-1 pt-4 text-center">
                                                 <CardTitle className="text-xs font-bold text-muted-foreground uppercase tracking-widest">{eff.label}</CardTitle>
                                             </CardHeader>
                                             <CardContent className="pb-4 pt-1 flex flex-col items-center justify-center">
                                                 <div className={`text-3xl font-bold ${Number(eff.value) >= eff.target
-                                                    ? "text-emerald-500"
+                                                    ? "text-blue-500"
                                                     : Number(eff.value) >= 80
                                                         ? "text-amber-500"
                                                         : "text-rose-500"
@@ -591,19 +633,19 @@ export default function ProductionDashboardPage() {
                                             <div className="h-72 w-full">
                                                 <ChartContainer config={{}} className="h-full w-full">
                                                     <BarChart data={hourlyChartData} margin={{ top: 20, right: 10, left: -10, bottom: 0 }}>
-                                                        <CartesianGrid strokeDasharray="3 3" vertical={false} className="stroke-muted-foreground/15" />
-                                                        <XAxis dataKey="hour" tick={{ fontSize: 10 }} stroke="var(--border)" className="text-muted-foreground" />
-                                                        <YAxis tick={{ fontSize: 10 }} stroke="var(--border)" className="text-muted-foreground" />
+                                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDark ? "#27272a" : "#f4f4f5"} />
+                                                        <XAxis dataKey="hour" tick={{ fontSize: 10, fill: isDark ? "#a1a1aa" : "#71717a" }} stroke={isDark ? "#27272a" : "#e4e4e7"} />
+                                                        <YAxis tick={{ fontSize: 10, fill: isDark ? "#a1a1aa" : "#71717a" }} stroke={isDark ? "#27272a" : "#e4e4e7"} />
                                                         <ChartTooltip content={<ChartTooltipContent />} />
                                                         <Bar dataKey="target" name="Target" fill="#3b82f6" radius={[3, 3, 0, 0]}>
-                                                            <LabelList dataKey="target" position="top" style={{ fontSize: 8, fill: "var(--foreground)" }} />
+                                                            <LabelList dataKey="target" position="top" style={{ fontSize: 8, fill: isDark ? "#f4f4f5" : "#18181b" }} />
                                                         </Bar>
                                                         <Bar dataKey="actual" name="Actual" radius={[3, 3, 0, 0]}>
                                                             {hourlyChartData.map((entry, index) => {
                                                                 const fillColor = entry.actual >= entry.target ? "#10b981" : (entry.actual >= entry.target * 0.8 ? "#f59e0b" : "#ef4444");
                                                                 return <Cell key={`cell-${index}`} fill={fillColor} />;
                                                             })}
-                                                            <LabelList dataKey="actual" position="top" style={{ fontSize: 8, fill: "var(--foreground)" }} />
+                                                            <LabelList dataKey="actual" position="top" style={{ fontSize: 8, fill: isDark ? "#f4f4f5" : "#18181b" }} />
                                                         </Bar>
                                                     </BarChart>
                                                 </ChartContainer>
@@ -633,20 +675,20 @@ export default function ProductionDashboardPage() {
                                                         </TableRow>
                                                     </TableHeader>
                                                     <TableBody>
-                                                        {data.modelDetails.map((row, rIdx) => {
+                                                        {paginatedModelDetails.map((row, rIdx) => {
                                                             const plan = row.plan || row.PLAN || 0;
                                                             const prod = row.production || row.PRODUCTION || 0;
                                                             const percent = plan > 0 ? ((prod / plan) * 100).toFixed(1) : "0.0";
                                                             const code = row.modelCode || row.model_code || row["MODEL CODE"] || "";
                                                             const name = row.modelName || row.model_name || row["MODEL NAME"] || "";
-                                                            const seq = row.sequence || row.seq || row.SEQUENCE || (rIdx + 1);
+                                                            const seq = row.sequence || row.seq || row.SEQUENCE || ((modelDetailsPage - 1) * modelDetailsPageSize + rIdx + 1);
                                                             const bf = row.backFlush || row.back_flush || row["BACK FLUSH"] || 0;
 
                                                             return (
-                                                                <TableRow key={rIdx} className={row.model_code === data.runningModel ? "bg-emerald-500/5 font-semibold" : ""}>
+                                                                <TableRow key={rIdx} className={row.model_code === data.runningModel ? "bg-blue-500/5 font-semibold" : ""}>
                                                                     <TableCell className="text-xs py-2">{seq}</TableCell>
                                                                     <TableCell className="text-xs py-2">{code}</TableCell>
-                                                                    <TableCell className="text-xs py-2">{name} {row.model_code === data.runningModel && <span className="text-[10px] bg-emerald-500/10 text-emerald-500 px-1.5 py-0.5 rounded ml-2">RUNNING</span>}</TableCell>
+                                                                    <TableCell className="text-xs py-2">{name} {row.model_code === data.runningModel && <span className="text-[10px] bg-blue-500/10 text-blue-500 px-1.5 py-0.5 rounded ml-2">RUNNING</span>}</TableCell>
                                                                     <TableCell className="text-xs py-2 text-right">{plan}</TableCell>
                                                                     <TableCell className="text-xs py-2 text-right">{prod}</TableCell>
                                                                     <TableCell className="text-xs py-2 text-right">{percent}%</TableCell>
@@ -656,6 +698,49 @@ export default function ProductionDashboardPage() {
                                                         })}
                                                     </TableBody>
                                                 </Table>
+                                            </div>
+
+                                            {/* Pagination UI */}
+                                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-4 pt-4 border-t text-xs">
+                                                <span className="text-xs text-muted-foreground">
+                                                    Showing {data.modelDetails.length > 0 ? (modelDetailsPage - 1) * modelDetailsPageSize + 1 : 0} to {Math.min(modelDetailsPage * modelDetailsPageSize, data.modelDetails.length)} of {data.modelDetails.length} entries
+                                                </span>
+                                                <div className="flex flex-wrap items-center gap-4">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-xs text-muted-foreground">Rows per page:</span>
+                                                        <Select value={String(modelDetailsPageSize)} onValueChange={(v) => { setModelDetailsPageSize(Number(v)); setModelDetailsPage(1); }}>
+                                                            <SelectTrigger className="w-16 h-8 text-xs bg-background border-border">
+                                                                <SelectValue placeholder={String(modelDetailsPageSize)} />
+                                                            </SelectTrigger>
+                                                            <SelectContent>
+                                                                {[5, 10, 20, 50, 100].map((size) => (
+                                                                    <SelectItem key={size} value={String(size)}>{size}</SelectItem>
+                                                                ))}
+                                                            </SelectContent>
+                                                        </Select>
+                                                    </div>
+                                                    <div className="flex items-center gap-1.5">
+                                                        <Button
+                                                            variant="outline"
+                                                            size="icon"
+                                                            className="h-8 w-8"
+                                                            onClick={() => setModelDetailsPage((p) => Math.max(p - 1, 1))}
+                                                            disabled={modelDetailsPage === 1}
+                                                        >
+                                                            <ChevronLeft className="h-4 w-4" />
+                                                        </Button>
+                                                        <span className="text-xs font-semibold px-2">Page {modelDetailsPage} of {totalModelDetailsPages || 1}</span>
+                                                        <Button
+                                                            variant="outline"
+                                                            size="icon"
+                                                            className="h-8 w-8"
+                                                            onClick={() => setModelDetailsPage((p) => Math.min(p + 1, totalModelDetailsPages))}
+                                                            disabled={modelDetailsPage === totalModelDetailsPages || totalModelDetailsPages === 0}
+                                                        >
+                                                            <ChevronRight className="h-4 w-4" />
+                                                        </Button>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </CardContent>
                                     </Card>
@@ -691,9 +776,9 @@ export default function ProductionDashboardPage() {
                                                     <div className="h-64 w-full">
                                                         <ChartContainer config={{}} className="h-full w-full">
                                                             <ComposedChart data={stampingHourlyChartData} margin={{ top: 15, right: 10, left: -10, bottom: 0 }}>
-                                                                <CartesianGrid strokeDasharray="3 3" vertical={false} className="stroke-muted-foreground/15" />
-                                                                <XAxis dataKey="hour" tick={{ fontSize: 10 }} stroke="var(--border)" className="text-muted-foreground" />
-                                                                <YAxis tick={{ fontSize: 10 }} stroke="var(--border)" className="text-muted-foreground" />
+                                                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDark ? "#27272a" : "#f4f4f5"} />
+                                                                <XAxis dataKey="hour" tick={{ fontSize: 10, fill: isDark ? "#a1a1aa" : "#71717a" }} stroke={isDark ? "#27272a" : "#e4e4e7"} />
+                                                                <YAxis tick={{ fontSize: 10, fill: isDark ? "#a1a1aa" : "#71717a" }} stroke={isDark ? "#27272a" : "#e4e4e7"} />
                                                                 <ChartTooltip content={<ChartTooltipContent />} />
                                                                 <Bar dataKey="actual" name="Actual" fill="#10b981" radius={[3, 3, 0, 0]} />
                                                                 <Line dataKey="target" name="Target" stroke="#3b82f6" strokeWidth={2} activeDot={{ r: 4 }} />
@@ -720,12 +805,12 @@ export default function ProductionDashboardPage() {
                                                 <div className="h-64 w-full">
                                                     <ChartContainer config={{}} className="h-full w-full">
                                                         <BarChart data={data.machineTrendData} margin={{ top: 15, right: 10, left: -10, bottom: 0 }}>
-                                                            <CartesianGrid strokeDasharray="3 3" vertical={false} className="stroke-muted-foreground/15" />
-                                                            <XAxis dataKey="machine" tick={{ fontSize: 10 }} stroke="var(--border)" className="text-muted-foreground" />
-                                                            <YAxis tick={{ fontSize: 10 }} stroke="var(--border)" className="text-muted-foreground" />
+                                                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDark ? "#27272a" : "#f4f4f5"} />
+                                                            <XAxis dataKey="machine" tick={{ fontSize: 10, fill: isDark ? "#a1a1aa" : "#71717a" }} stroke={isDark ? "#27272a" : "#e4e4e7"} />
+                                                            <YAxis tick={{ fontSize: 10, fill: isDark ? "#a1a1aa" : "#71717a" }} stroke={isDark ? "#27272a" : "#e4e4e7"} />
                                                             <ChartTooltip content={<ChartTooltipContent />} />
                                                             <Bar dataKey="count" name="Output" fill="#8b5cf6" radius={[3, 3, 0, 0]}>
-                                                                <LabelList dataKey="count" position="top" style={{ fontSize: 8, fill: "var(--foreground)" }} />
+                                                                <LabelList dataKey="count" position="top" style={{ fontSize: 8, fill: isDark ? "#f4f4f5" : "#18181b" }} />
                                                             </Bar>
                                                         </BarChart>
                                                     </ChartContainer>
@@ -757,7 +842,7 @@ export default function ProductionDashboardPage() {
                                                         </TableRow>
                                                     </TableHeader>
                                                     <TableBody>
-                                                        {data.modelData.map((row, rIdx) => (
+                                                        {paginatedModelData.map((row, rIdx) => (
                                                             <TableRow key={rIdx}>
                                                                 <TableCell className="text-xs py-2">{row.date || row.DATE || ""}</TableCell>
                                                                 <TableCell className="text-xs py-2">{row.line || row.LINE || ""}</TableCell>
@@ -771,6 +856,49 @@ export default function ProductionDashboardPage() {
                                                         ))}
                                                     </TableBody>
                                                 </Table>
+                                            </div>
+
+                                            {/* Pagination UI */}
+                                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-4 pt-4 border-t text-xs">
+                                                <span className="text-xs text-muted-foreground">
+                                                    Showing {data.modelData.length > 0 ? (modelDataPage - 1) * modelDataPageSize + 1 : 0} to {Math.min(modelDataPage * modelDataPageSize, data.modelData.length)} of {data.modelData.length} entries
+                                                </span>
+                                                <div className="flex flex-wrap items-center gap-4">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-xs text-muted-foreground">Rows per page:</span>
+                                                        <Select value={String(modelDataPageSize)} onValueChange={(v) => { setModelDataPageSize(Number(v)); setModelDataPage(1); }}>
+                                                            <SelectTrigger className="w-16 h-8 text-xs bg-background border-border">
+                                                                <SelectValue placeholder={String(modelDataPageSize)} />
+                                                            </SelectTrigger>
+                                                            <SelectContent>
+                                                                {[5, 10, 20, 50, 100].map((size) => (
+                                                                    <SelectItem key={size} value={String(size)}>{size}</SelectItem>
+                                                                ))}
+                                                            </SelectContent>
+                                                        </Select>
+                                                    </div>
+                                                    <div className="flex items-center gap-1.5">
+                                                        <Button
+                                                            variant="outline"
+                                                            size="icon"
+                                                            className="h-8 w-8"
+                                                            onClick={() => setModelDataPage((p) => Math.max(p - 1, 1))}
+                                                            disabled={modelDataPage === 1}
+                                                        >
+                                                            <ChevronLeft className="h-4 w-4" />
+                                                        </Button>
+                                                        <span className="text-xs font-semibold px-2">Page {modelDataPage} of {totalModelDataPages || 1}</span>
+                                                        <Button
+                                                            variant="outline"
+                                                            size="icon"
+                                                            className="h-8 w-8"
+                                                            onClick={() => setModelDataPage((p) => Math.min(p + 1, totalModelDataPages))}
+                                                            disabled={modelDataPage === totalModelDataPages || totalModelDataPages === 0}
+                                                        >
+                                                            <ChevronRight className="h-4 w-4" />
+                                                        </Button>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </CardContent>
                                     </Card>
@@ -792,12 +920,12 @@ export default function ProductionDashboardPage() {
                                             <div className="h-72 w-full">
                                                 <ChartContainer config={{}} className="h-full w-full">
                                                     <BarChart data={data.machineTrendData} margin={{ top: 20, right: 10, left: -10, bottom: 0 }}>
-                                                        <CartesianGrid strokeDasharray="3 3" vertical={false} className="stroke-muted-foreground/15" />
-                                                        <XAxis dataKey="machine" tick={{ fontSize: 10 }} stroke="var(--border)" className="text-muted-foreground" />
-                                                        <YAxis tick={{ fontSize: 10 }} stroke="var(--border)" className="text-muted-foreground" />
+                                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDark ? "#27272a" : "#f4f4f5"} />
+                                                        <XAxis dataKey="machine" tick={{ fontSize: 10, fill: isDark ? "#a1a1aa" : "#71717a" }} stroke={isDark ? "#27272a" : "#e4e4e7"} />
+                                                        <YAxis tick={{ fontSize: 10, fill: isDark ? "#a1a1aa" : "#71717a" }} stroke={isDark ? "#27272a" : "#e4e4e7"} />
                                                         <ChartTooltip content={<ChartTooltipContent />} />
                                                         <Bar dataKey="count" name="Output" fill="#06b6d4" radius={[3, 3, 0, 0]}>
-                                                            <LabelList dataKey="count" position="top" style={{ fontSize: 8, fill: "var(--foreground)" }} />
+                                                            <LabelList dataKey="count" position="top" style={{ fontSize: 8, fill: isDark ? "#f4f4f5" : "#18181b" }} />
                                                         </Bar>
                                                     </BarChart>
                                                 </ChartContainer>
@@ -831,7 +959,7 @@ export default function ProductionDashboardPage() {
                                                         </TableRow>
                                                     </TableHeader>
                                                     <TableBody>
-                                                        {data.modelData.map((row, rIdx) => (
+                                                        {paginatedModelData.map((row, rIdx) => (
                                                             <TableRow key={rIdx}>
                                                                 <TableCell className="text-xs py-2">{row.date || row.DATE || ""}</TableCell>
                                                                 <TableCell className="text-xs py-2">{row.shift || row.SHIFT || ""}</TableCell>
@@ -849,6 +977,49 @@ export default function ProductionDashboardPage() {
                                                     </TableBody>
                                                 </Table>
                                             </div>
+
+                                            {/* Pagination UI */}
+                                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-4 pt-4 border-t text-xs">
+                                                <span className="text-xs text-muted-foreground">
+                                                    Showing {data.modelData.length > 0 ? (modelDataPage - 1) * modelDataPageSize + 1 : 0} to {Math.min(modelDataPage * modelDataPageSize, data.modelData.length)} of {data.modelData.length} entries
+                                                </span>
+                                                <div className="flex flex-wrap items-center gap-4">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-xs text-muted-foreground">Rows per page:</span>
+                                                        <Select value={String(modelDataPageSize)} onValueChange={(v) => { setModelDataPageSize(Number(v)); setModelDataPage(1); }}>
+                                                            <SelectTrigger className="w-16 h-8 text-xs bg-background border-border">
+                                                                <SelectValue placeholder={String(modelDataPageSize)} />
+                                                            </SelectTrigger>
+                                                            <SelectContent>
+                                                                {[5, 10, 20, 50, 100].map((size) => (
+                                                                    <SelectItem key={size} value={String(size)}>{size}</SelectItem>
+                                                                ))}
+                                                            </SelectContent>
+                                                        </Select>
+                                                    </div>
+                                                    <div className="flex items-center gap-1.5">
+                                                        <Button
+                                                            variant="outline"
+                                                            size="icon"
+                                                            className="h-8 w-8"
+                                                            onClick={() => setModelDataPage((p) => Math.max(p - 1, 1))}
+                                                            disabled={modelDataPage === 1}
+                                                        >
+                                                            <ChevronLeft className="h-4 w-4" />
+                                                        </Button>
+                                                        <span className="text-xs font-semibold px-2">Page {modelDataPage} of {totalModelDataPages || 1}</span>
+                                                        <Button
+                                                            variant="outline"
+                                                            size="icon"
+                                                            className="h-8 w-8"
+                                                            onClick={() => setModelDataPage((p) => Math.min(p + 1, totalModelDataPages))}
+                                                            disabled={modelDataPage === totalModelDataPages || totalModelDataPages === 0}
+                                                        >
+                                                            <ChevronRight className="h-4 w-4" />
+                                                        </Button>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </CardContent>
                                     </Card>
                                 )}
@@ -856,7 +1027,7 @@ export default function ProductionDashboardPage() {
                         )}
 
                         {/* Downtime logger list table */}
-                        {downtimeData.length > 0 && (
+                        {/* {downtimeData.length > 0 && (
                             <Card className="border-border/60 shadow-sm bg-card mt-6">
                                 <CardHeader className="pb-2">
                                     <CardTitle className="text-md font-bold uppercase tracking-tight">Active Downtime Events</CardTitle>
@@ -875,7 +1046,7 @@ export default function ProductionDashboardPage() {
                                                 </TableRow>
                                             </TableHeader>
                                             <TableBody>
-                                                {downtimeData.map((row, rIdx) => (
+                                                {paginatedDowntimeData.map((row, rIdx) => (
                                                     <TableRow key={rIdx}>
                                                         <TableCell className="text-xs py-2">{row.date || row.DATE || ""}</TableCell>
                                                         <TableCell className="text-xs py-2">{row.time || row.TIME || ""}</TableCell>
@@ -888,9 +1059,52 @@ export default function ProductionDashboardPage() {
                                             </TableBody>
                                         </Table>
                                     </div>
+
+                                    // Pagination UI
+                                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-4 pt-4 border-t text-xs">
+                                        <span className="text-xs text-muted-foreground">
+                                            Showing {downtimeData.length > 0 ? (downtimePage - 1) * downtimePageSize + 1 : 0} to {Math.min(downtimePage * downtimePageSize, downtimeData.length)} of {downtimeData.length} entries
+                                        </span>
+                                        <div className="flex flex-wrap items-center gap-4">
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-xs text-muted-foreground">Rows per page:</span>
+                                                <Select value={String(downtimePageSize)} onValueChange={(v) => { setDowntimePageSize(Number(v)); setDowntimePage(1); }}>
+                                                    <SelectTrigger className="w-16 h-8 text-xs bg-background border-border">
+                                                        <SelectValue placeholder={String(downtimePageSize)} />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {[5, 10, 20, 50, 100].map((size) => (
+                                                            <SelectItem key={size} value={String(size)}>{size}</SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
+                                            <div className="flex items-center gap-1.5">
+                                                <Button
+                                                    variant="outline"
+                                                    size="icon"
+                                                    className="h-8 w-8"
+                                                    onClick={() => setDowntimePage((p) => Math.max(p - 1, 1))}
+                                                    disabled={downtimePage === 1}
+                                                >
+                                                    <ChevronLeft className="h-4 w-4" />
+                                                </Button>
+                                                <span className="text-xs font-semibold px-2">Page {downtimePage} of {totalDowntimePages || 1}</span>
+                                                <Button
+                                                    variant="outline"
+                                                    size="icon"
+                                                    className="h-8 w-8"
+                                                    onClick={() => setDowntimePage((p) => Math.min(p + 1, totalDowntimePages))}
+                                                    disabled={downtimePage === totalDowntimePages || totalDowntimePages === 0}
+                                                >
+                                                    <ChevronRight className="h-4 w-4" />
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </CardContent>
                             </Card>
-                        )}
+                        )} */}
                     </div>
                 )
             )}

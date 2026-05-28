@@ -1,4 +1,3 @@
-// app/(dashboard)/quality/page.tsx
 export default function QualityPage() {
     return (
         <div>

@@ -3,6 +3,8 @@
 
 import { useState, useEffect, useMemo } from "react";
 import axios from "axios";
+import { useTheme } from "next-themes";
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import {
     Select,
@@ -71,6 +73,9 @@ interface ApiResponse {
 }
 
 export default function EfficiencyDashboardPage() {
+    const router = useRouter();
+    const { resolvedTheme } = useTheme();
+    const isDark = resolvedTheme === "dark";
     const [mounted, setMounted] = useState(false);
 
     // Filters from session storage
@@ -315,7 +320,7 @@ export default function EfficiencyDashboardPage() {
 
     // Check OEE performance status coloring
     const getOeeColor = (val: number, target: number = 85) => {
-        if (val >= target) return "text-emerald-500 border-emerald-500/20 bg-emerald-500/5";
+        if (val >= target) return "text-blue-500 border-blue-500/20 bg-blue-500/5";
         if (val >= 80) return "text-amber-500 border-amber-500/20 bg-amber-500/5";
         return "text-rose-500 border-rose-500/20 bg-rose-500/5";
     };
@@ -335,7 +340,7 @@ export default function EfficiencyDashboardPage() {
                             Overall Equipment Efficiency (OEE)
                         </h1>
                         <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
-                            <Percent className="w-3.5 h-3.5 text-emerald-500" />
+                            <Percent className="w-3.5 h-3.5 text-blue-500" />
                             Production OEE logs and loss breakdowns
                         </p>
                     </div>
@@ -398,7 +403,7 @@ export default function EfficiencyDashboardPage() {
                         {/* Main Lines selection */}
                         <div className="space-y-2">
                             <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider block flex items-center gap-1.5">
-                                <Layers className="w-4 h-4 text-emerald-500" />
+                                <Layers className="w-4 h-4 text-blue-500" />
                                 {area === "ASSEMBLY LINES" ? "Select Assembly Line" : area === "STAMPING" ? "Select Main Lines" : "Select Coilshop Types"}
                             </span>
                             <div className="flex flex-wrap gap-2">
@@ -410,7 +415,7 @@ export default function EfficiencyDashboardPage() {
                                             variant={active ? "default" : "outline"}
                                             size="sm"
                                             onClick={() => handleLineSelect(line.value)}
-                                            className={active ? "bg-emerald-600 hover:bg-emerald-700 text-white" : "border-border text-muted-foreground hover:text-foreground"}
+                                            className={active ? "bg-blue-600 hover:bg-blue-700 text-white" : "border-border text-muted-foreground hover:text-foreground"}
                                         >
                                             {line.label}
                                         </Button>
@@ -423,7 +428,7 @@ export default function EfficiencyDashboardPage() {
                         {subOptions.length > 0 && (
                             <div className="space-y-2">
                                 <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider block flex items-center gap-1.5">
-                                    <Cpu className="w-4 h-4 text-emerald-500" />
+                                    <Cpu className="w-4 h-4 text-blue-500" />
                                     {area === "STAMPING" ? "Select Stamping Machines" : "Select Coilshop Machines"}
                                 </span>
                                 <div className="flex flex-wrap gap-2 max-h-[120px] overflow-y-auto p-1 border border-border/30 rounded-lg bg-background">
@@ -435,7 +440,7 @@ export default function EfficiencyDashboardPage() {
                                                 variant={active ? "secondary" : "ghost"}
                                                 size="sm"
                                                 onClick={() => handleSubMachineToggle(sub.value)}
-                                                className={`text-[10px] font-bold h-7 py-1 px-2.5 rounded-md ${active ? "bg-emerald-500/10 text-emerald-600 border border-emerald-500/30" : "text-muted-foreground hover:bg-muted"}`}
+                                                className={`text-[10px] font-bold h-7 py-1 px-2.5 rounded-md ${active ? "bg-blue-500/10 text-blue-600 border border-blue-500/30" : "text-muted-foreground hover:bg-muted"}`}
                                             >
                                                 {sub.label}
                                             </Button>
@@ -496,7 +501,7 @@ export default function EfficiencyDashboardPage() {
                                 <Card
                                     key={eff.label}
                                     className={`border shadow-sm cursor-pointer hover:shadow-md transition-shadow ${getOeeColor(eff.value, eff.target)}`}
-                                    onClick={() => window.location.href = `/manufacturing/production/${eff.label.toLowerCase()}`}
+                                    onClick={() => router.push(`/manufacturing/production/${eff.label.toLowerCase()}`)}
                                 >
                                     <CardHeader className="pb-1 pt-4 text-center">
                                         <CardTitle className="text-xs font-bold text-muted-foreground uppercase tracking-widest">{eff.label}</CardTitle>
@@ -517,7 +522,7 @@ export default function EfficiencyDashboardPage() {
                             <Card className="border border-border/60 shadow-sm bg-card">
                                 <CardHeader className="pb-2">
                                     <CardTitle className="text-sm font-bold uppercase tracking-tight flex items-center gap-1.5">
-                                        <TrendingUp className="w-4 h-4 text-emerald-500" />
+                                        <TrendingUp className="w-4 h-4 text-blue-500" />
                                         Daily OEE Trend
                                     </CardTitle>
                                     <CardDescription className="text-xs">Performance trajectory over select timeframe</CardDescription>
@@ -527,9 +532,9 @@ export default function EfficiencyDashboardPage() {
                                         <div className="h-72 w-full">
                                             <ChartContainer config={{}} className="h-full w-full">
                                                 <BarChart data={data.dailyOEE} margin={{ top: 20, right: 10, left: -10, bottom: 0 }}>
-                                                    <CartesianGrid strokeDasharray="3 3" vertical={false} className="stroke-muted-foreground/15" />
-                                                    <XAxis dataKey="date" tick={{ fontSize: 9 }} stroke="var(--border)" className="text-muted-foreground" />
-                                                    <YAxis domain={[0, 100]} tick={{ fontSize: 9 }} stroke="var(--border)" className="text-muted-foreground" />
+                                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDark ? "#27272a" : "#f4f4f5"} />
+                                                    <XAxis dataKey="date" tick={{ fontSize: 9, fill: isDark ? "#a1a1aa" : "#71717a" }} stroke={isDark ? "#27272a" : "#e4e4e7"} />
+                                                    <YAxis domain={[0, 100]} tick={{ fontSize: 9, fill: isDark ? "#a1a1aa" : "#71717a" }} stroke={isDark ? "#27272a" : "#e4e4e7"} />
                                                     <ChartTooltip content={<ChartTooltipContent />} />
                                                     <Bar dataKey="value" name="OEE" fill="#10b981" radius={[3, 3, 0, 0]}>
                                                         {data.dailyOEE.map((entry, index) => {
@@ -537,7 +542,7 @@ export default function EfficiencyDashboardPage() {
                                                             const fillColor = oeeVal >= (data.oeeTarget || 85) ? "#10b981" : (oeeVal >= 80 ? "#f59e0b" : "#ef4444");
                                                             return <Cell key={`cell-${index}`} fill={fillColor} />;
                                                         })}
-                                                        <LabelList dataKey="value" position="top" style={{ fontSize: 8, fill: "var(--foreground)" }} />
+                                                        <LabelList dataKey="value" position="top" style={{ fontSize: 8, fill: isDark ? "#f4f4f5" : "#18181b" }} />
                                                     </Bar>
                                                 </BarChart>
                                             </ChartContainer>
@@ -554,7 +559,7 @@ export default function EfficiencyDashboardPage() {
                             <Card className="border border-border/60 shadow-sm bg-card">
                                 <CardHeader className="pb-2">
                                     <CardTitle className="text-sm font-bold uppercase tracking-tight flex items-center gap-1.5">
-                                        <Percent className="w-4 h-4 text-emerald-500" />
+                                        <Percent className="w-4 h-4 text-blue-500" />
                                         OEE Loss Breakdown
                                     </CardTitle>
                                     <CardDescription className="text-xs">Relative contribution of availability, performance, and quality losses</CardDescription>

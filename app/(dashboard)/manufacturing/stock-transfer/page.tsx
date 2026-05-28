@@ -32,7 +32,7 @@ import {
 } from "@/components/ui/dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, RefreshCw, Send, ArrowLeftRight, CheckCircle2, AlertCircle } from "lucide-react";
+import { ArrowLeft, RefreshCw, Send, ArrowLeftRight, CheckCircle2, AlertCircle, ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
 
 const API_HOST = "http://localhost:3003";
@@ -65,6 +65,14 @@ export default function StockTransferPage() {
 
     // Log list data
     const [rows, setRows] = useState<StockTransferRow[]>([]);
+
+    // Pagination controls
+    const [currentPage, setCurrentPage] = useState(1);
+    const [pageSize, setPageSize] = useState(5);
+
+    const totalPages = Math.ceil(rows.length / pageSize);
+    const startIndex = (currentPage - 1) * pageSize;
+    const paginatedRows = rows.slice(startIndex, startIndex + pageSize);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [refreshTrigger, setRefreshTrigger] = useState(false);
@@ -150,8 +158,10 @@ export default function StockTransferPage() {
                     createdAt: row["CREATED AT"] || row.createdAt || row.CreatedAt || "",
                 }));
                 setRows(mapped);
+                setCurrentPage(1);
             } else {
                 setRows([]);
+                setCurrentPage(1);
             }
         } catch (err) {
             console.error("Stock logs fetch error:", err);
@@ -293,7 +303,7 @@ export default function StockTransferPage() {
                         </div>
                     )}
 
-                    <Button onClick={() => setDialogOpen(true)} className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs h-9 gap-1.5 shadow-md">
+                    <Button onClick={() => setDialogOpen(true)} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs h-9 gap-1.5 shadow-md">
                         <ArrowLeftRight className="w-4 h-4" /> Transfer Stock
                     </Button>
                 </div>
@@ -316,52 +326,97 @@ export default function StockTransferPage() {
                             ))}
                         </div>
                     ) : rows.length > 0 ? (
-                        <div className="overflow-x-auto border border-border/40 rounded-lg">
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead className="text-xs font-bold py-2.5">Posting Date</TableHead>
-                                        <TableHead className="text-xs font-bold py-2.5">Part Code</TableHead>
-                                        <TableHead className="text-xs font-bold py-2.5">Part Description</TableHead>
-                                        <TableHead className="text-xs font-bold py-2.5 text-right font-bold">Qty</TableHead>
-                                        <TableHead className="text-xs font-bold py-2.5">Source</TableHead>
-                                        <TableHead className="text-xs font-bold py-2.5">Destination</TableHead>
-                                        <TableHead className="text-xs font-bold py-2.5">Status</TableHead>
-                                        <TableHead className="text-xs font-bold py-2.5">Remarks</TableHead>
-                                        <TableHead className="text-xs font-bold py-2.5">Created By</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {rows.map((row, rIdx) => {
-                                        // Format posting date
-                                        let postDate = row.postingDate;
-                                        try {
-                                            const d = new Date(row.postingDate);
-                                            const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-                                            postDate = `${d.getDate().toString().padStart(2, '0')}-${months[d.getMonth()]}-${d.getFullYear()}`;
-                                        } catch (e) { }
+                        <div className="space-y-4">
+                            <div className="overflow-x-auto border border-border/40 rounded-lg bg-background">
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead className="text-xs font-bold py-2.5">Posting Date</TableHead>
+                                            <TableHead className="text-xs font-bold py-2.5">Part Code</TableHead>
+                                            <TableHead className="text-xs font-bold py-2.5">Part Description</TableHead>
+                                            <TableHead className="text-xs font-bold py-2.5 text-right font-bold">Qty</TableHead>
+                                            <TableHead className="text-xs font-bold py-2.5">Source</TableHead>
+                                            <TableHead className="text-xs font-bold py-2.5">Destination</TableHead>
+                                            <TableHead className="text-xs font-bold py-2.5">Status</TableHead>
+                                            <TableHead className="text-xs font-bold py-2.5">Remarks</TableHead>
+                                            <TableHead className="text-xs font-bold py-2.5">Created By</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {paginatedRows.map((row, rIdx) => {
+                                            // Format posting date
+                                            let postDate = row.postingDate;
+                                            try {
+                                                const d = new Date(row.postingDate);
+                                                const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+                                                postDate = `${d.getDate().toString().padStart(2, '0')}-${months[d.getMonth()]}-${d.getFullYear()}`;
+                                            } catch (e) { }
 
-                                        return (
-                                            <TableRow key={rIdx}>
-                                                <TableCell className="text-xs py-2 font-medium">{postDate}</TableCell>
-                                                <TableCell className="text-xs py-2 font-semibold">{row.partCode}</TableCell>
-                                                <TableCell className="text-xs py-2">{row.partDesc}</TableCell>
-                                                <TableCell className="text-xs py-2 text-right font-bold text-blue-600">{row.quantity}</TableCell>
-                                                <TableCell className="text-xs py-2">{row.source}</TableCell>
-                                                <TableCell className="text-xs py-2">{row.destination}</TableCell>
-                                                <TableCell className="text-xs py-2">
-                                                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${row.status === "S" ? "bg-emerald-500/10 text-emerald-500 border border-emerald-500/20" : "bg-rose-500/10 text-rose-500 border border-rose-500/20"
-                                                        }`}>
-                                                        {row.status === "S" ? "SUCCESS" : "ERROR"}
-                                                    </span>
-                                                </TableCell>
-                                                <TableCell className="text-xs py-2 text-muted-foreground max-w-[120px] truncate" title={row.remarks}>{row.remarks || "-"}</TableCell>
-                                                <TableCell className="text-xs py-2">{row.createdBy}</TableCell>
-                                            </TableRow>
-                                        );
-                                    })}
-                                </TableBody>
-                            </Table>
+                                            return (
+                                                <TableRow key={rIdx}>
+                                                    <TableCell className="text-xs py-2 font-medium">{postDate}</TableCell>
+                                                    <TableCell className="text-xs py-2 font-semibold">{row.partCode}</TableCell>
+                                                    <TableCell className="text-xs py-2">{row.partDesc}</TableCell>
+                                                    <TableCell className="text-xs py-2 text-right font-bold text-blue-600">{row.quantity}</TableCell>
+                                                    <TableCell className="text-xs py-2">{row.source}</TableCell>
+                                                    <TableCell className="text-xs py-2">{row.destination}</TableCell>
+                                                    <TableCell className="text-xs py-2">
+                                                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${row.status === "S" ? "bg-blue-500/10 text-blue-500 border border-blue-500/20" : "bg-rose-500/10 text-rose-500 border border-rose-500/20"
+                                                            }`}>
+                                                            {row.status === "S" ? "SUCCESS" : "ERROR"}
+                                                        </span>
+                                                    </TableCell>
+                                                    <TableCell className="text-xs py-2 text-muted-foreground max-w-[120px] truncate" title={row.remarks}>{row.remarks || "-"}</TableCell>
+                                                    <TableCell className="text-xs py-2">{row.createdBy}</TableCell>
+                                                </TableRow>
+                                            );
+                                        })}
+                                    </TableBody>
+                                </Table>
+                            </div>
+
+                            {/* Pagination UI */}
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-2 pt-2 border-t">
+                                <span className="text-xs text-muted-foreground">
+                                    Showing {rows.length > 0 ? startIndex + 1 : 0} to {Math.min(startIndex + pageSize, rows.length)} of {rows.length} entries
+                                </span>
+                                <div className="flex flex-wrap items-center gap-4">
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-xs text-muted-foreground">Rows per page:</span>
+                                        <Select value={String(pageSize)} onValueChange={(v) => { setPageSize(Number(v)); setCurrentPage(1); }}>
+                                            <SelectTrigger className="w-16 h-8 text-xs bg-background border-border">
+                                                <SelectValue placeholder={String(pageSize)} />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {[5, 10, 20, 50, 100].map((size) => (
+                                                    <SelectItem key={size} value={String(size)}>{size}</SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div className="flex items-center gap-1.5">
+                                        <Button
+                                            variant="outline"
+                                            size="icon"
+                                            className="h-8 w-8"
+                                            onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+                                            disabled={currentPage === 1}
+                                        >
+                                            <ChevronLeft className="h-4 w-4" />
+                                        </Button>
+                                        <span className="text-xs font-semibold px-2">Page {currentPage} of {totalPages || 1}</span>
+                                        <Button
+                                            variant="outline"
+                                            size="icon"
+                                            className="h-8 w-8"
+                                            onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+                                            disabled={currentPage === totalPages || totalPages === 0}
+                                        >
+                                            <ChevronRight className="h-4 w-4" />
+                                        </Button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     ) : (
                         <div className="flex flex-col items-center justify-center py-16 text-sm text-muted-foreground">
@@ -383,7 +438,7 @@ export default function StockTransferPage() {
                     {formFeedback.message && (
                         <Alert variant={formFeedback.type === "success" ? "default" : "destructive"} className="text-xs py-2 px-3">
                             <div className="flex gap-2 items-center">
-                                {formFeedback.type === "success" ? <CheckCircle2 className="w-4 h-4 text-emerald-500" /> : <AlertCircle className="w-4 h-4" />}
+                                {formFeedback.type === "success" ? <CheckCircle2 className="w-4 h-4 text-blue-500" /> : <AlertCircle className="w-4 h-4" />}
                                 <span className="text-xs font-semibold">{formFeedback.message}</span>
                             </div>
                         </Alert>
@@ -445,7 +500,7 @@ export default function StockTransferPage() {
                             <Button type="button" variant="outline" size="sm" onClick={() => setDialogOpen(false)} className="text-xs">
                                 Cancel
                             </Button>
-                            <Button type="submit" disabled={formSubmitting} className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs h-9">
+                            <Button type="submit" disabled={formSubmitting} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs h-9">
                                 {formSubmitting ? "Transferring..." : "Submit"}
                             </Button>
                         </DialogFooter>

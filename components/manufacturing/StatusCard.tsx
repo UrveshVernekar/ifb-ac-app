@@ -31,18 +31,18 @@ export default function StatusCard({ label, value, type, target, onClick, classN
     const content = (
         <Card className={cn(
             "p-5 transition-all duration-300 hover:shadow-lg group relative overflow-hidden",
-            isClickable && "cursor-pointer border-emerald-500/20 hover:border-emerald-500/50",
+            isClickable && "cursor-pointer border-blue-500/20 hover:border-blue-500/50",
             className
         )}>
             {/* Background decoration */}
-            <div className="absolute top-0 right-0 -mr-4 -mt-4 w-24 h-24 bg-emerald-500/5 rounded-full blur-2xl group-hover:bg-emerald-500/10 transition-colors" />
+            <div className="absolute top-0 right-0 -mr-4 -mt-4 w-24 h-24 bg-blue-500/5 rounded-full blur-2xl group-hover:bg-blue-500/10 transition-colors" />
 
             <div className="flex flex-col gap-1">
                 <div className="flex items-center justify-between">
                     <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{label}</p>
                     <div className={cn(
                         "w-8 h-8 rounded-lg flex items-center justify-center transition-colors",
-                        isClickable ? "bg-emerald-500/10 text-emerald-500" : "bg-muted text-muted-foreground"
+                        isClickable ? "bg-blue-500/10 text-blue-500" : "bg-muted text-muted-foreground"
                     )}>
                         <Icon />
                     </div>
@@ -54,7 +54,7 @@ export default function StatusCard({ label, value, type, target, onClick, classN
                         {type === 'rate' && !String(value).includes('%') && '%'}
                         {type === 'cycle' && 's'}
                     </h3>
-                    {isClickable && <ArrowUpRight className="w-4 h-4 text-emerald-500 opacity-0 group-hover:opacity-100 transition-all transform translate-y-1 group-hover:translate-y-0" />}
+                    {isClickable && <ArrowUpRight className="w-4 h-4 text-blue-500 opacity-0 group-hover:opacity-100 transition-all transform translate-y-1 group-hover:translate-y-0" />}
                 </div>
 
                 {target !== undefined && (
@@ -67,7 +67,7 @@ export default function StatusCard({ label, value, type, target, onClick, classN
                             <div
                                 className={cn(
                                     "h-full rounded-full transition-all duration-500",
-                                    Number(value) >= target ? "bg-emerald-500" : "bg-amber-500"
+                                    Number(value) >= target ? "bg-blue-500" : "bg-amber-500"
                                 )}
                                 style={{ width: `${Math.min((Number(value) / target) * 100, 100)}%` }}
                             />

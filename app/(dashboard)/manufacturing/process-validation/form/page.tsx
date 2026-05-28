@@ -671,7 +671,7 @@ function FormContent() {
                                                                 <span className="text-[9px] text-muted-foreground shrink-0">
                                                                     ({((img.isExisting ? img.file_size : img.file?.size) / 1024).toFixed(1)} KB)
                                                                 </span>
-                                                                {img.isExisting && <Badge className="text-[8px] h-3.5 px-1 bg-emerald-500 hover:bg-emerald-600 text-white font-bold shrink-0">Existing</Badge>}
+                                                                {img.isExisting && <Badge className="text-[8px] h-3.5 px-1 bg-blue-500 hover:bg-blue-600 text-white font-bold shrink-0">Existing</Badge>}
                                                             </div>
                                                             <Button
                                                                 size="icon"

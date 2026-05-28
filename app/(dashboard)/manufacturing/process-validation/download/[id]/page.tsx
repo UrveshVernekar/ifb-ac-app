@@ -266,7 +266,7 @@ export default function ProcessValidationDownloadPage({ params }: { params: Prom
                     <Button
                         onClick={handleDownloadPDF}
                         disabled={downloading}
-                        className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs h-9 gap-1.5"
+                        className="bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs h-9 gap-1.5"
                     >
                         <Download className="w-3.5 h-3.5" /> Export PDF
                     </Button>
@@ -428,7 +428,7 @@ export default function ProcessValidationDownloadPage({ params }: { params: Prom
                                     <td className="w-[15%] p-2 text-center align-middle">
                                         {item.status === "1" ? (
                                             <div className="space-y-0.5">
-                                                <span className="inline-block bg-emerald-600 text-white font-bold px-2 py-0.5 rounded-[3px] text-[10px]">APPROVED</span>
+                                                <span className="inline-block bg-blue-600 text-white font-bold px-2 py-0.5 rounded-[3px] text-[10px]">APPROVED</span>
                                                 <div className="text-[9px] text-slate-500">{formatDate(item.last_updated)}</div>
                                             </div>
                                         ) : item.status === "0" || item.status === "2" ? (
@@ -463,7 +463,7 @@ export default function ProcessValidationDownloadPage({ params }: { params: Prom
                                         <div className="grid grid-cols-5 gap-1">
                                             <span className="font-bold text-[9px] text-slate-500 col-span-1">STATUS:</span>
                                             <div className="col-span-4 flex items-center gap-1.5">
-                                                <span className={`px-1 rounded-[2px] font-bold text-[9px] text-white ${head?.status === "1" ? "bg-emerald-600" : head?.status === "0" || head?.status === "2" ? "bg-rose-600" : "bg-slate-400"
+                                                <span className={`px-1 rounded-[2px] font-bold text-[9px] text-white ${head?.status === "1" ? "bg-blue-600" : head?.status === "0" || head?.status === "2" ? "bg-rose-600" : "bg-slate-400"
                                                     }`}>
                                                     {statusLabel}
                                                 </span>
@@ -490,7 +490,7 @@ export default function ProcessValidationDownloadPage({ params }: { params: Prom
                             <div className="grid grid-cols-5 gap-1">
                                 <span className="font-bold text-[9px] text-slate-500 col-span-1">STATUS:</span>
                                 <div className="col-span-4 flex items-center gap-1.5">
-                                    <span className={`px-1 rounded-[2px] font-bold text-[9px] text-white ${qualityHead?.status === "1" ? "bg-emerald-600" : qualityHead?.status === "0" || qualityHead?.status === "2" ? "bg-rose-600" : "bg-slate-400"
+                                    <span className={`px-1 rounded-[2px] font-bold text-[9px] text-white ${qualityHead?.status === "1" ? "bg-blue-600" : qualityHead?.status === "0" || qualityHead?.status === "2" ? "bg-rose-600" : "bg-slate-400"
                                         }`}>
                                         {qualityHead?.status === "1" ? "APPROVED" : qualityHead?.status === "0" || qualityHead?.status === "2" ? "ON HOLD" : "PENDING"}
                                     </span>
@@ -511,7 +511,7 @@ export default function ProcessValidationDownloadPage({ params }: { params: Prom
                             <div className="grid grid-cols-5 gap-1">
                                 <span className="font-bold text-[9px] text-slate-500 col-span-1">STATUS:</span>
                                 <div className="col-span-4 flex items-center gap-1.5">
-                                    <span className={`px-1 rounded-[2px] font-bold text-[9px] text-white ${plantHead?.status === "1" ? "bg-emerald-600" : plantHead?.status === "0" || plantHead?.status === "2" ? "bg-rose-600" : "bg-slate-400"
+                                    <span className={`px-1 rounded-[2px] font-bold text-[9px] text-white ${plantHead?.status === "1" ? "bg-blue-600" : plantHead?.status === "0" || plantHead?.status === "2" ? "bg-rose-600" : "bg-slate-400"
                                         }`}>
                                         {plantHead?.status === "1" ? "APPROVED" : plantHead?.status === "0" || plantHead?.status === "2" ? "ON HOLD" : "PENDING"}
                                     </span>

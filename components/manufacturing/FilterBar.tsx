@@ -42,7 +42,7 @@ export default function FilterBar({
                         type="date"
                         value={fromDate}
                         onChange={(e) => onFromDateChange(e.target.value)}
-                        className="bg-background border-border h-10 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+                        className="bg-background border-border h-10 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                     />
                 </div>
 
@@ -54,7 +54,7 @@ export default function FilterBar({
                         type="date"
                         value={toDate}
                         onChange={(e) => onToDateChange(e.target.value)}
-                        className="bg-background border-border h-10 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+                        className="bg-background border-border h-10 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                     />
                 </div>
 
@@ -65,7 +65,7 @@ export default function FilterBar({
                     <select
                         value={area}
                         onChange={(e) => onAreaChange(e.target.value)}
-                        className="flex h-10 w-full rounded-md border border-border bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+                        className="flex h-10 w-full rounded-md border border-border bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                     >
                         <option value="">Select Area</option>
                         <option value="ASSEMBLY LINES">ASSEMBLY LINES</option>
@@ -80,7 +80,7 @@ export default function FilterBar({
                         <select
                             value={machine}
                             onChange={(e) => onMachineChange(e.target.value)}
-                            className="flex h-10 w-full rounded-md border border-border bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+                            className="flex h-10 w-full rounded-md border border-border bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                         >
                             <option value="">Select Machine</option>
                             <option value="IDU-Line">IDU-Line</option>
@@ -93,7 +93,7 @@ export default function FilterBar({
                     <Button
                         onClick={onSearch}
                         disabled={loading}
-                        className="w-full h-10 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold transition-all shadow-md shadow-emerald-500/20"
+                        className="w-full h-10 bg-blue-600 hover:bg-blue-700 text-white font-semibold transition-all shadow-md shadow-blue-500/20"
                     >
                         {loading ? (
                             <div className="flex items-center gap-2">

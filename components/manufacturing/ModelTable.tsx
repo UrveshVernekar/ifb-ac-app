@@ -52,11 +52,11 @@ export default function ModelTable({ data }: ModelTableProps) {
                                         </div>
                                     </td>
                                     <td className="px-4 py-4 text-right font-medium">{item.plan}</td>
-                                    <td className="px-4 py-4 text-right font-medium text-emerald-500">{item.production}</td>
+                                    <td className="px-4 py-4 text-right font-medium text-blue-500">{item.production}</td>
                                     <td className="px-4 py-4 text-right font-medium text-blue-500">{item.backflush}</td>
                                     <td className={cn(
                                         "px-4 py-4 text-right font-bold",
-                                        achievedVal >= 100 ? "text-emerald-500" : (achievedVal >= 90 ? "text-amber-500" : "text-red-500")
+                                        achievedVal >= 100 ? "text-blue-500" : (achievedVal >= 90 ? "text-amber-500" : "text-red-500")
                                     )}>
                                         {item.achieved}%
                                     </td>
@@ -65,7 +65,7 @@ export default function ModelTable({ data }: ModelTableProps) {
                                             <div
                                                 className={cn(
                                                     "h-full rounded-full transition-all duration-500",
-                                                    achievedVal >= 100 ? "bg-emerald-500" : (achievedVal >= 90 ? "bg-amber-500" : "bg-red-500")
+                                                    achievedVal >= 100 ? "bg-blue-500" : (achievedVal >= 90 ? "bg-amber-500" : "bg-red-500")
                                                 )}
                                                 style={{ width: `${Math.min(achievedVal, 100)}%` }}
                                             />

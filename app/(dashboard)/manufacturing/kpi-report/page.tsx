@@ -37,6 +37,7 @@ import {
     Plus
 } from "lucide-react";
 import Link from "next/link";
+import { useTheme } from "next-themes";
 
 const API_HOST = "http://10.0.7.26:3003";
 
@@ -60,6 +61,7 @@ export default function KPIReportPage() {
     const [costMonth, setCostMonth] = useState("Apr");
     const [costValue, setCostValue] = useState("");
     const [costUnitTarget, setCostUnitTarget] = useState("");
+    const [costType, setCostType] = useState("CONSUMABLE");
     const [costSubmitting, setCostSubmitting] = useState(false);
     const [costFeedback, setCostFeedback] = useState({ type: "", message: "" });
 
@@ -75,11 +77,21 @@ export default function KPIReportPage() {
     // KPI Data structures
     const [yearlyProd, setYearlyProd] = useState<any>({ plan: [], actual: [], achievement: [], labels: [] });
     const [monthlyProd, setMonthlyProd] = useState<any>({ plan: [], actual: [], achievement: [], labels: [] });
-    const [costData, setCostData] = useState<any>({ cost: [], target: [], unitCost: [], labels: [] });
+    const [costData, setCostData] = useState<any>({ consumable: [], power: [], manpower: [], scrap: [], target: [], unitCost: [], labels: [] });
     const [oeeData, setOeeData] = useState<any>({ target: [], oee: [], labels: [] });
     const [uphData, setUphData] = useState<any>({ uphTarget: [], uph: [], upphTarget: [], upph: [], labels: [] });
     const [manpowerData, setManpowerData] = useState<any>({ rates: [], labels: [] });
     const [rtyData, setRtyData] = useState<any>({ rates: [], labels: [] });
+
+    const { resolvedTheme } = useTheme();
+    const isDark = mounted && resolvedTheme === "dark";
+
+    const textColor = isDark ? '#a1a1aa' : '#71717a';
+    const lineColor = isDark ? '#27272a' : '#e4e4e7';
+    const splitLineColor = isDark ? '#27272a' : '#f4f4f5';
+    const tooltipBg = isDark ? '#18181b' : '#ffffff';
+    const tooltipBorder = isDark ? '#27272a' : '#e4e4e7';
+    const titleColor = isDark ? '#f4f4f5' : '#18181b';
 
     useEffect(() => {
         setMounted(true);
@@ -126,7 +138,10 @@ export default function KPIReportPage() {
             });
 
             setCostData({
-                cost: data.costDetails?.costData || [],
+                consumable: data.costDetails?.consumableData || [],
+                power: data.costDetails?.powerData || [],
+                manpower: data.costDetails?.manpowerData || [],
+                scrap: data.costDetails?.scrapData || [],
                 target: data.costDetails?.targetData || [],
                 unitCost: data.costDetails?.unitCostData || [],
                 labels: data.costDetails?.labelsData || [],
@@ -192,14 +207,14 @@ export default function KPIReportPage() {
             legend: {
                 data: ["Plan", "Actual", "Achievement"],
                 bottom: 0,
-                textStyle: { color: "hsl(var(--muted-foreground))" }
+                textStyle: { color: textColor }
             },
             grid: { top: 30, left: 50, right: 50, bottom: 45 },
             xAxis: {
                 type: "category",
                 data: pData.labels,
-                axisLine: { lineStyle: { color: "hsl(var(--border))" } },
-                axisLabel: { color: "hsl(var(--muted-foreground))" }
+                axisLine: { lineStyle: { color: lineColor } },
+                axisLabel: { color: textColor }
             },
             yAxis: [
                 {
@@ -207,15 +222,15 @@ export default function KPIReportPage() {
                     name: "Count",
                     min: 0,
                     max: maxVal,
-                    splitLine: { lineStyle: { color: "hsl(var(--border)/0.3)" } },
-                    axisLabel: { color: "hsl(var(--muted-foreground))" }
+                    splitLine: { lineStyle: { color: splitLineColor } },
+                    axisLabel: { color: textColor }
                 },
                 {
                     type: "value",
                     name: "Achievement",
                     min: 0,
                     max: 100,
-                    axisLabel: { formatter: "{value}%", color: "hsl(var(--muted-foreground))" },
+                    axisLabel: { formatter: "{value}%", color: textColor },
                     splitLine: { show: false }
                 }
             ],
@@ -247,18 +262,18 @@ export default function KPIReportPage() {
     const getUphChartOptions = () => {
         return {
             backgroundColor: "transparent",
-            tooltip: { trigger: "axis" },
+            tooltip: { trigger: "axis", backgroundColor: tooltipBg, borderColor: tooltipBorder, textStyle: { color: titleColor } },
             legend: {
                 data: ["UPH Plan", "UPH Actual", "UPPH Plan", "UPPH Actual"],
                 bottom: 0,
-                textStyle: { color: "hsl(var(--muted-foreground))" }
+                textStyle: { color: textColor }
             },
             grid: { top: 30, left: 50, right: 50, bottom: 45 },
             xAxis: {
                 type: "category",
                 data: uphData.labels,
-                axisLine: { lineStyle: { color: "hsl(var(--border))" } },
-                axisLabel: { color: "hsl(var(--muted-foreground))" }
+                axisLine: { lineStyle: { color: lineColor } },
+                axisLabel: { color: textColor }
             },
             yAxis: [
                 {
@@ -266,15 +281,15 @@ export default function KPIReportPage() {
                     name: "UPH",
                     min: 0,
                     max: 250,
-                    splitLine: { lineStyle: { color: "hsl(var(--border)/0.3)" } },
-                    axisLabel: { color: "hsl(var(--muted-foreground))" }
+                    splitLine: { lineStyle: { color: splitLineColor } },
+                    axisLabel: { color: textColor }
                 },
                 {
                     type: "value",
                     name: "UPPH",
                     min: 0,
                     max: getUpperLimit([...uphData.upphTarget, ...uphData.upph]),
-                    axisLabel: { color: "hsl(var(--muted-foreground))" },
+                    axisLabel: { color: textColor },
                     splitLine: { show: false }
                 }
             ],
@@ -290,21 +305,21 @@ export default function KPIReportPage() {
     const getRatesChartOptions = (rData: any, title: string, color = "#3b82f6", isLine = false) => {
         return {
             backgroundColor: "transparent",
-            tooltip: { trigger: "axis" },
-            legend: { data: [title], bottom: 0, textStyle: { color: "hsl(var(--muted-foreground))" } },
+            tooltip: { trigger: "axis", backgroundColor: tooltipBg, borderColor: tooltipBorder, textStyle: { color: titleColor } },
+            legend: { data: [title], bottom: 0, textStyle: { color: textColor } },
             grid: { top: 30, left: 50, right: 30, bottom: 45 },
             xAxis: {
                 type: "category",
                 data: rData.labels,
-                axisLine: { lineStyle: { color: "hsl(var(--border))" } },
-                axisLabel: { color: "hsl(var(--muted-foreground))" }
+                axisLine: { lineStyle: { color: lineColor } },
+                axisLabel: { color: textColor }
             },
             yAxis: {
                 type: "value",
                 min: 0,
                 max: 100,
-                axisLabel: { formatter: "{value}%", color: "hsl(var(--muted-foreground))" },
-                splitLine: { lineStyle: { color: "hsl(var(--border)/0.3)" } }
+                axisLabel: { formatter: "{value}%", color: textColor },
+                splitLine: { lineStyle: { color: splitLineColor } }
             },
             series: [{
                 name: title,
@@ -319,21 +334,21 @@ export default function KPIReportPage() {
     const getOeeChartOptions = () => {
         return {
             backgroundColor: "transparent",
-            tooltip: { trigger: "axis" },
-            legend: { data: ["OEE Plan", "OEE Actual"], bottom: 0, textStyle: { color: "hsl(var(--muted-foreground))" } },
+            tooltip: { trigger: "axis", backgroundColor: tooltipBg, borderColor: tooltipBorder, textStyle: { color: titleColor } },
+            legend: { data: ["OEE Plan", "OEE Actual"], bottom: 0, textStyle: { color: textColor } },
             grid: { top: 30, left: 50, right: 30, bottom: 45 },
             xAxis: {
                 type: "category",
                 data: oeeData.labels,
-                axisLine: { lineStyle: { color: "hsl(var(--border))" } },
-                axisLabel: { color: "hsl(var(--muted-foreground))" }
+                axisLine: { lineStyle: { color: lineColor } },
+                axisLabel: { color: textColor }
             },
             yAxis: {
                 type: "value",
                 min: 0,
                 max: 100,
-                axisLabel: { formatter: "{value}%", color: "hsl(var(--muted-foreground))" },
-                splitLine: { lineStyle: { color: "hsl(var(--border)/0.3)" } }
+                axisLabel: { formatter: "{value}%", color: textColor },
+                splitLine: { lineStyle: { color: splitLineColor } }
             },
             series: [
                 { name: "OEE Plan", type: "line", data: oeeData.target, itemStyle: { color: "#3b82f6" }, lineStyle: { width: 3 } },
@@ -343,37 +358,110 @@ export default function KPIReportPage() {
     };
 
     const getCostChartOptions = () => {
-        const max1 = getUpperLimit(costData.cost);
-        const max2 = getUpperLimit([...costData.target, ...costData.unitCost]);
+        const consumableData = costData.consumable || [];
+        const powerData = costData.power || [];
+        const manpowerData = costData.manpower || [];
+        const scrapData = costData.scrap || [];
+        const targetData = costData.target || [];
+        const unitCostData = costData.unitCost || [];
+        const labels = costData.labels || [];
+
+        const totalCostsPerMonth = labels.map((_: any, index: number) => {
+            return (
+                (consumableData[index] || 0) +
+                (powerData[index] || 0) +
+                (manpowerData[index] || 0) +
+                (scrapData[index] || 0)
+            );
+        });
+
+        const max1 = getUpperLimit(totalCostsPerMonth);
+        const max2 = getUpperLimit([...targetData, ...unitCostData]);
         return {
             backgroundColor: "transparent",
-            tooltip: { trigger: "axis" },
-            legend: { data: ["Avg. Cost/Month", "Target Cost/Unit", "Actual Cost/Unit"], bottom: 0, textStyle: { color: "hsl(var(--muted-foreground))" } },
+            tooltip: { trigger: "axis", backgroundColor: tooltipBg, borderColor: tooltipBorder, textStyle: { color: titleColor } },
+            legend: { 
+                data: [
+                    "Consumable Cost", 
+                    "Power Cost", 
+                    "Manpower Cost", 
+                    "Scrap Cost", 
+                    "Target Cost/Unit", 
+                    "Actual Cost/Unit"
+                ], 
+                bottom: 0, 
+                textStyle: { color: textColor } 
+            },
             grid: { top: 30, left: 55, right: 55, bottom: 45 },
             xAxis: {
                 type: "category",
-                data: costData.labels,
-                axisLine: { lineStyle: { color: "hsl(var(--border))" } },
-                axisLabel: { color: "hsl(var(--muted-foreground))" }
+                data: labels,
+                axisLine: { lineStyle: { color: lineColor } },
+                axisLabel: { color: textColor }
             },
             yAxis: [
                 {
                     type: "value",
                     name: "Total Cost",
-                    axisLabel: { formatter: "₹{value}", color: "hsl(var(--muted-foreground))" },
-                    splitLine: { lineStyle: { color: "hsl(var(--border)/0.3)" } }
+                    min: 0,
+                    max: max1,
+                    axisLabel: { formatter: "₹{value}", color: textColor },
+                    splitLine: { lineStyle: { color: splitLineColor } }
                 },
                 {
                     type: "value",
                     name: "Unit Cost",
-                    axisLabel: { formatter: "₹{value}", color: "hsl(var(--muted-foreground))" },
+                    min: 0,
+                    max: max2,
+                    axisLabel: { formatter: "₹{value}", color: textColor },
                     splitLine: { show: false }
                 }
             ],
             series: [
-                { name: "Avg. Cost/Month", type: "bar", data: costData.cost, itemStyle: { color: "#3b82f6", borderRadius: [3, 3, 0, 0] } },
-                { name: "Target Cost/Unit", type: "line", yAxisIndex: 1, data: costData.target, itemStyle: { color: "#10b981" }, lineStyle: { width: 2.5, type: "dashed" } },
-                { name: "Actual Cost/Unit", type: "line", yAxisIndex: 1, data: costData.unitCost, itemStyle: { color: "#f87171" }, lineStyle: { width: 3 } }
+                {
+                    name: "Consumable Cost",
+                    type: "bar",
+                    stack: "Cost",
+                    data: consumableData,
+                    itemStyle: { color: "#3b82f6" },
+                },
+                {
+                    name: "Power Cost",
+                    type: "bar",
+                    stack: "Cost",
+                    data: powerData,
+                    itemStyle: { color: "#eab308" },
+                },
+                {
+                    name: "Manpower Cost",
+                    type: "bar",
+                    stack: "Cost",
+                    data: manpowerData,
+                    itemStyle: { color: "#8b5cf6" },
+                },
+                {
+                    name: "Scrap Cost",
+                    type: "bar",
+                    stack: "Cost",
+                    data: scrapData,
+                    itemStyle: { color: "#f97316", borderRadius: [3, 3, 0, 0] },
+                },
+                { 
+                    name: "Target Cost/Unit", 
+                    type: "line", 
+                    yAxisIndex: 1, 
+                    data: targetData, 
+                    itemStyle: { color: "#10b981" }, 
+                    lineStyle: { width: 2.5, type: "dashed" } 
+                },
+                { 
+                    name: "Actual Cost/Unit", 
+                    type: "line", 
+                    yAxisIndex: 1, 
+                    data: unitCostData, 
+                    itemStyle: { color: "#f87171" }, 
+                    lineStyle: { width: 3 } 
+                }
             ]
         };
     };
@@ -394,6 +482,7 @@ export default function KPIReportPage() {
                 year: Number(costYear),
                 month: costMonth,
                 cost: Number(costValue),
+                costType: costType,
                 unitTarget: Number(costUnitTarget)
             });
             if (res.data.success) {
@@ -404,6 +493,7 @@ export default function KPIReportPage() {
                     setCostValue("");
                     setCostUnitTarget("");
                     setCostYear("");
+                    setCostType("CONSUMABLE");
                 }, 1500);
             }
         } catch (err) {
@@ -512,7 +602,7 @@ export default function KPIReportPage() {
                     {/* Input logs buttons */}
                     {showManpowerInput && (
                         <Button onClick={() => setMpModalOpen(true)} variant="outline" size="sm" className="h-9 gap-1.5 text-xs font-semibold">
-                            <Users className="w-4 h-4 text-emerald-500" /> Absenteeism Data
+                            <Users className="w-4 h-4 text-blue-500" /> Absenteeism Data
                         </Button>
                     )}
 
@@ -634,7 +724,7 @@ export default function KPIReportPage() {
                             <CardTitle className="text-sm font-bold uppercase tracking-wide">Consumable Cost Trends</CardTitle>
                         </CardHeader>
                         <CardContent>
-                            {costData.cost.length > 0 ? (
+                            {costData.consumable && costData.consumable.length > 0 ? (
                                 <ReactECharts option={getCostChartOptions()} style={{ height: "350px" }} />
                             ) : (
                                 <div className="flex h-[350px] items-center justify-center text-xs text-muted-foreground">No cost logs</div>
@@ -655,7 +745,7 @@ export default function KPIReportPage() {
                     {costFeedback.message && (
                         <Alert variant={costFeedback.type === "success" ? "default" : "destructive"} className="text-xs py-2 px-3">
                             <div className="flex gap-2 items-center">
-                                {costFeedback.type === "success" ? <CheckCircle2 className="w-4 h-4 text-emerald-500" /> : <AlertCircle className="w-4 h-4" />}
+                                {costFeedback.type === "success" ? <CheckCircle2 className="w-4 h-4 text-blue-500" /> : <AlertCircle className="w-4 h-4" />}
                                 <span className="text-xs font-semibold">{costFeedback.message}</span>
                             </div>
                         </Alert>
@@ -705,6 +795,21 @@ export default function KPIReportPage() {
                         </div>
 
                         <div className="space-y-1">
+                            <Label className="text-[10px] font-bold uppercase text-muted-foreground block">Cost Type *</Label>
+                            <Select value={costType} onValueChange={setCostType}>
+                                <SelectTrigger className="bg-background border-border h-9 text-xs">
+                                    <SelectValue placeholder="Cost Type" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="CONSUMABLE">CONSUMABLE</SelectItem>
+                                    <SelectItem value="POWER">POWER</SelectItem>
+                                    <SelectItem value="MANPOWER">MANPOWER</SelectItem>
+                                    <SelectItem value="SCRAP">SCRAP</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div className="space-y-1">
                             <Label className="text-[10px] font-bold uppercase text-muted-foreground block">Total Monthly Cost (₹) *</Label>
                             <Input
                                 type="number"
@@ -732,7 +837,7 @@ export default function KPIReportPage() {
                             <Button type="button" variant="outline" size="sm" onClick={() => setCostModalOpen(false)} className="text-xs">
                                 Cancel
                             </Button>
-                            <Button type="submit" disabled={costSubmitting} className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs h-9">
+                            <Button type="submit" disabled={costSubmitting} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs h-9">
                                 {costSubmitting ? "Submitting..." : "Submit Cost"}
                             </Button>
                         </DialogFooter>
@@ -751,7 +856,7 @@ export default function KPIReportPage() {
                     {mpFeedback.message && (
                         <Alert variant={mpFeedback.type === "success" ? "default" : "destructive"} className="text-xs py-2 px-3">
                             <div className="flex gap-2 items-center">
-                                {mpFeedback.type === "success" ? <CheckCircle2 className="w-4 h-4 text-emerald-500" /> : <AlertCircle className="w-4 h-4" />}
+                                {mpFeedback.type === "success" ? <CheckCircle2 className="w-4 h-4 text-blue-500" /> : <AlertCircle className="w-4 h-4" />}
                                 <span className="text-xs font-semibold">{mpFeedback.message}</span>
                             </div>
                         </Alert>
@@ -818,7 +923,7 @@ export default function KPIReportPage() {
                             <Button type="button" variant="outline" size="sm" onClick={() => setMpModalOpen(false)} className="text-xs">
                                 Cancel
                             </Button>
-                            <Button type="submit" disabled={mpSubmitting} className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs h-9">
+                            <Button type="submit" disabled={mpSubmitting} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs h-9">
                                 {mpSubmitting ? "Submitting..." : "Submit Rate"}
                             </Button>
                         </DialogFooter>

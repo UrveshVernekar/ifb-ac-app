@@ -331,7 +331,7 @@ export default function ProcessValidationDetailPage({ params }: { params: Promis
 
             {/* Overall Status Banner */}
             <div className={`p-4 rounded-xl border flex items-center justify-between text-xs font-semibold ${allApproved
-                ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
+                ? "bg-blue-500/10 text-blue-500 border-blue-500/20"
                 : hasHold
                     ? "bg-rose-500/10 text-rose-500 border-rose-500/20"
                     : "bg-blue-500/10 text-blue-500 border-blue-500/20"
@@ -423,7 +423,7 @@ export default function ProcessValidationDetailPage({ params }: { params: Promis
                     <CardContent className="pt-2 text-xs space-y-3">
                         <div className="flex flex-wrap gap-1.5">
                             {data.docs?.map((d: string, i: number) => (
-                                <Badge key={i} variant="outline" className="border-emerald-500/20 text-emerald-600 dark:text-emerald-400 bg-emerald-500/5">
+                                <Badge key={i} variant="outline" className="border-blue-500/20 text-blue-600 dark:text-emerald-400 bg-blue-500/5">
                                     {docOptions.find(opt => opt.key === d)?.label || d}
                                 </Badge>
                             ))}
@@ -475,7 +475,7 @@ export default function ProcessValidationDetailPage({ params }: { params: Promis
                     </div>
 
                     <div className="border bg-slate-900/10 dark:bg-slate-900/30 p-4 rounded-xl">
-                        <span className="text-[10px] font-bold block text-emerald-500 uppercase tracking-widest mb-2 border-b pb-1">After Change Process</span>
+                        <span className="text-[10px] font-bold block text-blue-500 uppercase tracking-widest mb-2 border-b pb-1">After Change Process</span>
                         <p className="text-xs whitespace-pre-wrap leading-relaxed text-foreground/80">{data.after_text || "N/A"}</p>
                     </div>
                 </CardContent>
@@ -507,7 +507,7 @@ export default function ProcessValidationDetailPage({ params }: { params: Promis
                                         Request submitted on {formatDate(data.created_at)}
                                     </TableCell>
                                     <TableCell className="text-center py-3.5">
-                                        <Badge className="bg-emerald-500 text-white border-none font-bold text-[9px] px-2 py-0.5">SUBMITTED</Badge>
+                                        <Badge className="bg-blue-500 text-white border-none font-bold text-[9px] px-2 py-0.5">SUBMITTED</Badge>
                                     </TableCell>
                                 </TableRow>
 
@@ -528,7 +528,7 @@ export default function ProcessValidationDetailPage({ params }: { params: Promis
                                                             {item.history.map((h: any, hIdx: number) => (
                                                                 <div key={hIdx} className="p-2 bg-slate-900/10 dark:bg-slate-900/40 rounded-r-md border-l-2 border-blue-500 text-[11px]">
                                                                     <div className="flex items-center justify-between mb-1">
-                                                                        <Badge className={`text-[8px] font-bold h-4 px-1.5 ${h.status === "1" ? "bg-emerald-500" : "bg-rose-500"
+                                                                        <Badge className={`text-[8px] font-bold h-4 px-1.5 ${h.status === "1" ? "bg-blue-500" : "bg-rose-500"
                                                                             }`}>
                                                                             {h.status === "1" ? "APPROVED" : "ON HOLD"}
                                                                         </Badge>
@@ -566,7 +566,7 @@ export default function ProcessValidationDetailPage({ params }: { params: Promis
                                                 {/* Actions or Status label */}
                                                 {item.status === "1" ? (
                                                     <div className="space-y-1">
-                                                        <Badge className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-[9px] px-2.5 py-0.5">APPROVED</Badge>
+                                                        <Badge className="bg-blue-500 hover:bg-blue-600 text-white font-bold text-[9px] px-2.5 py-0.5">APPROVED</Badge>
                                                         <div className="text-[9px] text-muted-foreground block">{formatDate(item.last_updated)}</div>
                                                     </div>
                                                 ) : item.status === "0" || item.status === "2" ? (
@@ -580,7 +580,7 @@ export default function ProcessValidationDetailPage({ params }: { params: Promis
                                                                 <Button
                                                                     onClick={() => handleAction(item.id, item.department, 1)}
                                                                     disabled={actionLoading === item.id}
-                                                                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[10px] h-7 px-2.5"
+                                                                    className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-[10px] h-7 px-2.5"
                                                                 >
                                                                     Approve
                                                                 </Button>
@@ -600,7 +600,7 @@ export default function ProcessValidationDetailPage({ params }: { params: Promis
                                                             <Button
                                                                 onClick={() => handleAction(item.id, item.department, 1)}
                                                                 disabled={actionLoading === item.id}
-                                                                className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[10px] h-7 w-full"
+                                                                className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-[10px] h-7 w-full"
                                                             >
                                                                 Approve
                                                             </Button>

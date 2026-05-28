@@ -34,7 +34,8 @@ import {
     AlertCircle,
     Play,
     Lock,
-    HelpCircle
+    HelpCircle,
+    X
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -208,14 +209,19 @@ export default function DowntimeDetailsPage({ params }: { params: Promise<{ id: 
         }
     };
 
-    // Handle HOD Approve / Reopen
-    const handleApprove = async (status: "CLOSE" | "REOPEN") => {
+    // Handle HOD Approve / Reject / Reopen
+    const handleApprove = async (status: "CLOSE" | "REOPEN" | "REJECT") => {
         if (!record) return;
         try {
             await axios.post(`${API_HOST}/api/production/downtime/approve`, { downtimeID: record.id, status });
+            let message = "";
+            if (status === "CLOSE") message = "Record approved and closed successfully!";
+            else if (status === "REJECT") message = "Record rejected successfully!";
+            else message = "Record reopened successfully!";
+
             setActionFeedback({
                 type: "success",
-                message: status === "CLOSE" ? "Record approved and closed successfully!" : "Record reopened successfully!"
+                message
             });
             fetchRecordAndOptions();
         } catch (err) {
@@ -277,9 +283,10 @@ export default function DowntimeDetailsPage({ params }: { params: Promise<{ id: 
     // Role checks
     const currentEmail = typeof window !== "undefined" ? sessionStorage.getItem("employee_email") : "";
     const isApproved = record.approved === 1;
+    const isRejected = record.approved === 2;
     const isPersonInCharge = record.person_incharge_email === currentEmail;
     const isDepartmentInCharge = record.department_incharge_email === currentEmail;
-    const canEdit = !isApproved && (isPersonInCharge || isDepartmentInCharge);
+    const canEdit = !isApproved && !isRejected && (isPersonInCharge || isDepartmentInCharge);
 
     return (
         <div className="space-y-6 max-w-7xl mx-auto p-2">
@@ -305,27 +312,36 @@ export default function DowntimeDetailsPage({ params }: { params: Promise<{ id: 
                     <Button
                         onClick={handleSave}
                         disabled={saving || !canEdit}
-                        className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs h-9 gap-1.5"
+                        className="bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs h-9 gap-1.5"
                     >
                         {saving ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
                         Save Analysis
                     </Button>
 
                     {/* HOD Approvals */}
-                    {record.created_by_email === currentEmail && record.approved !== 1 && (
-                        <Button
-                            onClick={() => handleApprove("CLOSE")}
-                            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs h-9 gap-1.5"
-                        >
-                            <CheckCircle className="w-3.5 h-3.5" /> Approve & Close
-                        </Button>
+                    {record.created_by_email === currentEmail && ![1, 2].includes(record.approved) && (
+                        <>
+                            <Button
+                                onClick={() => handleApprove("CLOSE")}
+                                className="bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs h-9 gap-1.5"
+                            >
+                                <CheckCircle className="w-3.5 h-3.5" /> Approve & Close
+                            </Button>
+                            <Button
+                                onClick={() => handleApprove("REJECT")}
+                                variant="destructive"
+                                className="font-semibold text-xs h-9 gap-1.5"
+                            >
+                                <X className="w-3.5 h-3.5" /> Reject
+                            </Button>
+                        </>
                     )}
 
-                    {record.created_by_email === currentEmail && record.approved === 1 && (
+                    {record.created_by_email === currentEmail && (record.approved === 1 || record.approved === 2) && (
                         <Button
                             onClick={() => handleApprove("REOPEN")}
-                            variant="destructive"
-                            className="font-semibold text-xs h-9 gap-1.5"
+                            variant="default"
+                            className="bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs h-9 gap-1.5"
                         >
                             <Play className="w-3.5 h-3.5 rotate-90" /> Reopen Record
                         </Button>
@@ -336,7 +352,7 @@ export default function DowntimeDetailsPage({ params }: { params: Promise<{ id: 
             {actionFeedback.message && (
                 <Alert variant={actionFeedback.type === "success" ? "default" : "destructive"} className="text-xs py-2 px-3">
                     <div className="flex gap-2 items-center">
-                        <CheckCircle className="w-4 h-4 text-emerald-500" />
+                        <CheckCircle className="w-4 h-4 text-blue-500" />
                         <AlertDescription className="text-xs font-semibold">{actionFeedback.message}</AlertDescription>
                     </div>
                 </Alert>
@@ -375,8 +391,14 @@ export default function DowntimeDetailsPage({ params }: { params: Promise<{ id: 
                         </div>
                         <div>
                             <span className="text-muted-foreground block font-medium uppercase tracking-wider text-[10px]">Status</span>
-                            <span className={`px-1.5 py-0.5 rounded font-bold text-[9px] inline-block ${isApproved ? "bg-emerald-500/10 text-emerald-500 border border-emerald-500/20" : "bg-amber-500/10 text-amber-500 border border-amber-500/20"}`}>
-                                {isApproved ? "CLOSED & APPROVED" : "OPEN / PENDING APPROVAL"}
+                            <span className={`px-1.5 py-0.5 rounded font-bold text-[9px] inline-block ${
+                                isApproved 
+                                    ? "bg-blue-500/10 text-blue-500 border border-blue-500/20" 
+                                    : isRejected 
+                                        ? "bg-rose-500/10 text-rose-500 border border-rose-500/20" 
+                                        : "bg-amber-500/10 text-amber-500 border border-amber-500/20"
+                            }`}>
+                                {isApproved ? "CLOSED & APPROVED" : isRejected ? "REJECTED" : "OPEN / PENDING APPROVAL"}
                             </span>
                         </div>
                         {record.remarks && (
@@ -426,7 +448,7 @@ export default function DowntimeDetailsPage({ params }: { params: Promise<{ id: 
                     <CardHeader className="pb-2 flex flex-row items-center justify-between space-y-0">
                         <CardTitle className="text-md font-bold uppercase tracking-tight">{sec.title}</CardTitle>
                         {canEdit && (
-                            <Button onClick={() => addActionRow(sec.key)} variant="outline" size="sm" className="h-8 gap-1 text-xs border-emerald-500/20 text-emerald-600 hover:bg-emerald-500/5">
+                            <Button onClick={() => addActionRow(sec.key)} variant="outline" size="sm" className="h-8 gap-1 text-xs border-blue-500/20 text-blue-600 hover:bg-blue-500/5">
                                 <Plus className="w-3.5 h-3.5" /> Add Action
                             </Button>
                         )}

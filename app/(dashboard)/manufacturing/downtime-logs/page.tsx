@@ -44,7 +44,9 @@ import {
     HelpCircle,
     AlertCircle,
     User,
-    CheckCircle2
+    CheckCircle2,
+    ChevronLeft,
+    ChevronRight
 } from "lucide-react";
 import Link from "next/link";
 
@@ -78,6 +80,14 @@ export default function DowntimeLogsPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [refreshTrigger, setRefreshTrigger] = useState(false);
+
+    // Pagination controls
+    const [currentPage, setCurrentPage] = useState(1);
+    const [pageSize, setPageSize] = useState(5);
+
+    const totalPages = Math.ceil(logs.length / pageSize);
+    const startIndex = (currentPage - 1) * pageSize;
+    const paginatedLogs = logs.slice(startIndex, startIndex + pageSize);
 
     // Form/Modal states
     const [modalOpen, setModalOpen] = useState(false);
@@ -142,8 +152,10 @@ export default function DowntimeLogsPage() {
             });
             if (res.data.success) {
                 setLogs(res.data.data);
+                setCurrentPage(1);
             } else {
                 setLogs([]);
+                setCurrentPage(1);
             }
         } catch (err) {
             console.error("Downtime fetch error:", err);
@@ -402,7 +414,7 @@ export default function DowntimeLogsPage() {
                         </div>
                     )}
 
-                    <Button onClick={handleOpenCreate} className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs h-9 gap-1.5">
+                    <Button onClick={handleOpenCreate} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs h-9 gap-1.5">
                         <Plus className="w-4 h-4" /> Record Downtime
                     </Button>
                 </div>
@@ -425,68 +437,113 @@ export default function DowntimeLogsPage() {
                             ))}
                         </div>
                     ) : logs.length > 0 ? (
-                        <div className="overflow-x-auto border border-border/40 rounded-lg">
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead className="text-xs font-bold py-2.5">Date</TableHead>
-                                        <TableHead className="text-xs font-bold py-2.5">Time</TableHead>
-                                        <TableHead className="text-xs font-bold py-2.5">Type</TableHead>
-                                        <TableHead className="text-xs font-bold py-2.5">Reason</TableHead>
-                                        <TableHead className="text-xs font-bold py-2.5 text-right">Duration (min)</TableHead>
-                                        <TableHead className="text-xs font-bold py-2.5">Person Incharge</TableHead>
-                                        <TableHead className="text-xs font-bold py-2.5">Remarks</TableHead>
-                                        <TableHead className="text-xs font-bold py-2.5 text-center">Actions</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {logs.map((log) => {
-                                        // Format date to DD-MMM-YYYY
-                                        let displayDate = log.date;
-                                        try {
-                                            const d = new Date(log.date);
-                                            const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-                                            displayDate = `${d.getDate().toString().padStart(2, '0')}-${months[d.getMonth()]}-${d.getFullYear()}`;
-                                        } catch (e) { }
+                        <div className="space-y-4">
+                            <div className="overflow-x-auto border border-border/40 rounded-lg bg-background">
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead className="text-xs font-bold py-2.5">Date</TableHead>
+                                            <TableHead className="text-xs font-bold py-2.5">Time</TableHead>
+                                            <TableHead className="text-xs font-bold py-2.5">Type</TableHead>
+                                            <TableHead className="text-xs font-bold py-2.5">Reason</TableHead>
+                                            <TableHead className="text-xs font-bold py-2.5 text-right">Duration (min)</TableHead>
+                                            <TableHead className="text-xs font-bold py-2.5">Person Incharge</TableHead>
+                                            <TableHead className="text-xs font-bold py-2.5">Remarks</TableHead>
+                                            <TableHead className="text-xs font-bold py-2.5 text-center">Actions</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {paginatedLogs.map((log) => {
+                                            // Format date to DD-MMM-YYYY
+                                            let displayDate = log.date;
+                                            try {
+                                                const d = new Date(log.date);
+                                                const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+                                                displayDate = `${d.getDate().toString().padStart(2, '0')}-${months[d.getMonth()]}-${d.getFullYear()}`;
+                                            } catch (e) { }
 
-                                        return (
-                                            <TableRow key={log.id}>
-                                                <TableCell className="text-xs py-2 font-medium">{displayDate}</TableCell>
-                                                <TableCell className="text-xs py-2">{log.time || "N/A"}</TableCell>
-                                                <TableCell className="text-xs py-2">
-                                                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${log.type === "AVAILABILITY"
-                                                        ? "bg-rose-500/10 text-rose-500"
-                                                        : log.type === "PERFORMANCE"
-                                                            ? "bg-amber-500/10 text-amber-500"
-                                                            : "bg-blue-500/10 text-blue-500"
-                                                        }`}>
-                                                        {log.type}
-                                                    </span>
-                                                </TableCell>
-                                                <TableCell className="text-xs py-2 font-semibold text-foreground/80">{log.reason}</TableCell>
-                                                <TableCell className="text-xs py-2 text-right font-bold text-rose-500">{log.duration}</TableCell>
-                                                <TableCell className="text-xs py-2 max-w-[120px] truncate">{log.person_incharge || "N/A"}</TableCell>
-                                                <TableCell className="text-xs py-2 max-w-[150px] truncate text-muted-foreground" title={log.remarks}>{log.remarks || "-"}</TableCell>
-                                                <TableCell className="text-xs py-2 text-center">
-                                                    <div className="flex items-center justify-center gap-1">
-                                                        <Button onClick={() => handleOpenEdit(log)} variant="ghost" size="icon" className="h-7 w-7 text-blue-500 hover:text-blue-600 hover:bg-blue-500/10">
-                                                            <Edit className="w-3.5 h-3.5" />
-                                                        </Button>
-                                                        <Button onClick={() => handleOpenDelete(log)} variant="ghost" size="icon" className="h-7 w-7 text-rose-500 hover:text-rose-600 hover:bg-rose-500/10">
-                                                            <Trash2 className="w-3.5 h-3.5" />
-                                                        </Button>
-                                                        <Link href={`/manufacturing/downtime-logs/${log.id}`}>
-                                                            <Button variant="outline" size="xs" className="h-7 px-2 border-emerald-500/30 text-emerald-600 hover:bg-emerald-500/10 text-[10px] font-bold">
-                                                                5 Why
+                                            return (
+                                                <TableRow key={log.id}>
+                                                    <TableCell className="text-xs py-2 font-medium">{displayDate}</TableCell>
+                                                    <TableCell className="text-xs py-2">{log.time || "N/A"}</TableCell>
+                                                    <TableCell className="text-xs py-2">
+                                                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${log.type === "AVAILABILITY"
+                                                            ? "bg-rose-500/10 text-rose-500"
+                                                            : log.type === "PERFORMANCE"
+                                                                ? "bg-amber-500/10 text-amber-500"
+                                                                : "bg-blue-500/10 text-blue-500"
+                                                            }`}>
+                                                            {log.type}
+                                                        </span>
+                                                    </TableCell>
+                                                    <TableCell className="text-xs py-2 font-semibold text-foreground/80">{log.reason}</TableCell>
+                                                    <TableCell className="text-xs py-2 text-right font-bold text-rose-500">{log.duration}</TableCell>
+                                                    <TableCell className="text-xs py-2 max-w-[120px] truncate">{log.person_incharge || "N/A"}</TableCell>
+                                                    <TableCell className="text-xs py-2 max-w-[150px] truncate text-muted-foreground" title={log.remarks}>{log.remarks || "-"}</TableCell>
+                                                    <TableCell className="text-xs py-2 text-center">
+                                                        <div className="flex items-center justify-center gap-1">
+                                                            <Button onClick={() => handleOpenEdit(log)} variant="ghost" size="icon" className="h-7 w-7 text-blue-500 hover:text-blue-600 hover:bg-blue-500/10">
+                                                                <Edit className="w-3.5 h-3.5" />
                                                             </Button>
-                                                        </Link>
-                                                    </div>
-                                                </TableCell>
-                                            </TableRow>
-                                        );
-                                    })}
-                                </TableBody>
-                            </Table>
+                                                            <Button onClick={() => handleOpenDelete(log)} variant="ghost" size="icon" className="h-7 w-7 text-rose-500 hover:text-rose-600 hover:bg-rose-500/10">
+                                                                <Trash2 className="w-3.5 h-3.5" />
+                                                            </Button>
+                                                            <Link href={`/manufacturing/downtime-logs/${log.id}`}>
+                                                                <Button variant="outline" size="xs" className="h-7 px-2 border-blue-500/30 text-blue-600 hover:bg-blue-500/10 text-[10px] font-bold">
+                                                                    5 Why
+                                                                </Button>
+                                                            </Link>
+                                                        </div>
+                                                    </TableCell>
+                                                </TableRow>
+                                            );
+                                        })}
+                                    </TableBody>
+                                </Table>
+                            </div>
+
+                            {/* Pagination UI */}
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-2 pt-2 border-t">
+                                <span className="text-xs text-muted-foreground">
+                                    Showing {logs.length > 0 ? startIndex + 1 : 0} to {Math.min(startIndex + pageSize, logs.length)} of {logs.length} entries
+                                </span>
+                                <div className="flex flex-wrap items-center gap-4">
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-xs text-muted-foreground">Rows per page:</span>
+                                        <Select value={String(pageSize)} onValueChange={(v) => { setPageSize(Number(v)); setCurrentPage(1); }}>
+                                            <SelectTrigger className="w-16 h-8 text-xs bg-background border-border">
+                                                <SelectValue placeholder={String(pageSize)} />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {[5, 10, 20, 50, 100].map((size) => (
+                                                    <SelectItem key={size} value={String(size)}>{size}</SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div className="flex items-center gap-1.5">
+                                        <Button
+                                            variant="outline"
+                                            size="icon"
+                                            className="h-8 w-8"
+                                            onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+                                            disabled={currentPage === 1}
+                                        >
+                                            <ChevronLeft className="h-4 w-4" />
+                                        </Button>
+                                        <span className="text-xs font-semibold px-2">Page {currentPage} of {totalPages || 1}</span>
+                                        <Button
+                                            variant="outline"
+                                            size="icon"
+                                            className="h-8 w-8"
+                                            onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+                                            disabled={currentPage === totalPages || totalPages === 0}
+                                        >
+                                            <ChevronRight className="h-4 w-4" />
+                                        </Button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     ) : (
                         <div className="flex flex-col items-center justify-center py-16 text-sm text-muted-foreground">
@@ -508,7 +565,7 @@ export default function DowntimeLogsPage() {
                     {formFeedback.message && (
                         <Alert variant={formFeedback.type === "success" ? "default" : "destructive"} className="text-xs py-2 px-3">
                             <div className="flex gap-2 items-center">
-                                {formFeedback.type === "success" ? <CheckCircle2 className="w-4 h-4 text-emerald-500" /> : <AlertCircle className="w-4 h-4" />}
+                                {formFeedback.type === "success" ? <CheckCircle2 className="w-4 h-4 text-blue-500" /> : <AlertCircle className="w-4 h-4" />}
                                 <span className="text-xs font-semibold">{formFeedback.message}</span>
                             </div>
                         </Alert>
@@ -652,7 +709,7 @@ export default function DowntimeLogsPage() {
                             <Button type="button" variant="outline" size="sm" onClick={() => setModalOpen(false)} className="text-xs">
                                 Cancel
                             </Button>
-                            <Button type="submit" disabled={formSubmitting} className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs h-9">
+                            <Button type="submit" disabled={formSubmitting} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs h-9">
                                 {formSubmitting ? "Submitting..." : "Submit Log"}
                             </Button>
                         </DialogFooter>
