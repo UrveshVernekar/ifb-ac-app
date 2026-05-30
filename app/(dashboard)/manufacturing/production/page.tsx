@@ -42,6 +42,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import Link from "next/link";
+import { Badge } from "@/components/ui/badge";
 
 const API_HOST = "http://10.0.7.26:3003";
 
@@ -100,6 +101,7 @@ export default function ProductionDashboardPage() {
     const [downtimeData, setDowntimeData] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [searchTerm, setSearchTerm] = useState("");
 
     // Pagination states
     const [modelDetailsPage, setModelDetailsPage] = useState(1);
@@ -113,15 +115,27 @@ export default function ProductionDashboardPage() {
         setModelDetailsPage(1);
         setModelDataPage(1);
         setDowntimePage(1);
-    }, [area, fromDate, toDate, selectedLines, selectedSubMachines]);
+    }, [area, fromDate, toDate, selectedLines, selectedSubMachines, searchTerm]);
+
+    const filteredModelDetails = useMemo(() => {
+        if (!data?.modelDetails) return [];
+        return data.modelDetails.filter((row: any) => {
+            const code = row.modelCode || row.model_code || row["MODEL CODE"] || "";
+            const name = row.modelName || row.model_name || row["MODEL NAME"] || "";
+            const desc = row.model_description || row.modelDescription || "";
+            const term = searchTerm.toLowerCase();
+            return String(code).toLowerCase().includes(term) ||
+                String(name).toLowerCase().includes(term) ||
+                String(desc).toLowerCase().includes(term);
+        });
+    }, [data?.modelDetails, searchTerm]);
 
     const paginatedModelDetails = useMemo(() => {
-        if (!data?.modelDetails) return [];
         const startIndex = (modelDetailsPage - 1) * modelDetailsPageSize;
-        return data.modelDetails.slice(startIndex, startIndex + modelDetailsPageSize);
-    }, [data?.modelDetails, modelDetailsPage, modelDetailsPageSize]);
+        return filteredModelDetails.slice(startIndex, startIndex + modelDetailsPageSize);
+    }, [filteredModelDetails, modelDetailsPage, modelDetailsPageSize]);
 
-    const totalModelDetailsPages = Math.ceil((data?.modelDetails?.length || 0) / modelDetailsPageSize);
+    const totalModelDetailsPages = Math.ceil(filteredModelDetails.length / modelDetailsPageSize);
 
     const paginatedModelData = useMemo(() => {
         if (!data?.modelData) return [];
@@ -157,12 +171,17 @@ export default function ProductionDashboardPage() {
         setFromDate(fDate);
         setToDate(tDate);
 
-        // Prepopulate lines based on area
+        // Prepopulate lines based on area and saved selection
         if (activeArea === "ASSEMBLY LINES") {
-            setSelectedLines(["ODU-Line"]);
+            const savedLines = sessionStorage.getItem("manufacturingMachines") || "ODU-Line";
+            setSelectedLines(savedLines.split(","));
         } else if (activeArea === "STAMPING") {
+            const savedLines = sessionStorage.getItem("subMachineSession") || "315T-A,315T-B,315T-C,315T-D,315T-E,200T-A,200T-B,200T-C,200T-D,200T-E,110T";
+            setSelectedSubMachines(savedLines.split(","));
             setSelectedLines(["AUTO LINE", "TANDEM LINE"]);
         } else if (activeArea === "COILSHOP") {
+            const savedLines = sessionStorage.getItem("subMachineSession") || "1";
+            setSelectedSubMachines(savedLines.split(","));
             setSelectedLines(["COILSHOP IDU"]);
         }
     }, []);
@@ -234,16 +253,19 @@ export default function ProductionDashboardPage() {
 
         if (newArea === "ASSEMBLY LINES") {
             setSelectedLines(["ODU-Line"]);
+            sessionStorage.setItem("manufacturingMachines", "ODU-Line");
         } else if (newArea === "STAMPING") {
             setSelectedLines(["AUTO LINE", "TANDEM LINE"]);
             // Autofill submachines
             const allSub = [...stampingAutoOptions, ...stampingTandemOptions];
             setSelectedSubMachines(allSub);
             setStampingActiveMachine(stampingAutoOptions[0]);
+            sessionStorage.setItem("subMachineSession", allSub.join(","));
         } else if (newArea === "COILSHOP") {
             setSelectedLines(["COILSHOP IDU"]);
             const allCSIDU = coilshopIDUOptions.map(o => o.value);
             setSelectedSubMachines(allCSIDU);
+            sessionStorage.setItem("subMachineSession", allCSIDU.join(","));
         }
     };
 
@@ -260,6 +282,7 @@ export default function ProductionDashboardPage() {
             }
         }
         setSelectedLines(updatedLines);
+        sessionStorage.setItem("manufacturingMachines", updatedLines.join(","));
 
         // Reset or adjust submachines
         if (area === "STAMPING") {
@@ -267,6 +290,7 @@ export default function ProductionDashboardPage() {
             if (updatedLines.includes("AUTO LINE")) validSubs.push(...stampingAutoOptions);
             if (updatedLines.includes("TANDEM LINE")) validSubs.push(...stampingTandemOptions);
             setSelectedSubMachines(validSubs);
+            sessionStorage.setItem("subMachineSession", validSubs.join(","));
             if (validSubs.length > 0 && !validSubs.includes(stampingActiveMachine)) {
                 setStampingActiveMachine(validSubs[0]);
             }
@@ -275,6 +299,7 @@ export default function ProductionDashboardPage() {
             if (updatedLines.includes("COILSHOP IDU")) coilshopIDUOptions.forEach(o => validSubs.push(o.value));
             if (updatedLines.includes("COILSHOP ODU")) coilshopODUOptions.forEach(o => validSubs.push(o.value));
             setSelectedSubMachines(validSubs);
+            sessionStorage.setItem("subMachineSession", validSubs.join(","));
         }
     };
 
@@ -287,6 +312,7 @@ export default function ProductionDashboardPage() {
             updated.push(value);
         }
         setSelectedSubMachines(updated);
+        sessionStorage.setItem("subMachineSession", updated.join(","));
     };
 
     // Fetch live dashboard data
@@ -366,8 +392,8 @@ export default function ProductionDashboardPage() {
         };
 
         return (
-            <Card 
-                key={item.label} 
+            <Card
+                key={item.label}
                 className={`transition-all bg-card border-border/60 ${isClickable ? "cursor-pointer hover:shadow-md hover:border-blue-500/50 hover:-translate-y-0.5" : "hover:shadow-sm"}`}
                 onClick={handleClick}
             >
@@ -384,6 +410,28 @@ export default function ProductionDashboardPage() {
                 </CardContent>
             </Card>
         );
+    };
+
+    const isTodaySelected = useMemo(() => {
+        const today = new Date().toLocaleDateString("en-CA"); // "YYYY-MM-DD"
+        return fromDate === today && toDate === today;
+    }, [fromDate, toDate]);
+
+    const getAchievementBadge = (achieved: string, plan: number) => {
+        const value = parseFloat(achieved);
+        let variant = "";
+        if (value >= 100)
+            variant = "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200";
+        else if (value >= 70)
+            variant = "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200";
+        else
+            variant = "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200";
+
+        if (plan === 0) {
+            return "";
+        } else {
+            return <Badge className={variant}>{achieved}%</Badge>;
+        }
     };
 
     // Chart Configuration for Assembly Lines hourly
@@ -698,41 +746,107 @@ export default function ProductionDashboardPage() {
                                 {data.modelDetails && data.modelDetails.length > 0 && (
                                     <Card className="border-border/60 shadow-sm bg-card">
                                         <CardHeader className="pb-2">
-                                            <CardTitle className="text-md font-bold uppercase tracking-tight">Production Plans & Backflush</CardTitle>
+                                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                                                <div>
+                                                    <CardTitle className="text-gray-900 font-bold text-2xl dark:text-white">
+                                                        PRODUCTION PLAN
+                                                    </CardTitle>
+                                                </div>
+                                                <Input
+                                                    placeholder="Search model name or model code..."
+                                                    value={searchTerm}
+                                                    onChange={(e) => {
+                                                        setSearchTerm(e.target.value);
+                                                        setModelDetailsPage(1);
+                                                    }}
+                                                    className="w-full sm:w-64 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400"
+                                                />
+                                            </div>
                                         </CardHeader>
-                                        <CardContent className="pt-2">
-                                            <div className="overflow-x-auto">
+                                        <div className="p-6 pt-0">
+                                            <div className="rounded-md border border-gray-200 dark:border-gray-700 overflow-x-auto">
                                                 <Table>
                                                     <TableHeader>
-                                                        <TableRow>
-                                                            <TableHead className="text-xs uppercase font-bold tracking-wider">Sequence</TableHead>
-                                                            <TableHead className="text-xs uppercase font-bold tracking-wider">Model Code</TableHead>
-                                                            <TableHead className="text-xs uppercase font-bold tracking-wider">Model Name</TableHead>
-                                                            <TableHead className="text-xs uppercase font-bold tracking-wider text-right">Plan</TableHead>
-                                                            <TableHead className="text-xs uppercase font-bold tracking-wider text-right">Production</TableHead>
-                                                            <TableHead className="text-xs uppercase font-bold tracking-wider text-right">Achieved (%)</TableHead>
-                                                            <TableHead className="text-xs uppercase font-bold tracking-wider text-right">Back Flush</TableHead>
+                                                        <TableRow className="dark:border-gray-700">
+                                                            <TableHead className="text-gray-900 dark:text-gray-100">Seq</TableHead>
+                                                            <TableHead className="text-gray-900 dark:text-gray-100">Plan Order</TableHead>
+                                                            <TableHead className="text-gray-900 dark:text-gray-100">Model Code</TableHead>
+                                                            <TableHead className="text-gray-900 dark:text-gray-100">Model Description</TableHead>
+                                                            <TableHead className="text-gray-900 dark:text-gray-100">Model Name</TableHead>
+                                                            <TableHead className="text-center text-gray-900 dark:text-gray-100">Plan</TableHead>
+                                                            <TableHead className="text-center text-gray-900 dark:text-gray-100">Initial</TableHead>
+                                                            <TableHead className="text-center text-gray-900 dark:text-gray-100">Prod</TableHead>
+                                                            <TableHead className="text-center text-gray-900 dark:text-gray-100">Backflush</TableHead>
+                                                            <TableHead className="text-center text-gray-900 dark:text-gray-100">Progress</TableHead>
+                                                            <TableHead className="text-center text-gray-900 dark:text-gray-100">Achieved (%)</TableHead>
                                                         </TableRow>
                                                     </TableHeader>
                                                     <TableBody>
                                                         {paginatedModelDetails.map((row, rIdx) => {
-                                                            const plan = row.plan || row.PLAN || 0;
-                                                            const prod = row.production || row.PRODUCTION || 0;
-                                                            const percent = plan > 0 ? ((prod / plan) * 100).toFixed(1) : "0.0";
+                                                            const plan = Number(row.plan || row.PLAN || 0);
+                                                            const prod = Number(row.production || row.PRODUCTION || 0);
+                                                            const initial = Number(row.initial_count || row.initialCount || row.INITIAL_COUNT || 0);
+                                                            const bf = Number(row.backFlush || row.back_flush || row.backflush || row["BACK FLUSH"] || 0);
+
                                                             const code = row.modelCode || row.model_code || row["MODEL CODE"] || "";
                                                             const name = row.modelName || row.model_name || row["MODEL NAME"] || "";
+                                                            const desc = row.model_description || row.modelDescription || row["MODEL DESCRIPTION"] || "-";
                                                             const seq = row.sequence || row.seq || row.SEQUENCE || ((modelDetailsPage - 1) * modelDetailsPageSize + rIdx + 1);
-                                                            const bf = row.backFlush || row.back_flush || row["BACK FLUSH"] || 0;
+                                                            const planOrder = row.planOrder || row.plan_order || row.PLAN_ORDER || "-";
+
+                                                            const percent = plan > 0 ? ((prod / plan) * 100).toFixed(1) : "0.0";
+                                                            const achievedStr = row.achieved || percent;
+
+                                                            let progress = 0;
+                                                            if (plan === 0) {
+                                                                progress = prod > 0 ? (bf / prod) * 100 : 0;
+                                                            } else {
+                                                                progress = (prod / plan) * 100;
+                                                            }
+
+                                                            const isRunning = data.runningModel && String(code) === String(data.runningModel) && isTodaySelected && plan !== prod;
 
                                                             return (
-                                                                <TableRow key={rIdx} className={row.model_code === data.runningModel ? "bg-blue-500/5 font-semibold" : ""}>
-                                                                    <TableCell className="text-xs py-2">{seq}</TableCell>
-                                                                    <TableCell className="text-xs py-2">{code}</TableCell>
-                                                                    <TableCell className="text-xs py-2">{name} {row.model_code === data.runningModel && <span className="text-[10px] bg-blue-500/10 text-blue-500 px-1.5 py-0.5 rounded ml-2">RUNNING</span>}</TableCell>
-                                                                    <TableCell className="text-xs py-2 text-right">{plan}</TableCell>
-                                                                    <TableCell className="text-xs py-2 text-right">{prod}</TableCell>
-                                                                    <TableCell className="text-xs py-2 text-right">{percent}%</TableCell>
-                                                                    <TableCell className="text-xs py-2 text-right">{bf}</TableCell>
+                                                                <TableRow
+                                                                    key={rIdx}
+                                                                    className={`dark:border-gray-700 transition-colors duration-200
+                                                                        ${isRunning ? "row-breathe font-semibold border-l-2 border-blue-500" : "hover:bg-gray-50 dark:hover:bg-gray-800"}
+                                                                    `}
+                                                                >
+                                                                    <TableCell className="font-medium text-gray-900 dark:text-white">{seq}</TableCell>
+                                                                    <TableCell className="text-gray-900 dark:text-white">{planOrder}</TableCell>
+                                                                    <TableCell className="text-gray-900 dark:text-white">{code}</TableCell>
+                                                                    <TableCell className="text-gray-900 dark:text-white max-w-xs truncate" title={name}>{name}</TableCell>
+                                                                    <TableCell className="text-gray-900 dark:text-white max-w-xs truncate" title={desc}>
+                                                                        {desc} {isRunning && <span className="text-[10px] bg-blue-500/10 text-blue-500 px-1.5 py-0.5 rounded ml-2 animate-pulse font-bold">RUNNING</span>}
+                                                                    </TableCell>
+                                                                    <TableCell className="text-center font-medium text-gray-900 dark:text-white">{plan.toLocaleString()}</TableCell>
+                                                                    <TableCell className="text-center font-medium text-gray-900 dark:text-white">{initial.toLocaleString()}</TableCell>
+                                                                    <TableCell className="text-center font-medium text-gray-900 dark:text-white">{prod.toLocaleString()}</TableCell>
+                                                                    <TableCell className="text-center text-gray-900 dark:text-white">{bf.toLocaleString()}</TableCell>
+                                                                    <TableCell>
+                                                                        <div className="flex items-center justify-center gap-2">
+                                                                            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 max-w-24">
+                                                                                <div
+                                                                                    className={`h-2 rounded-full transition-all ${progress >= 100
+                                                                                        ? "bg-green-600"
+                                                                                        : progress >= 75
+                                                                                            ? "bg-blue-600"
+                                                                                            : progress >= 50
+                                                                                                ? "bg-yellow-600"
+                                                                                                : "bg-red-600"
+                                                                                        }`}
+                                                                                    style={{ width: `${Math.min(progress, 100)}%` }}
+                                                                                />
+                                                                            </div>
+                                                                            <span className="text-xs text-gray-600 dark:text-gray-400 w-12 text-right">
+                                                                                {progress.toFixed(0)}%
+                                                                            </span>
+                                                                        </div>
+                                                                    </TableCell>
+                                                                    <TableCell className="text-center">
+                                                                        {getAchievementBadge(achievedStr, plan)}
+                                                                    </TableCell>
                                                                 </TableRow>
                                                             );
                                                         })}
@@ -743,7 +857,7 @@ export default function ProductionDashboardPage() {
                                             {/* Pagination UI */}
                                             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-4 pt-4 border-t text-xs">
                                                 <span className="text-xs text-muted-foreground">
-                                                    Showing {data.modelDetails.length > 0 ? (modelDetailsPage - 1) * modelDetailsPageSize + 1 : 0} to {Math.min(modelDetailsPage * modelDetailsPageSize, data.modelDetails.length)} of {data.modelDetails.length} entries
+                                                    Showing {filteredModelDetails.length > 0 ? (modelDetailsPage - 1) * modelDetailsPageSize + 1 : 0} to {Math.min(modelDetailsPage * modelDetailsPageSize, filteredModelDetails.length)} of {filteredModelDetails.length} entries
                                                 </span>
                                                 <div className="flex flex-wrap items-center gap-4">
                                                     <div className="flex items-center gap-2">
@@ -782,7 +896,7 @@ export default function ProductionDashboardPage() {
                                                     </div>
                                                 </div>
                                             </div>
-                                        </CardContent>
+                                        </div>
                                     </Card>
                                 )}
                             </>
@@ -794,12 +908,11 @@ export default function ProductionDashboardPage() {
                                 {/* Stamping charts – expand to full width when only one chart has data */}
                                 {(data.hourlyChartData && Object.keys(data.hourlyChartData).length > 0) ||
                                     (data.machineTrendData && data.machineTrendData.length > 0) ? (
-                                    <div className={`grid gap-6 ${
-                                        (data.hourlyChartData && Object.keys(data.hourlyChartData).length > 0) &&
+                                    <div className={`grid gap-6 ${(data.hourlyChartData && Object.keys(data.hourlyChartData).length > 0) &&
                                         (data.machineTrendData && data.machineTrendData.length > 0)
-                                            ? "grid-cols-1 lg:grid-cols-2"
-                                            : "grid-cols-1"
-                                    }`}>
+                                        ? "grid-cols-1 lg:grid-cols-2"
+                                        : "grid-cols-1"
+                                        }`}>
                                         {/* Machine Hourly Trend */}
                                         {data.hourlyChartData && Object.keys(data.hourlyChartData).length > 0 && (
                                             <Card className="border-border/60 shadow-sm bg-card">

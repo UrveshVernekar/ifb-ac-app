@@ -153,3 +153,16 @@
     @apply bg-muted;
   }
 }
+
+@keyframes row-breathe {
+  0%, 100% {
+    background-color: rgba(59, 130, 246, 0.03);
+  }
+  50% {
+    background-color: rgba(59, 130, 246, 0.14);
+  }
+}
+
+.row-breathe, .row-breathe td {
+  animation: row-breathe 2.5s ease-in-out infinite !important;
+}

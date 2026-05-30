@@ -22,10 +22,16 @@ export default function DashboardLayout({
         if (!auth) {
             router.replace('/login');
         } else {
-            setIsAuthenticated(true);
-            if (typeof window !== 'undefined' && window.innerWidth < 768) {
-                setSidebarCollapsed(true);
-            }
+            const timer = setTimeout(() => {
+                setIsAuthenticated(true);
+                const saved = localStorage.getItem('sidebarCollapsed');
+                if (saved !== null) {
+                    setSidebarCollapsed(saved === 'true');
+                } else if (window.innerWidth < 768) {
+                    setSidebarCollapsed(true);
+                }
+            }, 0);
+            return () => clearTimeout(timer);
         }
     }, [router]);
 
@@ -34,19 +40,42 @@ export default function DashboardLayout({
         const handleResize = () => {
             if (window.innerWidth < 768) {
                 setSidebarCollapsed(true);
+            } else {
+                const saved = localStorage.getItem('sidebarCollapsed');
+                if (saved !== null) {
+                    setSidebarCollapsed(saved === 'true');
+                } else {
+                    setSidebarCollapsed(false);
+                }
             }
         };
-        handleResize();
+        const timer = setTimeout(() => {
+            handleResize();
+        }, 0);
         window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
+        return () => {
+            clearTimeout(timer);
+            window.removeEventListener('resize', handleResize);
+        };
     }, []);
 
     // Automatically collapse sidebar on mobile when route changes
     useEffect(() => {
         if (typeof window !== 'undefined' && window.innerWidth < 768) {
-            setSidebarCollapsed(true);
+            const timer = setTimeout(() => {
+                setSidebarCollapsed(true);
+            }, 0);
+            return () => clearTimeout(timer);
         }
     }, [pathname]);
+
+    const toggleSidebar = () => {
+        setSidebarCollapsed(prev => {
+            const nextVal = !prev;
+            localStorage.setItem('sidebarCollapsed', String(nextVal));
+            return nextVal;
+        });
+    };
 
     if (!isAuthenticated) {
         return (
@@ -60,12 +89,12 @@ export default function DashboardLayout({
         <div className="flex h-screen overflow-hidden bg-background text-foreground">
             <Sidebar
                 collapsed={sidebarCollapsed}
-                onCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
+                onCollapse={toggleSidebar}
             />
 
             <div className="flex-1 flex flex-col overflow-hidden">
                 <Topbar
-                    onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)}
+                    onToggleSidebar={toggleSidebar}
                     collapsed={sidebarCollapsed}
                 />
 
