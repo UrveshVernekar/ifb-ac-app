@@ -19,7 +19,7 @@ export default function ProfileDropdown() {
         if (!loginData) return { name: 'User', role: 'Employee' };
         try {
             const parsed = JSON.parse(loginData);
-            return { name: parsed?.name || 'User', role: parsed?.company || 'Employee' };
+            return { name: parsed?.name || 'User', role: parsed?.depart || 'Employee' };
         } catch {
             return { name: 'User', role: 'Employee' };
         }
