@@ -75,7 +75,7 @@ interface ApiResponse {
         modelDetails?: any[];
         runningModel?: number;
         dailyData?: { date: string; count: number }[];
-        machineTrendData?: { name: string; count?: number; value?: number;[key: string]: any }[];
+        machineTrendData?: any;
         modelData?: any[];
         singleDay?: boolean;
         hourlyChartData?: Record<string, { labels: string[]; counts: number[]; hourlyTarget: number[] }>;
@@ -263,16 +263,16 @@ export default function ProductionDashboardPage() {
             sessionStorage.setItem("subMachineSession", allSub.join(","));
         } else if (newArea === "COILSHOP") {
             setSelectedLines(["COILSHOP IDU"]);
-            const allCSIDU = coilshopIDUOptions.map(o => o.value);
-            setSelectedSubMachines(allCSIDU);
-            sessionStorage.setItem("subMachineSession", allCSIDU.join(","));
+            const firstCSIDU = coilshopIDUOptions[0].value;
+            setSelectedSubMachines([firstCSIDU]);
+            sessionStorage.setItem("subMachineSession", firstCSIDU);
         }
     };
 
     // Main lines change handler
     const handleLineSelect = (line: string) => {
         let updatedLines = [...selectedLines];
-        if (area === "ASSEMBLY LINES") {
+        if (area === "ASSEMBLY LINES" || area === "COILSHOP") {
             updatedLines = [line];
         } else {
             if (updatedLines.includes(line)) {
@@ -295,9 +295,9 @@ export default function ProductionDashboardPage() {
                 setStampingActiveMachine(validSubs[0]);
             }
         } else if (area === "COILSHOP") {
-            const validSubs: string[] = [];
-            if (updatedLines.includes("COILSHOP IDU")) coilshopIDUOptions.forEach(o => validSubs.push(o.value));
-            if (updatedLines.includes("COILSHOP ODU")) coilshopODUOptions.forEach(o => validSubs.push(o.value));
+            let validSubs: string[] = [];
+            if (updatedLines.includes("COILSHOP IDU")) validSubs.push(coilshopIDUOptions[0].value);
+            if (updatedLines.includes("COILSHOP ODU")) validSubs.push(coilshopODUOptions[0].value);
             setSelectedSubMachines(validSubs);
             sessionStorage.setItem("subMachineSession", validSubs.join(","));
         }
@@ -306,10 +306,14 @@ export default function ProductionDashboardPage() {
     // Sub machine toggle handler
     const handleSubMachineToggle = (value: string) => {
         let updated = [...selectedSubMachines];
-        if (updated.includes(value)) {
-            updated = updated.filter(v => v !== value);
+        if (area === "COILSHOP") {
+            updated = [value];
         } else {
-            updated.push(value);
+            if (updated.includes(value)) {
+                updated = updated.filter(v => v !== value);
+            } else {
+                updated.push(value);
+            }
         }
         setSelectedSubMachines(updated);
         sessionStorage.setItem("subMachineSession", updated.join(","));
@@ -456,6 +460,46 @@ export default function ProductionDashboardPage() {
         }));
     }, [data, stampingActiveMachine]);
 
+    // Transform machineTrendData if it is in ECharts format
+    const transformedMachineTrendData = useMemo(() => {
+        if (!data?.machineTrendData) return [];
+        if (Array.isArray(data.machineTrendData)) {
+            return data.machineTrendData;
+        }
+        if (typeof data.machineTrendData === 'object') {
+            const echartsData = data.machineTrendData as any;
+            if (Array.isArray(echartsData.data) && echartsData.data.length > 0) {
+                const headers = echartsData.data[0];
+                if (Array.isArray(headers)) {
+                    return echartsData.data.slice(1).map((row: any[]) => {
+                        const obj: Record<string, any> = {};
+                        headers.forEach((header, idx) => {
+                            obj[header] = row[idx];
+                        });
+                        return obj;
+                    });
+                }
+            }
+        }
+        return [];
+    }, [data?.machineTrendData]);
+
+    // Compute dynamic keys for Coilshop stacked chart
+    const coilshopChartKeys = useMemo(() => {
+        if (!Array.isArray(transformedMachineTrendData) || transformedMachineTrendData.length === 0) return [];
+        const firstItem = transformedMachineTrendData[0];
+        if (!firstItem) return [];
+        const exclude = ['machine', 'date', 'name', 'count', 'value'];
+        return Object.keys(firstItem).filter(key => !exclude.includes(key));
+    }, [transformedMachineTrendData]);
+
+    const xAxisKey = useMemo(() => {
+        if (!Array.isArray(transformedMachineTrendData) || transformedMachineTrendData.length === 0) return "machine";
+        return transformedMachineTrendData[0]?.date ? "date" : "machine";
+    }, [transformedMachineTrendData]);
+
+    const chartColors = ["#f97316", "#10b981", "#ef4444", "#3b82f6", "#8b5cf6", "#ec4899"];
+
     return (
         <div className="space-y-6 max-w-8xl mx-auto p-2">
             {/* Header section */}
@@ -523,6 +567,14 @@ export default function ProductionDashboardPage() {
                         <Button onClick={fetchData} variant="secondary" size="sm" className="h-9 gap-1 text-xs">
                             <RefreshCw className="w-3.5 h-3.5" /> Reload
                         </Button>
+
+                        {area === "COILSHOP" && (
+                            <Link href="/manufacturing/production/coilshop-entry">
+                                <Button variant="default" size="sm" className="h-9 gap-1 text-xs bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm ml-2">
+                                    <Edit className="w-3.5 h-3.5" /> Data Entry
+                                </Button>
+                            </Link>
+                        )}
                     </div>
                 )}
             </div>
@@ -901,20 +953,19 @@ export default function ProductionDashboardPage() {
                                 )}
                             </>
                         )}
-
                         {/* SECTION: STAMPING TRENDS & MACHINE WISE VIEWS */}
                         {area === "STAMPING" && (
                             <>
                                 {/* Stamping charts – expand to full width when only one chart has data */}
-                                {(data.hourlyChartData && Object.keys(data.hourlyChartData).length > 0) ||
-                                    (data.machineTrendData && data.machineTrendData.length > 0) ? (
-                                    <div className={`grid gap-6 ${(data.hourlyChartData && Object.keys(data.hourlyChartData).length > 0) &&
-                                        (data.machineTrendData && data.machineTrendData.length > 0)
+                                {(fromDate === toDate && data.hourlyChartData && Object.keys(data.hourlyChartData).length > 0) ||
+                                    (transformedMachineTrendData && transformedMachineTrendData.length > 0) ? (
+                                    <div className={`grid gap-6 ${(fromDate === toDate && data.hourlyChartData && Object.keys(data.hourlyChartData).length > 0) &&
+                                        (transformedMachineTrendData && transformedMachineTrendData.length > 0)
                                         ? "grid-cols-1 lg:grid-cols-2"
                                         : "grid-cols-1"
                                         }`}>
                                         {/* Machine Hourly Trend */}
-                                        {data.hourlyChartData && Object.keys(data.hourlyChartData).length > 0 && (
+                                        {fromDate === toDate && data.hourlyChartData && Object.keys(data.hourlyChartData).length > 0 && (
                                             <Card className="border-border/60 shadow-sm bg-card">
                                                 <CardHeader className="pb-2 flex flex-row items-center justify-between space-y-0 flex-wrap gap-2">
                                                     <div>
@@ -956,23 +1007,45 @@ export default function ProductionDashboardPage() {
                                         )}
 
                                         {/* Machine-wise production overview */}
-                                        {data.machineTrendData && data.machineTrendData.length > 0 && (
+                                        {transformedMachineTrendData && transformedMachineTrendData.length > 0 && (
                                             <Card className="border-border/60 shadow-sm bg-card">
                                                 <CardHeader className="pb-2">
-                                                    <CardTitle className="text-md font-bold uppercase tracking-tight">Machine-Wise Production</CardTitle>
-                                                    <CardDescription className="text-xs">Comparative machine outputs</CardDescription>
+                                                    <CardTitle className="text-md font-bold uppercase tracking-tight">
+                                                        {fromDate === toDate ? "Machine-Wise Production" : "Daily Production Trend"}
+                                                    </CardTitle>
+                                                    <CardDescription className="text-xs">
+                                                        {fromDate === toDate ? "Comparative machine outputs" : "Machine output trend over date range"}
+                                                    </CardDescription>
                                                 </CardHeader>
                                                 <CardContent className="pt-2">
                                                     <div className="h-64 w-full">
                                                         <ChartContainer config={{}} className="h-full w-full">
-                                                            <BarChart data={data.machineTrendData} margin={{ top: 15, right: 10, left: -10, bottom: 0 }}>
+                                                            <BarChart data={transformedMachineTrendData} margin={{ top: 15, right: 10, left: -10, bottom: 0 }}>
                                                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDark ? "#27272a" : "#f4f4f5"} />
-                                                                <XAxis dataKey="machine" tick={{ fontSize: 10, fill: isDark ? "#a1a1aa" : "#71717a" }} stroke={isDark ? "#27272a" : "#e4e4e7"} />
+                                                                <XAxis dataKey={xAxisKey} tick={{ fontSize: 10, fill: isDark ? "#a1a1aa" : "#71717a" }} stroke={isDark ? "#27272a" : "#e4e4e7"} />
                                                                 <YAxis tick={{ fontSize: 10, fill: isDark ? "#a1a1aa" : "#71717a" }} stroke={isDark ? "#27272a" : "#e4e4e7"} />
                                                                 <ChartTooltip content={<ChartTooltipContent />} />
-                                                                <Bar dataKey="count" name="Output" fill="#8b5cf6" radius={[3, 3, 0, 0]}>
-                                                                    <LabelList dataKey="count" position="top" style={{ fontSize: 8, fill: isDark ? "#f4f4f5" : "#18181b" }} />
-                                                                </Bar>
+                                                                <Legend verticalAlign="top" height={36} wrapperStyle={{ fontSize: '12px', fontWeight: 'bold' }} />
+                                                                {coilshopChartKeys.length > 0 ? (
+                                                                    coilshopChartKeys.map((key, idx) => {
+                                                                        const seriesItem = (data?.machineTrendData as any)?.series?.[idx];
+                                                                        const isStacked = seriesItem && seriesItem.stack;
+                                                                        return (
+                                                                            <Bar
+                                                                                key={key}
+                                                                                dataKey={key}
+                                                                                name={key.toUpperCase()}
+                                                                                stackId={isStacked ? "a" : undefined}
+                                                                                fill={chartColors[idx % chartColors.length]}
+                                                                                radius={!isStacked || idx === coilshopChartKeys.length - 1 ? [3, 3, 0, 0] : [0, 0, 0, 0]}
+                                                                            />
+                                                                        );
+                                                                    })
+                                                                ) : (
+                                                                    <Bar dataKey="count" name="Output" fill="#8b5cf6" radius={[3, 3, 0, 0]}>
+                                                                        <LabelList dataKey="count" position="top" style={{ fontSize: 8, fill: isDark ? "#f4f4f5" : "#18181b" }} />
+                                                                    </Bar>
+                                                                )}
                                                             </BarChart>
                                                         </ChartContainer>
                                                     </div>
@@ -981,7 +1054,6 @@ export default function ProductionDashboardPage() {
                                         )}
                                     </div>
                                 ) : null}
-
 
                                 {/* Model-wise production log */}
                                 {data.modelData && data.modelData.length > 0 && (
@@ -1010,9 +1082,9 @@ export default function ProductionDashboardPage() {
                                                                 <TableCell className="text-xs py-2">{row.date || row.DATE || ""}</TableCell>
                                                                 <TableCell className="text-xs py-2">{row.line || row.LINE || ""}</TableCell>
                                                                 <TableCell className="text-xs py-2">{row.machine || row.MACHINE || ""}</TableCell>
-                                                                <TableCell className="text-xs py-2">{row.modelName || row.model_name || row["MODEL NAME"] || ""}</TableCell>
-                                                                <TableCell className="text-xs py-2">{row.startTime || row.start_time || row["START TIME"] || ""}</TableCell>
-                                                                <TableCell className="text-xs py-2">{row.endTime || row.end_time || row["END TIME"] || ""}</TableCell>
+                                                                <TableCell className="text-xs py-2">{row.modelName || row.model_name || row.modelname || row["MODEL NAME"] || ""}</TableCell>
+                                                                <TableCell className="text-xs py-2">{row.startTime || row.starttime || row.start_time || row["START TIME"] || ""}</TableCell>
+                                                                <TableCell className="text-xs py-2">{row.endTime || row.endtime || row.end_time || row["END TIME"] || ""}</TableCell>
                                                                 <TableCell className="text-xs py-2 text-right font-semibold">{row.count || row.COUNT || 0}</TableCell>
                                                                 <TableCell className="text-xs py-2 text-right">{row.spm || row.SPM || 0}</TableCell>
                                                             </TableRow>
@@ -1073,7 +1145,7 @@ export default function ProductionDashboardPage() {
                         {area === "COILSHOP" && (
                             <>
                                 {/* Coilshop machine trend */}
-                                {data.machineTrendData && data.machineTrendData.length > 0 && (
+                                {transformedMachineTrendData && transformedMachineTrendData.length > 0 && (
                                     <Card className="border-border/60 shadow-sm bg-card">
                                         <CardHeader className="pb-2">
                                             <CardTitle className="text-md font-bold uppercase tracking-tight">Machine-Wise Production Trend</CardTitle>
@@ -1082,14 +1154,32 @@ export default function ProductionDashboardPage() {
                                         <CardContent className="pt-2">
                                             <div className="h-72 w-full">
                                                 <ChartContainer config={{}} className="h-full w-full">
-                                                    <BarChart data={data.machineTrendData} margin={{ top: 20, right: 10, left: -10, bottom: 0 }}>
+                                                    <BarChart data={transformedMachineTrendData} margin={{ top: 20, right: 10, left: -10, bottom: 0 }}>
                                                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDark ? "#27272a" : "#f4f4f5"} />
-                                                        <XAxis dataKey="machine" tick={{ fontSize: 10, fill: isDark ? "#a1a1aa" : "#71717a" }} stroke={isDark ? "#27272a" : "#e4e4e7"} />
+                                                        <XAxis dataKey={xAxisKey} tick={{ fontSize: 10, fill: isDark ? "#a1a1aa" : "#71717a" }} stroke={isDark ? "#27272a" : "#e4e4e7"} />
                                                         <YAxis tick={{ fontSize: 10, fill: isDark ? "#a1a1aa" : "#71717a" }} stroke={isDark ? "#27272a" : "#e4e4e7"} />
                                                         <ChartTooltip content={<ChartTooltipContent />} />
-                                                        <Bar dataKey="count" name="Output" fill="#06b6d4" radius={[3, 3, 0, 0]}>
-                                                            <LabelList dataKey="count" position="top" style={{ fontSize: 8, fill: isDark ? "#f4f4f5" : "#18181b" }} />
-                                                        </Bar>
+                                                        <Legend verticalAlign="top" height={36} wrapperStyle={{ fontSize: '12px', fontWeight: 'bold' }} />
+                                                        {coilshopChartKeys.length > 0 ? (
+                                                            coilshopChartKeys.map((key, idx) => {
+                                                                const seriesItem = (data?.machineTrendData as any)?.series?.[idx];
+                                                                const isStacked = (seriesItem && seriesItem.stack) || area === "COILSHOP";
+                                                                return (
+                                                                    <Bar
+                                                                        key={key}
+                                                                        dataKey={key}
+                                                                        name={key.toUpperCase()}
+                                                                        stackId={isStacked ? "a" : undefined}
+                                                                        fill={chartColors[idx % chartColors.length]}
+                                                                        radius={!isStacked || idx === coilshopChartKeys.length - 1 ? [3, 3, 0, 0] : [0, 0, 0, 0]}
+                                                                    />
+                                                                );
+                                                            })
+                                                        ) : (
+                                                            <Bar dataKey="count" name="Output" fill="#06b6d4" radius={[3, 3, 0, 0]}>
+                                                                <LabelList dataKey="count" position="top" style={{ fontSize: 8, fill: isDark ? "#f4f4f5" : "#18181b" }} />
+                                                            </Bar>
+                                                        )}
                                                     </BarChart>
                                                 </ChartContainer>
                                             </div>
@@ -1128,7 +1218,7 @@ export default function ProductionDashboardPage() {
                                                                 <TableCell className="text-xs py-2">{row.shift || row.SHIFT || ""}</TableCell>
                                                                 <TableCell className="text-xs py-2">{row.line || row.LINE || ""}</TableCell>
                                                                 <TableCell className="text-xs py-2">{row.machine || row.MACHINE || ""}</TableCell>
-                                                                <TableCell className="text-xs py-2">{row.modelName || row.model_name || row["MODEL NAME"] || ""}</TableCell>
+                                                                <TableCell className="text-xs py-2">{row.modelName || row.modelname || row.model_name || row["MODEL NAME"] || ""}</TableCell>
                                                                 <TableCell className="text-xs py-2 text-right">{row.plan || row.PLAN || 0}</TableCell>
                                                                 <TableCell className="text-xs py-2 text-right font-semibold">{row.production || row.PRODUCTION || 0}</TableCell>
                                                                 <TableCell className="text-xs py-2 text-right">{row.a || row.A || 0}%</TableCell>
