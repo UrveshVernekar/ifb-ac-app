@@ -259,7 +259,7 @@ export default function DowntimeDetailsPage({ params }: { params: Promise<{ id: 
 
     if (loading) {
         return (
-            <div className="space-y-6 max-w-7xl mx-auto p-2">
+            <div className="space-y-6 max-w-8xl mx-auto p-2">
                 <Skeleton className="h-10 w-44" />
                 <Skeleton className="h-64 w-full" />
             </div>
@@ -268,7 +268,7 @@ export default function DowntimeDetailsPage({ params }: { params: Promise<{ id: 
 
     if (error || !record) {
         return (
-            <div className="space-y-6 max-w-7xl mx-auto p-2">
+            <div className="space-y-6 max-w-8xl mx-auto p-2">
                 <Link href="/manufacturing/downtime-logs">
                     <Button variant="outline" size="sm"><ArrowLeft className="w-4 h-4 mr-2" /> Back</Button>
                 </Link>
@@ -289,7 +289,7 @@ export default function DowntimeDetailsPage({ params }: { params: Promise<{ id: 
     const canEdit = !isApproved && !isRejected && (isPersonInCharge || isDepartmentInCharge);
 
     return (
-        <div className="space-y-6 max-w-7xl mx-auto p-2">
+        <div className="space-y-6 max-w-8xl mx-auto p-2">
             {/* Action Bar Header */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div className="flex items-center gap-3">
@@ -402,13 +402,12 @@ export default function DowntimeDetailsPage({ params }: { params: Promise<{ id: 
                         </div>
                         <div className="col-span-2 md:col-span-1">
                             <span className="text-muted-foreground block font-medium uppercase tracking-wider text-[10px]">Status</span>
-                            <span className={`px-1.5 py-0.5 rounded font-bold text-[9px] inline-block mt-0.5 ${
-                                isApproved 
-                                    ? "bg-blue-500/10 text-blue-500 border border-blue-500/20" 
-                                    : isRejected 
-                                        ? "bg-rose-500/10 text-rose-500 border border-rose-500/20" 
-                                        : "bg-amber-500/10 text-amber-500 border border-amber-500/20"
-                            }`}>
+                            <span className={`px-1.5 py-0.5 rounded font-bold text-[9px] inline-block mt-0.5 ${isApproved
+                                ? "bg-blue-500/10 text-blue-500 border border-blue-500/20"
+                                : isRejected
+                                    ? "bg-rose-500/10 text-rose-500 border border-rose-500/20"
+                                    : "bg-amber-500/10 text-amber-500 border border-amber-500/20"
+                                }`}>
                                 {isApproved ? "CLOSED & APPROVED" : isRejected ? "REJECTED" : "OPEN / PENDING APPROVAL"}
                             </span>
                         </div>

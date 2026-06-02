@@ -344,7 +344,7 @@ export default function DowntimeLogsPage() {
     };
 
     return (
-        <div className="space-y-6 max-w-7xl mx-auto p-2">
+        <div className="space-y-6 max-w-8xl mx-auto p-2">
             {/* Header section */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div className="flex items-center gap-3">

@@ -193,7 +193,7 @@ export default function ProcessValidationDownloadPage({ params }: { params: Prom
 
     if (loading) {
         return (
-            <div className="space-y-6 max-w-7xl mx-auto p-2">
+            <div className="space-y-6 max-w-8xl mx-auto p-2">
                 <Skeleton className="h-10 w-44" />
                 <Skeleton className="h-96 w-full" />
             </div>
@@ -202,7 +202,7 @@ export default function ProcessValidationDownloadPage({ params }: { params: Prom
 
     if (error || !data) {
         return (
-            <div className="space-y-6 max-w-7xl mx-auto p-2">
+            <div className="space-y-6 max-w-8xl mx-auto p-2">
                 <Link href="/manufacturing/process-validation">
                     <Button variant="outline" size="sm"><ArrowLeft className="w-4 h-4 mr-2" /> Back</Button>
                 </Link>
@@ -235,7 +235,7 @@ export default function ProcessValidationDownloadPage({ params }: { params: Prom
     const plantHead = data.approvals?.find((a: any) => a.department === "Plant Head");
 
     return (
-        <div className="space-y-6 max-w-7xl mx-auto p-2">
+        <div className="space-y-6 max-w-8xl mx-auto p-2">
             {/* Header controls bar */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div className="flex items-center gap-3">

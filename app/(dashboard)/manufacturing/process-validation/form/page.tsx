@@ -429,7 +429,7 @@ function FormContent() {
 
     if (fetchingEditData) {
         return (
-            <div className="space-y-6 max-w-7xl mx-auto p-2">
+            <div className="space-y-6 max-w-8xl mx-auto p-2">
                 <Skeleton className="h-10 w-44" />
                 <Skeleton className="h-[400px] w-full" />
             </div>
@@ -437,7 +437,7 @@ function FormContent() {
     }
 
     return (
-        <div className="space-y-6 max-w-7xl mx-auto p-2">
+        <div className="space-y-6 max-w-8xl mx-auto p-2">
             {/* Header / Action Bar */}
             <div className="flex items-center gap-3">
                 <Link href="/manufacturing/process-validation">

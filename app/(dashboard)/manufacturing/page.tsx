@@ -146,7 +146,7 @@ export default function ManufacturingHub() {
     if (!mounted) return null;
 
     return (
-        <div className="space-y-10 max-w-7xl mx-auto p-6">
+        <div className="space-y-10 max-w-8xl mx-auto p-6">
             {/* HEADER */}
             <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
                 <div className="space-y-3">

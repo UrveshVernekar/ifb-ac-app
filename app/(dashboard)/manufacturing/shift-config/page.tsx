@@ -172,7 +172,7 @@ export default function ShiftConfigPage() {
     };
 
     return (
-        <div className="space-y-6 max-w-7xl mx-auto p-2">
+        <div className="space-y-6 max-w-8xl mx-auto p-2">
             {/* Header */}
             <div className="flex items-center gap-3">
                 <Link href="/manufacturing">

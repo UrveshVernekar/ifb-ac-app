@@ -304,7 +304,7 @@ export default function AvailabilityDashboardPage() {
     };
 
     return (
-        <div className="space-y-6 max-w-7xl mx-auto p-2">
+        <div className="space-y-6 max-w-8xl mx-auto p-2">
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div className="flex items-center gap-3">
@@ -528,9 +528,8 @@ export default function AvailabilityDashboardPage() {
                                                         <TableCell className="text-xs py-2">{row.time || row.TIME || ""}</TableCell>
                                                         <TableCell className="text-xs py-2">{row.line || row.LINE || ""}</TableCell>
                                                         <TableCell className="text-xs py-2">
-                                                            <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
-                                                                row.type === "AVAILABILITY" ? "bg-rose-500/10 text-rose-500" : (row.type === "PERFORMANCE" ? "bg-amber-500/10 text-amber-500" : "bg-blue-500/10 text-blue-500")
-                                                            }`}>
+                                                            <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${row.type === "AVAILABILITY" ? "bg-rose-500/10 text-rose-500" : (row.type === "PERFORMANCE" ? "bg-amber-500/10 text-amber-500" : "bg-blue-500/10 text-blue-500")
+                                                                }`}>
                                                                 {row.type || row.TYPE || ""}
                                                             </span>
                                                         </TableCell>
@@ -540,7 +539,7 @@ export default function AvailabilityDashboardPage() {
                                                 ))}
                                             </TableBody>
                                         </Table>
-                                        
+
                                         {/* Pagination UI */}
                                         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-4 pt-4 border-t text-xs">
                                             <span className="text-xs text-muted-foreground">

@@ -382,17 +382,17 @@ export default function KPIReportPage() {
         return {
             backgroundColor: "transparent",
             tooltip: { trigger: "axis", backgroundColor: tooltipBg, borderColor: tooltipBorder, textStyle: { color: titleColor } },
-            legend: { 
+            legend: {
                 data: [
-                    "Consumable Cost", 
-                    "Power Cost", 
-                    "Manpower Cost", 
-                    "Scrap Cost", 
-                    "Target Cost/Unit", 
+                    "Consumable Cost",
+                    "Power Cost",
+                    "Manpower Cost",
+                    "Scrap Cost",
+                    "Target Cost/Unit",
                     "Actual Cost/Unit"
-                ], 
-                bottom: 0, 
-                textStyle: { color: textColor } 
+                ],
+                bottom: 0,
+                textStyle: { color: textColor }
             },
             grid: { top: 30, left: 55, right: 55, bottom: 80 },
             xAxis: {
@@ -448,23 +448,23 @@ export default function KPIReportPage() {
                     data: scrapData,
                     itemStyle: { color: "#f97316", borderRadius: [3, 3, 0, 0] },
                 },
-                { 
-                    name: "Target Cost/Unit", 
-                    type: "line", 
+                {
+                    name: "Target Cost/Unit",
+                    type: "line",
                     smooth: true,
-                    yAxisIndex: 1, 
-                    data: targetData, 
-                    itemStyle: { color: "#10b981" }, 
-                    lineStyle: { width: 2.5, type: "dashed" } 
+                    yAxisIndex: 1,
+                    data: targetData,
+                    itemStyle: { color: "#10b981" },
+                    lineStyle: { width: 2.5, type: "dashed" }
                 },
-                { 
-                    name: "Actual Cost/Unit", 
-                    type: "line", 
+                {
+                    name: "Actual Cost/Unit",
+                    type: "line",
                     smooth: true,
-                    yAxisIndex: 1, 
-                    data: unitCostData, 
-                    itemStyle: { color: "#f87171" }, 
-                    lineStyle: { width: 3 } 
+                    yAxisIndex: 1,
+                    data: unitCostData,
+                    itemStyle: { color: "#f87171" },
+                    lineStyle: { width: 3 }
                 }
             ]
         };
@@ -542,7 +542,7 @@ export default function KPIReportPage() {
     };
 
     return (
-        <div className="space-y-6 max-w-7xl mx-auto p-2">
+        <div className="space-y-6 max-w-8xl mx-auto p-2">
             {/* Action Bar Header */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div className="flex items-center gap-3">
