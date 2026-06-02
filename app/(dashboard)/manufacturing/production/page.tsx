@@ -804,7 +804,7 @@ export default function ProductionDashboardPage() {
                                                                 progress = (prod / plan) * 100;
                                                             }
 
-                                                            const isRunning = data.runningModel && String(code) === String(data.runningModel) && isTodaySelected && plan !== prod;
+                                                            const isRunning = data.runningModel && String(code) === String(data.runningModel) && isTodaySelected && plan !== prod && prod !== 0;
 
                                                             return (
                                                                 <TableRow

@@ -90,7 +90,7 @@ export default function ShiftConfigPage() {
                 params: {
                     fromDate: filterFrom,
                     toDate: filterTo,
-                    line: filterLine === "ALL" ? "" : filterLine,
+                    line: filterLine,
                 }
             });
 
