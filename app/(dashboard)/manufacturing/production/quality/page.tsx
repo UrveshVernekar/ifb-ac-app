@@ -298,7 +298,7 @@ export default function QualityDashboardPage() {
     const chartColors = ["#ef4444", "#3b82f6", "#f59e0b", "#10b981", "#8b5cf6", "#06b6d4"];
 
     return (
-        <div className="space-y-6 max-w-7xl mx-auto p-2">
+        <div className="space-y-6 max-w-8xl mx-auto p-2">
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div className="flex items-center gap-3">

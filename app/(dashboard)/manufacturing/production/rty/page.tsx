@@ -312,21 +312,21 @@ const ZoneFpyChart = ({ series, xAxisLabels, theme }: { series: any[]; xAxisLabe
                 smooth: isLine ? true : undefined, // Smooth line curves
                 label: isLine
                     ? {
-                          show: true,
-                          position: "top",
-                          color: isDark ? "#f4f4f5" : "#18181b",
-                          fontSize: 10,
-                          fontWeight: "bold",
-                          formatter: (params: any) => params.value != null ? `${params.value.toFixed(1)}%` : "",
-                      }
+                        show: true,
+                        position: "top",
+                        color: isDark ? "#f4f4f5" : "#18181b",
+                        fontSize: 10,
+                        fontWeight: "bold",
+                        formatter: (params: any) => params.value != null ? `${params.value.toFixed(1)}%` : "",
+                    }
                     : {
-                          show: xAxisLabels.length <= 10,
-                          position: "inside",
-                          color: "#fff",
-                          fontSize: 9,
-                          fontWeight: "bold",
-                          formatter: (params: any) => params.value > 0 ? `${params.value.toFixed(0)}%` : "",
-                      },
+                        show: xAxisLabels.length <= 10,
+                        position: "inside",
+                        color: "#fff",
+                        fontSize: 9,
+                        fontWeight: "bold",
+                        formatter: (params: any) => params.value > 0 ? `${params.value.toFixed(0)}%` : "",
+                    },
             };
         }),
     };
@@ -457,11 +457,10 @@ export default function RtyDashboardPage() {
         const card = (
             <Card
                 key={item.label}
-                className={`bg-card border-border/60 shadow-sm transition-all ${
-                    isClickable
+                className={`bg-card border-border/60 shadow-sm transition-all ${isClickable
                         ? "cursor-pointer hover:shadow-md hover:border-blue-500/50 hover:-translate-y-0.5 group"
                         : ""
-                }`}
+                    }`}
             >
                 <CardHeader className="pb-1 pt-4 px-4 flex flex-row items-center justify-between space-y-0">
                     <CardTitle className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
@@ -494,7 +493,7 @@ export default function RtyDashboardPage() {
     const isDark = mounted && resolvedTheme === "dark";
 
     return (
-        <div className="space-y-6 max-w-7xl mx-auto p-2">
+        <div className="space-y-6 max-w-8xl mx-auto p-2">
             {/* Header row */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div className="flex items-center gap-3">
