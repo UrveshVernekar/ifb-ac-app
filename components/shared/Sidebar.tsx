@@ -18,14 +18,14 @@ const menuItems = [
         href: '/manufacturing'
     },
     {
-        label: 'Safety',
-        icon: Shield,
-        href: '/safety'
-    },
-    {
         label: 'Planning',
         icon: Calendar,
         href: '/planning'
+    },
+    {
+        label: 'Safety',
+        icon: Shield,
+        href: '/safety'
     },
     {
         label: 'Quality',
@@ -48,17 +48,16 @@ export default function Sidebar({ collapsed, onCollapse }: SidebarProps) {
     return (
         <TooltipProvider delayDuration={0}>
             {!collapsed && (
-                <div 
+                <div
                     className="fixed inset-0 bg-background/80 backdrop-blur-sm z-40 md:hidden animate-in fade-in duration-200"
                     onClick={onCollapse}
                 />
             )}
             <aside
-                className={`fixed inset-y-0 left-0 md:relative md:flex flex-shrink-0 border-r border-border bg-card/95 backdrop-blur-xl h-full flex flex-col transition-all duration-300 ease-in-out z-50 ${
-                    collapsed 
-                        ? '-translate-x-full md:translate-x-0 md:w-16' 
+                className={`fixed inset-y-0 left-0 md:relative md:flex flex-shrink-0 border-r border-border bg-card/95 backdrop-blur-xl h-full flex flex-col transition-all duration-300 ease-in-out z-50 ${collapsed
+                        ? '-translate-x-full md:translate-x-0 md:w-16'
                         : 'translate-x-0 md:w-72 w-72'
-                }`}
+                    }`}
             >
                 {/* Collapse Toggle Button */}
                 <button
@@ -90,9 +89,8 @@ export default function Sidebar({ collapsed, onCollapse }: SidebarProps) {
                 {/* Navigation */}
                 <div className="flex-1 overflow-y-auto py-8 px-3">
                     <div
-                        className={`text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-4 px-3 transition-all duration-300 ${
-                            collapsed ? 'opacity-0 h-0 overflow-hidden' : ''
-                        }`}
+                        className={`text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-4 px-3 transition-all duration-300 ${collapsed ? 'opacity-0 h-0 overflow-hidden' : ''
+                            }`}
                     >
                         Core Operations
                     </div>
