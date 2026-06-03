@@ -8,6 +8,7 @@ import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { encryptValue, getApiBaseUrl, shouldBypassAltcha } from "@/lib/auth-client";
+import { toast } from "sonner";
 
 const AltchaWidgetClient = dynamic(() => import("@/components/auth/AltchaWidgetClient"), {
   ssr: false,
@@ -29,7 +30,6 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [message, setMessage] = useState("");
 
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [forgotEmail, setForgotEmail] = useState("");
@@ -69,7 +69,6 @@ export default function LoginPage() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setMessage("");
     setIsSubmitting(true);
 
     try {
@@ -86,22 +85,22 @@ export default function LoginPage() {
       const data = await res.json();
 
       if (!data?.success) {
-        setMessage(data?.message || "Login failed");
+        toast.error(data?.message || "Login failed");
         return;
       }
 
       setSession(data.user);
+      toast.success("Logged in successfully! Redirecting...");
       // router.push("/manufacturing");
       router.push("/safety");
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Unable to login");
+      toast.error(error instanceof Error ? error.message : "Unable to login");
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleGenerateOtp = async () => {
-    setMessage("");
     setIsSubmitting(true);
     try {
       const res = await fetch(`${apiBase}/auth/forgot-password`, {
@@ -114,22 +113,21 @@ export default function LoginPage() {
       });
       const data = await res.json();
       if (!data?.success) {
-        setMessage(data?.message || "Failed to generate OTP");
+        toast.error(data?.message || "Failed to generate OTP");
         return;
       }
       setOtpSent(true);
       setEmail(forgotEmail.toLowerCase().trim());
       setShowForgotPassword(false);
-      setMessage(data?.message || "OTP sent to registered email");
+      toast.success(data?.message || "OTP sent to registered email");
     } catch {
-      setMessage("Error while generating OTP");
+      toast.error("Error while generating OTP");
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleVerifyOtp = async () => {
-    setMessage("");
     setIsSubmitting(true);
     try {
       const res = await fetch(`${apiBase}/auth/verify-otp`, {
@@ -143,13 +141,13 @@ export default function LoginPage() {
       });
       const data = await res.json();
       if (!data?.success) {
-        setMessage(data?.message || "Invalid OTP");
+        toast.error(data?.message || "Invalid OTP");
         return;
       }
       setVerifiedUser({ id: data.user.id, company: data.user.company });
-      setMessage("OTP verified. Set your new password.");
+      toast.success("OTP verified. Set your new password.");
     } catch {
-      setMessage("Error while verifying OTP");
+      toast.error("Error while verifying OTP");
     } finally {
       setIsSubmitting(false);
     }
@@ -157,16 +155,15 @@ export default function LoginPage() {
 
   const handleChangePassword = async () => {
     if (!PASSWORD_POLICY.test(newPassword)) {
-      setMessage("Password must be 8+ chars with uppercase, number and special character.");
+      toast.error("Password must be 8+ chars with uppercase, number and special character.");
       return;
     }
     if (newPassword !== confirmPassword) {
-      setMessage("Passwords do not match.");
+      toast.error("Passwords do not match.");
       return;
     }
     if (!verifiedUser) return;
 
-    setMessage("");
     setIsSubmitting(true);
     try {
       const res = await fetch(`${apiBase}/auth/change-password`, {
@@ -180,11 +177,11 @@ export default function LoginPage() {
       });
       const data = await res.json();
       if (!data?.success) {
-        setMessage(data?.message || "Failed to update password");
+        toast.error(data?.message || "Failed to update password");
         return;
       }
 
-      setMessage(data.message || "Password updated. Please login.");
+      toast.success(data.message || "Password updated. Please login.");
       setOtpSent(false);
       setVerifiedUser(null);
       setOtp("");
@@ -192,7 +189,7 @@ export default function LoginPage() {
       setNewPassword("");
       setConfirmPassword("");
     } catch {
-      setMessage("Error while updating password");
+      toast.error("Error while updating password");
     } finally {
       setIsSubmitting(false);
     }
@@ -207,7 +204,7 @@ export default function LoginPage() {
       </div>
 
       <CardHeader className="text-center pb-3 pt-4">
-        <CardTitle className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground">
+        <CardTitle className="text-xl sm:text-2xl font-extrabold tracking-tight text-foreground">
           {isPasswordChangeStage ? "Change Password" : otpSent ? "Verify OTP" : showForgotPassword ? "Forgot Password" : "Sign In"}
         </CardTitle>
         <CardDescription className="text-sm mt-1">IFB AC Portal Authentication</CardDescription>
@@ -316,7 +313,7 @@ export default function LoginPage() {
             </>
           )}
 
-          {message && <p className="text-sm text-center text-red-500">{message}</p>}
+
 
           {!otpSent && !showForgotPassword && !isPasswordChangeStage && (
             <AltchaWidgetClient challengeUrl={`${apiBase}/auth/altcha/challenge`} />
@@ -366,7 +363,6 @@ export default function LoginPage() {
                 setShowForgotPassword(false);
                 setOtpSent(false);
                 setVerifiedUser(null);
-                setMessage("");
               }}
             >
               Back to Login
