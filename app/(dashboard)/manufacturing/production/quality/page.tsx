@@ -47,8 +47,10 @@ interface DailyQualityItem {
 interface DefectRow {
     "DEFECT NAME"?: string;
     defectName?: string;
+    defectname?: string;
     "DEFECT COUNT"?: number;
     defectCount?: number;
+    defectcount?: number;
     [key: string]: any;
 }
 
@@ -541,8 +543,8 @@ export default function QualityDashboardPage() {
                                                 </TableHeader>
                                                 <TableBody>
                                                     {data.topDefects.map((row, idx) => {
-                                                        const name = row["DEFECT NAME"] || row.defectName || "N/A";
-                                                        const count = row["DEFECT COUNT"] || row.defectCount || 0;
+                                                        const name = row["DEFECT NAME"] || row.defectName || row.defectname || "N/A";
+                                                        const count = row["DEFECT COUNT"] || row.defectCount || row.defectcount || 0;
                                                         return (
                                                             <TableRow key={idx}>
                                                                 <TableCell className="text-xs py-2 flex items-center gap-2">
