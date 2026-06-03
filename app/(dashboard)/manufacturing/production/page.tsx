@@ -427,6 +427,7 @@ export default function ProductionDashboardPage() {
             header: "Model Code",
             accessorKey: "modelCode",
             cell: (row) => row.modelCode || row.model_code || row["MODEL CODE"] || "",
+            className: "py-2.5 font-semibold text-blue-600"
         },
         {
             header: "Model Description",

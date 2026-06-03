@@ -27,15 +27,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
     ArrowLeft,
-    Calendar,
-    Clock,
     RefreshCw,
     Plus,
     Edit,
     Trash2,
-    HelpCircle,
     AlertCircle,
-    User,
     CheckCircle2
 } from "lucide-react";
 import Link from "next/link";
@@ -192,7 +188,7 @@ export default function DowntimeLogsPage() {
         {
             header: "Duration (min)",
             accessorKey: "duration",
-            className: "font-bold text-rose-500 text-right",
+            className: "font-bold text-rose-500 text-center",
             cell: (row) => row.duration,
         },
         {

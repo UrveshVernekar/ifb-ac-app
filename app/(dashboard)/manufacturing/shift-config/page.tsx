@@ -139,13 +139,13 @@ export default function ShiftConfigPage() {
         {
             header: "Hours",
             accessorKey: "totalhours",
-            className: "text-right",
+            className: "text-center",
             cell: (row) => row.totalhours || 8,
         },
         {
             header: "Ext",
             accessorKey: "extensionhours",
-            className: "text-amber-600 dark:text-amber-400 font-bold text-right",
+            className: "text-amber-600 dark:text-amber-400 font-bold text-center",
             cell: (row) => `+${row.extensionhours}`,
         },
         {
