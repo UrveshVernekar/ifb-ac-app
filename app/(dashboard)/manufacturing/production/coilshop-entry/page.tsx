@@ -17,7 +17,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { useTheme } from "next-themes";
-import { toast } from "sonner"; // Using sonner if available, falling back to window.alert otherwise
+import { toast } from "sonner";
 
 const API_HOST = "http://10.0.7.26:3003";
 
@@ -31,12 +31,12 @@ export default function CoilshopDataEntry() {
     const router = useRouter();
     const { resolvedTheme } = useTheme();
 
-    // Data States
+    // DATA STATES
     const [allMachines, setAllMachines] = useState<any[]>([]);
     const [allModels, setAllModels] = useState<any[]>([]);
     const [lossData, setLossData] = useState<any[]>([]);
 
-    // Form States
+    // FORM STATES
     const [downtime, setDowntime] = useState<Record<string, number | string>>({});
     const [lossRemarks, setLossRemarks] = useState<Record<string, string>>({});
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -167,7 +167,7 @@ export default function CoilshopDataEntry() {
                 spm: Number(form.spm),
                 plannedTime: Number(form.plannedTime),
                 plannedShutdown: Number(form.plannedShutdown),
-                shift: Number(form.shift), // Make sure shift is a number
+                shift: Number(form.shift),
                 downtimes: downtimeArray,
             };
 
@@ -188,7 +188,7 @@ export default function CoilshopDataEntry() {
 
             toast.success("Data Submitted Successfully!");
 
-            // Reset form
+            // RESET FORM
             setForm({
                 line: "",
                 date: "",
@@ -214,7 +214,7 @@ export default function CoilshopDataEntry() {
 
     return (
         <div className="space-y-6 max-w-7xl mx-auto p-4 pb-24">
-            {/* Header section */}
+            {/* HEADER SECTION */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div className="flex items-center gap-3">
                     <Button variant="outline" size="icon" className="h-9 w-9 shrink-0" onClick={() => router.push("/manufacturing/production")}>
@@ -230,7 +230,7 @@ export default function CoilshopDataEntry() {
                     </div>
                 </div>
 
-                {/* Floating Loss Allocation Status */}
+                {/* LOSS ALLOCATION STATUS */}
                 {(form.machine && Number(form.spm) > 0) && (
                     <div className={`fixed top-20 right-6 z-50 shadow-lg backdrop-blur-md px-5 py-2.5 rounded-full border-2 flex items-center gap-3 transition-colors ${isValidAllocation ? "border-green-500 bg-green-50/90 dark:bg-green-950/80" : "border-rose-500 bg-rose-50/90 dark:bg-rose-950/80"}`}>
                         <div className="flex flex-col">
@@ -248,7 +248,7 @@ export default function CoilshopDataEntry() {
                 )}
             </div>
 
-            {/* Primary Details */}
+            {/* PRIMARY DETAILS */}
             <Card className="border-border/60 shadow-sm">
                 <CardHeader className="pb-4">
                     <CardTitle className="text-sm font-bold uppercase tracking-wider flex items-center gap-2">
@@ -297,7 +297,7 @@ export default function CoilshopDataEntry() {
                 </CardContent>
             </Card>
 
-            {/* Production Details */}
+            {/* PRODUCTION DETAILS */}
             <Card className={`border-border/60 shadow-sm transition-opacity ${!isPrimarySelected ? 'opacity-50 pointer-events-none' : ''}`}>
                 <CardHeader className="pb-4">
                     <CardTitle className="text-sm font-bold uppercase tracking-wider flex items-center gap-2">
@@ -347,7 +347,7 @@ export default function CoilshopDataEntry() {
                 </CardContent>
             </Card>
 
-            {/* Loss Entry */}
+            {/* LOSS ENTRY */}
             {form.machine && (
                 <div className="space-y-6">
                     <h3 className="text-xl font-bold uppercase tracking-tight flex items-center gap-2 mt-8">
@@ -413,7 +413,7 @@ export default function CoilshopDataEntry() {
                 </div>
             )}
 
-            {/* Sticky Submit Bar */}
+            {/* SUBMISSION BAR */}
             <div className="fixed bottom-0 left-0 right-0 p-4 bg-background/80 backdrop-blur-md border-t border-border z-50 flex justify-center lg:pl-64">
                 <div className="w-full max-w-4xl flex items-center justify-between gap-4">
                     <div className="hidden sm:block">

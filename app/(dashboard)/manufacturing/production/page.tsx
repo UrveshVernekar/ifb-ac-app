@@ -1,6 +1,7 @@
 // app/(dashboard)/manufacturing/production/page.tsx
 "use client";
 
+import { cn } from '@/lib/utils';
 import { useState, useEffect, useMemo } from "react";
 import { useTheme } from "next-themes";
 import { useRouter } from "next/navigation";
@@ -26,11 +27,8 @@ import {
     ArrowLeft,
     Layers,
     Cpu,
-    Calendar,
     CheckCircle2,
     Edit,
-    ChevronLeft,
-    ChevronRight,
 } from "lucide-react";
 import {
     ChartContainer,
@@ -40,9 +38,9 @@ import {
 import { Bar, BarChart, XAxis, YAxis, LabelList, Legend, Cell, CartesianGrid, Line, ComposedChart } from "recharts";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
+import CommonTable, { ColumnConfig } from "@/components/shared/CommonTable";
 
 const API_HOST = "http://10.0.7.26:3003";
 
@@ -88,7 +86,7 @@ export default function ProductionDashboardPage() {
     const isDark = resolvedTheme === "dark";
     const [mounted, setMounted] = useState(false);
 
-    // Filters & Navigation controls
+    // FILTERS & NAVIGATION CONTROLS
     const [area, setArea] = useState<"ASSEMBLY LINES" | "STAMPING" | "COILSHOP">("ASSEMBLY LINES");
     const [fromDate, setFromDate] = useState("");
     const [toDate, setToDate] = useState("");
@@ -96,26 +94,11 @@ export default function ProductionDashboardPage() {
     const [selectedSubMachines, setSelectedSubMachines] = useState<string[]>([]);
     const [stampingActiveMachine, setStampingActiveMachine] = useState<string>("");
 
-    // API Data
+    // API DATA
     const [data, setData] = useState<ApiResponse["data"] | null>(null);
-    const [downtimeData, setDowntimeData] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [searchTerm, setSearchTerm] = useState("");
-
-    // Pagination states
-    const [modelDetailsPage, setModelDetailsPage] = useState(1);
-    const [modelDetailsPageSize, setModelDetailsPageSize] = useState(5);
-    const [modelDataPage, setModelDataPage] = useState(1);
-    const [modelDataPageSize, setModelDataPageSize] = useState(5);
-    const [downtimePage, setDowntimePage] = useState(1);
-    const [downtimePageSize, setDowntimePageSize] = useState(5);
-
-    useEffect(() => {
-        setModelDetailsPage(1);
-        setModelDataPage(1);
-        setDowntimePage(1);
-    }, [area, fromDate, toDate, selectedLines, selectedSubMachines, searchTerm]);
 
     const filteredModelDetails = useMemo(() => {
         if (!data?.modelDetails) return [];
@@ -130,35 +113,12 @@ export default function ProductionDashboardPage() {
         });
     }, [data?.modelDetails, searchTerm]);
 
-    const paginatedModelDetails = useMemo(() => {
-        const startIndex = (modelDetailsPage - 1) * modelDetailsPageSize;
-        return filteredModelDetails.slice(startIndex, startIndex + modelDetailsPageSize);
-    }, [filteredModelDetails, modelDetailsPage, modelDetailsPageSize]);
-
-    const totalModelDetailsPages = Math.ceil(filteredModelDetails.length / modelDetailsPageSize);
-
-    const paginatedModelData = useMemo(() => {
-        if (!data?.modelData) return [];
-        const startIndex = (modelDataPage - 1) * modelDataPageSize;
-        return data.modelData.slice(startIndex, startIndex + modelDataPageSize);
-    }, [data?.modelData, modelDataPage, modelDataPageSize]);
-
-    const totalModelDataPages = Math.ceil((data?.modelData?.length || 0) / modelDataPageSize);
-
-    const paginatedDowntimeData = useMemo(() => {
-        if (!downtimeData) return [];
-        const startIndex = (downtimePage - 1) * downtimePageSize;
-        return downtimeData.slice(startIndex, startIndex + downtimePageSize);
-    }, [downtimeData, downtimePage, downtimePageSize]);
-
-    const totalDowntimePages = Math.ceil(downtimeData.length / downtimePageSize);
-
-    // Initial default dates and session restore
+    // INITIAL DEFAULT DATES & SESSION RESTORE
     useEffect(() => {
         setMounted(true);
         const todayStr = new Date().toISOString().split("T")[0];
 
-        // Restore from session storage
+        // RESTORE FROM SESSION STORAGE
         const savedArea = sessionStorage.getItem("areaValue") as any;
         const savedFrom = sessionStorage.getItem("manufacturingFromDate");
         const savedTo = sessionStorage.getItem("manufacturingToDate");
@@ -171,7 +131,6 @@ export default function ProductionDashboardPage() {
         setFromDate(fDate);
         setToDate(tDate);
 
-        // Prepopulate lines based on area and saved selection
         if (activeArea === "ASSEMBLY LINES") {
             const savedLines = sessionStorage.getItem("manufacturingMachines") || "ODU-Line";
             setSelectedLines(savedLines.split(","));
@@ -186,7 +145,7 @@ export default function ProductionDashboardPage() {
         }
     }, []);
 
-    // Options mapping
+    // OPTIONS MAPPING
     const assemblyOptions = [
         { value: "IDU-Line", label: "IDU LINE" },
         { value: "ODU-Line", label: "ODU LINE" },
@@ -224,7 +183,7 @@ export default function ProductionDashboardPage() {
         { label: "Auto Brazing 2", value: "13" },
     ];
 
-    // Compute sub options based on selected main lines
+    // COMPUTE SUB-OPTIONS
     const subOptions = useMemo(() => {
         let result: { label: string; value: string }[] = [];
         if (area === "STAMPING") {
@@ -245,7 +204,7 @@ export default function ProductionDashboardPage() {
         return result;
     }, [area, selectedLines]);
 
-    // Handle area change
+    // HANDLE AREA CHANGE
     const handleAreaChange = (newArea: "ASSEMBLY LINES" | "STAMPING" | "COILSHOP") => {
         setArea(newArea);
         sessionStorage.setItem("areaValue", newArea);
@@ -256,7 +215,7 @@ export default function ProductionDashboardPage() {
             sessionStorage.setItem("manufacturingMachines", "ODU-Line");
         } else if (newArea === "STAMPING") {
             setSelectedLines(["AUTO LINE", "TANDEM LINE"]);
-            // Autofill submachines
+
             const allSub = [...stampingAutoOptions, ...stampingTandemOptions];
             setSelectedSubMachines(allSub);
             setStampingActiveMachine(stampingAutoOptions[0]);
@@ -269,7 +228,7 @@ export default function ProductionDashboardPage() {
         }
     };
 
-    // Main lines change handler
+    // MAIN LINES CHANGE HANDLER
     const handleLineSelect = (line: string) => {
         let updatedLines = [...selectedLines];
         if (area === "ASSEMBLY LINES" || area === "COILSHOP") {
@@ -284,7 +243,7 @@ export default function ProductionDashboardPage() {
         setSelectedLines(updatedLines);
         sessionStorage.setItem("manufacturingMachines", updatedLines.join(","));
 
-        // Reset or adjust submachines
+        // RESET OR ADJUST SUB MACHINES
         if (area === "STAMPING") {
             const validSubs: string[] = [];
             if (updatedLines.includes("AUTO LINE")) validSubs.push(...stampingAutoOptions);
@@ -303,7 +262,7 @@ export default function ProductionDashboardPage() {
         }
     };
 
-    // Sub machine toggle handler
+    // SUB MACHINE TOGGLE HANDLER
     const handleSubMachineToggle = (value: string) => {
         let updated = [...selectedSubMachines];
         if (area === "COILSHOP") {
@@ -319,13 +278,12 @@ export default function ProductionDashboardPage() {
         sessionStorage.setItem("subMachineSession", updated.join(","));
     };
 
-    // Fetch live dashboard data
+    // FETCH LIVE DASHBOARD DATA
     const fetchData = async () => {
         if (!fromDate || !toDate) return;
         setLoading(true);
         setError(null);
 
-        // Prepare machine query string
         let machineQuery = "";
         if (area === "ASSEMBLY LINES") {
             machineQuery = selectedLines[0] || "ODU-Line";
@@ -362,12 +320,6 @@ export default function ProductionDashboardPage() {
                     setStampingActiveMachine(machinesList[0]);
                 }
             }
-
-            if (downtimeRes.data.success) {
-                setDowntimeData(downtimeRes.data.data);
-            } else {
-                setDowntimeData([]);
-            }
         } catch (err) {
             console.error("Fetch error:", err);
             setError(err instanceof Error ? err.message : "Failed to fetch dashboard data.");
@@ -382,14 +334,13 @@ export default function ProductionDashboardPage() {
         }
     }, [area, fromDate, toDate, selectedLines, selectedSubMachines, mounted]);
 
-    // KPI Card Helper
+    // KPI CARD HELPER
     const renderKpiCard = (item: ProductionStatus, icon: React.ReactNode) => {
         const isRate = item.type === "rate";
         const value = isRate ? `${item.value}%` : Number(item.value).toLocaleString();
         const isClickable = item.onClick?.status;
         const handleClick = () => {
             if (isClickable && item.onClick?.url) {
-                // replace /ac prefix with empty string if present
                 const targetUrl = item.onClick.url.replace(/^\/ac/, "");
                 router.push(targetUrl);
             }
@@ -438,7 +389,7 @@ export default function ProductionDashboardPage() {
         }
     };
 
-    // Chart Configuration for Assembly Lines hourly
+    // CHART CONFIG: ASSEMBLY LINES HOURLY
     const hourlyChartData = useMemo(() => {
         if (!data?.hourlyData?.labels) return [];
         return data.hourlyData.labels.map((label, i) => ({
@@ -448,7 +399,7 @@ export default function ProductionDashboardPage() {
         }));
     }, [data]);
 
-    // Chart Configuration for Stamping Active Machine hourly
+    // CHART CONFIG: STAMPING ACTIVE MACHINE HOURLY
     const stampingHourlyChartData = useMemo(() => {
         if (!data?.hourlyChartData || !stampingActiveMachine || !data.hourlyChartData[stampingActiveMachine]) return [];
         const mData = data.hourlyChartData[stampingActiveMachine];
@@ -460,7 +411,276 @@ export default function ProductionDashboardPage() {
         }));
     }, [data, stampingActiveMachine]);
 
-    // Transform machineTrendData if it is in ECharts format
+    // COLUMN CONFIG: ASSEMBLY LINES
+    const assemblyColumns = useMemo<ColumnConfig<any>[]>(() => [
+        {
+            header: "Seq",
+            accessorKey: "seq",
+            cell: (row, idx) => row.sequence || row.seq || row.SEQUENCE || (idx + 1),
+        },
+        {
+            header: "Plan Order",
+            accessorKey: "planOrder",
+            cell: (row) => row.planOrder || row.plan_order || row.PLAN_ORDER || "-",
+        },
+        {
+            header: "Model Code",
+            accessorKey: "modelCode",
+            cell: (row) => row.modelCode || row.model_code || row["MODEL CODE"] || "",
+        },
+        {
+            header: "Model Description",
+            accessorKey: "desc",
+            cell: (row) => {
+                const code = row.modelCode || row.model_code || row["MODEL CODE"] || "";
+                const desc = row.model_description || row.modelDescription || row["MODEL DESCRIPTION"] || "-";
+                const plan = Number(row.plan || row.PLAN || 0);
+                const prod = Number(row.production || row.PRODUCTION || 0);
+                const isRunning = data?.runningModel && String(code) === String(data.runningModel) && isTodaySelected && plan !== prod && prod !== 0;
+                return (
+                    <span>
+                        {desc} {isRunning && <span className="text-[10px] bg-blue-500/10 text-blue-500 px-1.5 py-0.5 rounded ml-2 animate-pulse font-bold">RUNNING</span>}
+                    </span>
+                );
+            },
+        },
+        {
+            header: "Model Name",
+            accessorKey: "modelName",
+            cell: (row) => row.modelName || row.model_name || row["MODEL NAME"] || "",
+        },
+        {
+            header: "Plan",
+            accessorKey: "plan",
+            className: "text-center font-medium",
+            cell: (row) => Number(row.plan || row.PLAN || 0).toLocaleString(),
+        },
+        {
+            header: "Initial",
+            accessorKey: "initial",
+            className: "text-center font-medium",
+            cell: (row) => Number(row.initial_count || row.initialCount || row.INITIAL_COUNT || 0).toLocaleString(),
+        },
+        {
+            header: "Prod",
+            accessorKey: "prod",
+            className: "text-center font-medium",
+            cell: (row) => Number(row.production || row.PRODUCTION || 0).toLocaleString(),
+        },
+        {
+            header: "Backflush",
+            accessorKey: "bf",
+            className: "text-center",
+            cell: (row) => Number(row.backFlush || row.back_flush || row.backflush || row["BACK FLUSH"] || 0).toLocaleString(),
+        },
+        {
+            header: "Progress",
+            accessorKey: "progress",
+            isSortable: false,
+            isFilterable: false,
+            cell: (row) => {
+                const plan = Number(row.plan || row.PLAN || 0);
+                const prod = Number(row.production || row.PRODUCTION || 0);
+                const bf = Number(row.backFlush || row.back_flush || row.backflush || row["BACK FLUSH"] || 0);
+                let progress = 0;
+                if (plan === 0) {
+                    progress = prod > 0 ? (bf / prod) * 100 : 0;
+                } else {
+                    progress = (prod / plan) * 100;
+                }
+                return (
+                    <div className="flex items-center justify-center gap-2">
+                        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 max-w-24">
+                            <div
+                                className={cn(
+                                    "h-2 rounded-full transition-all",
+                                    progress >= 100
+                                        ? "bg-green-600"
+                                        : progress >= 75
+                                            ? "bg-blue-600"
+                                            : progress >= 50
+                                                ? "bg-yellow-600"
+                                                : "bg-red-600"
+                                )}
+                                style={{ width: `${Math.min(progress, 100)}%` }}
+                            />
+                        </div>
+                        <span className="text-xs text-gray-600 dark:text-gray-400 w-12 text-right">
+                            {progress.toFixed(0)}%
+                        </span>
+                    </div>
+                );
+            },
+        },
+        {
+            header: "Achieved (%)",
+            accessorKey: "achieved",
+            isSortable: false,
+            isFilterable: false,
+            cell: (row) => {
+                const plan = Number(row.plan || row.PLAN || 0);
+                const prod = Number(row.production || row.PRODUCTION || 0);
+                const percent = plan > 0 ? ((prod / plan) * 100).toFixed(1) : "0.0";
+                const achievedStr = row.achieved || percent;
+                return getAchievementBadge(achievedStr, plan);
+            },
+        },
+    ], [data?.runningModel, isTodaySelected]);
+
+    const stampingColumns = useMemo<ColumnConfig<any>[]>(() => [
+        {
+            header: "Date",
+            accessorKey: "date",
+            isFilterable: true,
+            isSortable: true,
+            cell: (row) => row.date || row.DATE || "",
+        },
+        {
+            header: "Line",
+            accessorKey: "line",
+            isFilterable: true,
+            isSortable: true,
+            cell: (row) => row.line || row.LINE || "",
+        },
+        {
+            header: "Machine",
+            accessorKey: "machine",
+            isFilterable: true,
+            isSortable: true,
+            cell: (row) => row.machine || row.MACHINE || "",
+        },
+        {
+            header: "Model Name",
+            accessorKey: "modelName",
+            isFilterable: true,
+            isSortable: true,
+            cell: (row) => row.modelName || row.model_name || row.modelname || row["MODEL NAME"] || "",
+        },
+        {
+            header: "Start Time",
+            accessorKey: "startTime",
+            isFilterable: true,
+            isSortable: true,
+            hiddenByDefault: true,
+            cell: (row) => row.startTime || row.starttime || row.start_time || row["START TIME"] || "",
+        },
+        {
+            header: "End Time",
+            accessorKey: "endTime",
+            isFilterable: true,
+            isSortable: true,
+            hiddenByDefault: true,
+            cell: (row) => row.endTime || row.endtime || row.end_time || row["END TIME"] || "",
+        },
+        {
+            header: "Count",
+            accessorKey: "count",
+            isFilterable: true,
+            isSortable: true,
+            className: "font-semibold",
+            cell: (row) => Number(row.count || row.COUNT || 0).toLocaleString(),
+        },
+        {
+            header: "SPM",
+            accessorKey: "spm",
+            isFilterable: true,
+            isSortable: true,
+            hiddenByDefault: true,
+            className: "text-right",
+            cell: (row) => Number(row.spm || row.SPM || 0).toLocaleString(),
+        },
+    ], []);
+
+    const coilshopColumns = useMemo<ColumnConfig<any>[]>(() => [
+        {
+            header: "Date",
+            accessorKey: "date",
+            isFilterable: true,
+            isSortable: true,
+            cell: (row) => row.date || row.DATE || "",
+        },
+        {
+            header: "Shift",
+            accessorKey: "shift",
+            isFilterable: true,
+            isSortable: true,
+            cell: (row) => row.shift || row.SHIFT || "",
+        },
+        {
+            header: "Line",
+            accessorKey: "line",
+            isFilterable: true,
+            isSortable: true,
+            cell: (row) => row.line || row.LINE || "",
+        },
+        {
+            header: "Machine",
+            accessorKey: "machine",
+            isFilterable: true,
+            isSortable: true,
+            cell: (row) => row.machine || row.MACHINE || "",
+        },
+        {
+            header: "Model Name",
+            accessorKey: "modelName",
+            isFilterable: true,
+            isSortable: true,
+            cell: (row) => row.modelName || row.modelname || row.model_name || row["MODEL NAME"] || "",
+        },
+        {
+            header: "Plan",
+            accessorKey: "plan",
+            isFilterable: true,
+            isSortable: true,
+            // className: "text-right",
+            cell: (row) => Number(row.plan || row.PLAN || 0).toLocaleString(),
+        },
+        {
+            header: "Production",
+            accessorKey: "production",
+            isFilterable: true,
+            isSortable: true,
+            className: "font-semibold",
+            cell: (row) => Number(row.production || row.PRODUCTION || 0).toLocaleString(),
+        },
+        {
+            header: "A (%)",
+            accessorKey: "a",
+            isFilterable: true,
+            isSortable: true,
+            hiddenByDefault: true,
+            // className: "text-right",
+            cell: (row) => `${row.a || row.A || 0}%`,
+        },
+        {
+            header: "P (%)",
+            accessorKey: "p",
+            isFilterable: true,
+            isSortable: true,
+            hiddenByDefault: true,
+            // className: "text-right",
+            cell: (row) => `${row.p || row.P || 0}%`,
+        },
+        {
+            header: "Q (%)",
+            accessorKey: "q",
+            isFilterable: true,
+            isSortable: true,
+            hiddenByDefault: true,
+            // className: "text-right",
+            cell: (row) => `${row.q || row.Q || 0}%`,
+        },
+        {
+            header: "OEE (%)",
+            accessorKey: "oee",
+            isFilterable: true,
+            isSortable: true,
+            className: "font-bold text-blue-600 dark:text-blue-400",
+            cell: (row) => `${row.oee || row.OEE || 0}%`,
+        },
+    ], []);
+
+    // TRANSFORM machineTrendData IF IT IS IN ECHARTS FORMAT
     const transformedMachineTrendData = useMemo(() => {
         if (!data?.machineTrendData) return [];
         if (Array.isArray(data.machineTrendData)) {
@@ -484,7 +704,7 @@ export default function ProductionDashboardPage() {
         return [];
     }, [data?.machineTrendData]);
 
-    // Compute dynamic keys for Coilshop stacked chart
+    // COMPUTE DYNAMIC KEYS FOR COULSHOP STACK CHART
     const coilshopChartKeys = useMemo(() => {
         if (!Array.isArray(transformedMachineTrendData) || transformedMachineTrendData.length === 0) return [];
         const firstItem = transformedMachineTrendData[0];
@@ -502,7 +722,7 @@ export default function ProductionDashboardPage() {
 
     return (
         <div className="space-y-6 max-w-8xl mx-auto p-2">
-            {/* Header section */}
+            {/* HEADER SECTION */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div className="flex items-center gap-3">
                     <Link href="/manufacturing">
@@ -521,7 +741,7 @@ export default function ProductionDashboardPage() {
                     </div>
                 </div>
 
-                {/* Filter / Dates controls */}
+                {/* FILTER / DATES CONTROLS */}
                 {mounted && (
                     <div className="flex flex-wrap gap-2.5 items-end bg-card p-3 rounded-xl border border-border/60 shadow-sm">
                         <div className="space-y-1">
@@ -579,11 +799,11 @@ export default function ProductionDashboardPage() {
                 )}
             </div>
 
-            {/* Line / Machine Selector Segment */}
+            {/* LINE / MACHINE SELECTOR SEGMENT */}
             {mounted && (
                 <Card className="border-border/60 shadow-sm bg-card p-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {/* Main Lines selection */}
+                        {/* MAIN LINES SELECTION */}
                         <div className="space-y-2">
                             <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider block flex items-center gap-1.5">
                                 <Layers className="w-4 h-4 text-blue-500" />
@@ -607,7 +827,7 @@ export default function ProductionDashboardPage() {
                             </div>
                         </div>
 
-                        {/* Sub machines checkboxes (for Stamping & Coilshop) */}
+                        {/* SUB-MACHINES CHECKBOXES */}
                         {subOptions.length > 0 && (
                             <div className="space-y-2">
                                 <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider block flex items-center gap-1.5">
@@ -636,7 +856,7 @@ export default function ProductionDashboardPage() {
                 </Card>
             )}
 
-            {/* Error boundary status */}
+            {/* ERROR BOUNDARY STATUS */}
             {error && (
                 <Card className="border-destructive/20 bg-destructive/5">
                     <CardContent className="flex items-center gap-2 text-destructive pt-6">
@@ -659,7 +879,7 @@ export default function ProductionDashboardPage() {
             ) : (
                 data && (
                     <div className="space-y-6">
-                        {/* KPI Status Cards */}
+                        {/* KPI CARDS */}
                         <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-6 gap-4">
                             {data.productionStatus?.map((item) => {
                                 const icons: Record<string, React.ReactNode> = {
@@ -676,7 +896,7 @@ export default function ProductionDashboardPage() {
                             })}
                         </div>
 
-                        {/* OEE speedometer & efficiency status cards (Assembly / Coilshop) */}
+                        {/* OEE & EFFICIENCY STATUS CARDS (ASSEMBLY / COILSHOP) */}
                         {data.oee !== undefined && (
                             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                                 <Card
@@ -740,7 +960,7 @@ export default function ProductionDashboardPage() {
                             </div>
                         )}
 
-                        {/* Daily Status (Assembly lines) */}
+                        {/* DAILY STATUS (ASSEMBLY LINES) */}
                         {area === "ASSEMBLY LINES" && data.dailyStatus && data.dailyStatus.length > 0 && (
                             <div className="space-y-3">
                                 <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest pl-1">Daily Status</h3>
@@ -762,7 +982,7 @@ export default function ProductionDashboardPage() {
                         {/* SECTION: ASSEMBLY LINES HOURLY TREND & PLANS */}
                         {area === "ASSEMBLY LINES" && (
                             <>
-                                {/* Hourly bar trend */}
+                                {/* HOURLY PRODUCTION TREND */}
                                 {hourlyChartData.length > 0 && (
                                     <Card className="border-border/60 shadow-sm bg-card">
                                         <CardHeader className="pb-2">
@@ -794,7 +1014,7 @@ export default function ProductionDashboardPage() {
                                     </Card>
                                 )}
 
-                                {/* Production model plan details */}
+                                {/* PRODUCTION MODEL PLAN DETAILS */}
                                 {data.modelDetails && data.modelDetails.length > 0 && (
                                     <Card className="border-border/60 shadow-sm bg-card">
                                         <CardHeader className="pb-2">
@@ -807,152 +1027,34 @@ export default function ProductionDashboardPage() {
                                                 <Input
                                                     placeholder="Search model name or model code..."
                                                     value={searchTerm}
-                                                    onChange={(e) => {
-                                                        setSearchTerm(e.target.value);
-                                                        setModelDetailsPage(1);
-                                                    }}
+                                                    onChange={(e) => setSearchTerm(e.target.value)}
                                                     className="w-full sm:w-64 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400"
                                                 />
                                             </div>
                                         </CardHeader>
-                                        <div className="p-6 pt-0">
-                                            <div className="rounded-md border border-gray-200 dark:border-gray-700 overflow-x-auto">
-                                                <Table>
-                                                    <TableHeader>
-                                                        <TableRow className="dark:border-gray-700">
-                                                            <TableHead className="text-gray-900 dark:text-gray-100">Seq</TableHead>
-                                                            <TableHead className="text-gray-900 dark:text-gray-100">Plan Order</TableHead>
-                                                            <TableHead className="text-gray-900 dark:text-gray-100">Model Code</TableHead>
-                                                            <TableHead className="text-gray-900 dark:text-gray-100">Model Description</TableHead>
-                                                            <TableHead className="text-gray-900 dark:text-gray-100">Model Name</TableHead>
-                                                            <TableHead className="text-center text-gray-900 dark:text-gray-100">Plan</TableHead>
-                                                            <TableHead className="text-center text-gray-900 dark:text-gray-100">Initial</TableHead>
-                                                            <TableHead className="text-center text-gray-900 dark:text-gray-100">Prod</TableHead>
-                                                            <TableHead className="text-center text-gray-900 dark:text-gray-100">Backflush</TableHead>
-                                                            <TableHead className="text-center text-gray-900 dark:text-gray-100">Progress</TableHead>
-                                                            <TableHead className="text-center text-gray-900 dark:text-gray-100">Achieved (%)</TableHead>
-                                                        </TableRow>
-                                                    </TableHeader>
-                                                    <TableBody>
-                                                        {paginatedModelDetails.map((row, rIdx) => {
-                                                            const plan = Number(row.plan || row.PLAN || 0);
-                                                            const prod = Number(row.production || row.PRODUCTION || 0);
-                                                            const initial = Number(row.initial_count || row.initialCount || row.INITIAL_COUNT || 0);
-                                                            const bf = Number(row.backFlush || row.back_flush || row.backflush || row["BACK FLUSH"] || 0);
-
-                                                            const code = row.modelCode || row.model_code || row["MODEL CODE"] || "";
-                                                            const name = row.modelName || row.model_name || row["MODEL NAME"] || "";
-                                                            const desc = row.model_description || row.modelDescription || row["MODEL DESCRIPTION"] || "-";
-                                                            const seq = row.sequence || row.seq || row.SEQUENCE || ((modelDetailsPage - 1) * modelDetailsPageSize + rIdx + 1);
-                                                            const planOrder = row.planOrder || row.plan_order || row.PLAN_ORDER || "-";
-
-                                                            const percent = plan > 0 ? ((prod / plan) * 100).toFixed(1) : "0.0";
-                                                            const achievedStr = row.achieved || percent;
-
-                                                            let progress = 0;
-                                                            if (plan === 0) {
-                                                                progress = prod > 0 ? (bf / prod) * 100 : 0;
-                                                            } else {
-                                                                progress = (prod / plan) * 100;
-                                                            }
-
-                                                            const isRunning = data.runningModel && String(code) === String(data.runningModel) && isTodaySelected && plan !== prod && prod !== 0;
-
-                                                            return (
-                                                                <TableRow
-                                                                    key={rIdx}
-                                                                    className={`dark:border-gray-700 transition-colors duration-200
-                                                                        ${isRunning ? "row-breathe font-semibold border-l-2 border-blue-500" : "hover:bg-gray-50 dark:hover:bg-gray-800"}
-                                                                    `}
-                                                                >
-                                                                    <TableCell className="font-medium text-gray-900 dark:text-white">{seq}</TableCell>
-                                                                    <TableCell className="text-gray-900 dark:text-white">{planOrder}</TableCell>
-                                                                    <TableCell className="text-gray-900 dark:text-white">{code}</TableCell>
-                                                                    <TableCell className="text-gray-900 dark:text-white max-w-xs truncate" title={name}>{name}</TableCell>
-                                                                    <TableCell className="text-gray-900 dark:text-white max-w-xs truncate" title={desc}>
-                                                                        {desc} {isRunning && <span className="text-[10px] bg-blue-500/10 text-blue-500 px-1.5 py-0.5 rounded ml-2 animate-pulse font-bold">RUNNING</span>}
-                                                                    </TableCell>
-                                                                    <TableCell className="text-center font-medium text-gray-900 dark:text-white">{plan.toLocaleString()}</TableCell>
-                                                                    <TableCell className="text-center font-medium text-gray-900 dark:text-white">{initial.toLocaleString()}</TableCell>
-                                                                    <TableCell className="text-center font-medium text-gray-900 dark:text-white">{prod.toLocaleString()}</TableCell>
-                                                                    <TableCell className="text-center text-gray-900 dark:text-white">{bf.toLocaleString()}</TableCell>
-                                                                    <TableCell>
-                                                                        <div className="flex items-center justify-center gap-2">
-                                                                            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 max-w-24">
-                                                                                <div
-                                                                                    className={`h-2 rounded-full transition-all ${progress >= 100
-                                                                                        ? "bg-green-600"
-                                                                                        : progress >= 75
-                                                                                            ? "bg-blue-600"
-                                                                                            : progress >= 50
-                                                                                                ? "bg-yellow-600"
-                                                                                                : "bg-red-600"
-                                                                                        }`}
-                                                                                    style={{ width: `${Math.min(progress, 100)}%` }}
-                                                                                />
-                                                                            </div>
-                                                                            <span className="text-xs text-gray-600 dark:text-gray-400 w-12 text-right">
-                                                                                {progress.toFixed(0)}%
-                                                                            </span>
-                                                                        </div>
-                                                                    </TableCell>
-                                                                    <TableCell className="text-center">
-                                                                        {getAchievementBadge(achievedStr, plan)}
-                                                                    </TableCell>
-                                                                </TableRow>
-                                                            );
-                                                        })}
-                                                    </TableBody>
-                                                </Table>
-                                            </div>
-
-                                            {/* Pagination UI */}
-                                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-4 pt-4 border-t text-xs">
-                                                <span className="text-xs text-muted-foreground">
-                                                    Showing {filteredModelDetails.length > 0 ? (modelDetailsPage - 1) * modelDetailsPageSize + 1 : 0} to {Math.min(modelDetailsPage * modelDetailsPageSize, filteredModelDetails.length)} of {filteredModelDetails.length} entries
-                                                </span>
-                                                <div className="flex flex-wrap items-center gap-4">
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="text-xs text-muted-foreground">Rows per page:</span>
-                                                        <Select value={String(modelDetailsPageSize)} onValueChange={(v) => { setModelDetailsPageSize(Number(v)); setModelDetailsPage(1); }}>
-                                                            <SelectTrigger className="w-16 h-8 text-xs bg-background border-border">
-                                                                <SelectValue placeholder={String(modelDetailsPageSize)} />
-                                                            </SelectTrigger>
-                                                            <SelectContent>
-                                                                {[5, 10, 20, 50, 100].map((size) => (
-                                                                    <SelectItem key={size} value={String(size)}>{size}</SelectItem>
-                                                                ))}
-                                                            </SelectContent>
-                                                        </Select>
-                                                    </div>
-                                                    <div className="flex items-center gap-1.5">
-                                                        <Button
-                                                            variant="outline"
-                                                            size="icon"
-                                                            className="h-8 w-8"
-                                                            onClick={() => setModelDetailsPage((p) => Math.max(p - 1, 1))}
-                                                            disabled={modelDetailsPage === 1}
-                                                        >
-                                                            <ChevronLeft className="h-4 w-4" />
-                                                        </Button>
-                                                        <span className="text-xs font-semibold px-2">Page {modelDetailsPage} of {totalModelDetailsPages || 1}</span>
-                                                        <Button
-                                                            variant="outline"
-                                                            size="icon"
-                                                            className="h-8 w-8"
-                                                            onClick={() => setModelDetailsPage((p) => Math.min(p + 1, totalModelDetailsPages))}
-                                                            disabled={modelDetailsPage === totalModelDetailsPages || totalModelDetailsPages === 0}
-                                                        >
-                                                            <ChevronRight className="h-4 w-4" />
-                                                        </Button>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
+                                        <CardContent className="pt-2">
+                                            <CommonTable
+                                                data={filteredModelDetails}
+                                                columns={assemblyColumns}
+                                                enableFiltering={true}
+                                                enableExport={true}
+                                                exportFileName='Production_Plan.csv'
+                                                noDataMessage="No plans found matching selection"
+                                                initialPageSize={5}
+                                                rowClassName={(row) => {
+                                                    const code = row.modelCode || row.model_code || row["MODEL CODE"] || "";
+                                                    const plan = Number(row.plan || row.PLAN || 0);
+                                                    const prod = Number(row.production || row.PRODUCTION || 0);
+                                                    const isRunning = data?.runningModel && String(code) === String(data.runningModel) && isTodaySelected && plan !== prod && prod !== 0;
+                                                    return isRunning ? "row-breathe font-semibold border-l-2 border-blue-500 bg-blue-500/5 dark:bg-blue-500/10" : "";
+                                                }}
+                                            />
+                                        </CardContent>
                                     </Card>
                                 )}
                             </>
                         )}
+
                         {/* SECTION: STAMPING TRENDS & MACHINE WISE VIEWS */}
                         {area === "STAMPING" && (
                             <>
@@ -964,7 +1066,7 @@ export default function ProductionDashboardPage() {
                                         ? "grid-cols-1 lg:grid-cols-2"
                                         : "grid-cols-1"
                                         }`}>
-                                        {/* Machine Hourly Trend */}
+                                        {/* MACHINE HOURLY TREND */}
                                         {fromDate === toDate && data.hourlyChartData && Object.keys(data.hourlyChartData).length > 0 && (
                                             <Card className="border-border/60 shadow-sm bg-card">
                                                 <CardHeader className="pb-2 flex flex-row items-center justify-between space-y-0 flex-wrap gap-2">
@@ -1006,7 +1108,7 @@ export default function ProductionDashboardPage() {
                                             </Card>
                                         )}
 
-                                        {/* Machine-wise production overview */}
+                                        {/* MACHINE-WISE PRODUCTION OVERVIEW */}
                                         {transformedMachineTrendData && transformedMachineTrendData.length > 0 && (
                                             <Card className="border-border/60 shadow-sm bg-card">
                                                 <CardHeader className="pb-2">
@@ -1055,86 +1157,22 @@ export default function ProductionDashboardPage() {
                                     </div>
                                 ) : null}
 
-                                {/* Model-wise production log */}
+                                {/* MODEL-WISE PRODUCTION LOG */}
                                 {data.modelData && data.modelData.length > 0 && (
                                     <Card className="border-border/60 shadow-sm bg-card">
                                         <CardHeader className="pb-2">
                                             <CardTitle className="text-md font-bold uppercase tracking-tight">Model-Wise Production Log</CardTitle>
                                         </CardHeader>
                                         <CardContent className="pt-2">
-                                            <div className="overflow-x-auto">
-                                                <Table>
-                                                    <TableHeader>
-                                                        <TableRow>
-                                                            <TableHead className="text-xs uppercase font-bold tracking-wider">Date</TableHead>
-                                                            <TableHead className="text-xs uppercase font-bold tracking-wider">Line</TableHead>
-                                                            <TableHead className="text-xs uppercase font-bold tracking-wider">Machine</TableHead>
-                                                            <TableHead className="text-xs uppercase font-bold tracking-wider">Model Name</TableHead>
-                                                            <TableHead className="text-xs uppercase font-bold tracking-wider">Start Time</TableHead>
-                                                            <TableHead className="text-xs uppercase font-bold tracking-wider">End Time</TableHead>
-                                                            <TableHead className="text-xs uppercase font-bold tracking-wider text-right font-bold">Count</TableHead>
-                                                            <TableHead className="text-xs uppercase font-bold tracking-wider text-right font-bold">SPM</TableHead>
-                                                        </TableRow>
-                                                    </TableHeader>
-                                                    <TableBody>
-                                                        {paginatedModelData.map((row, rIdx) => (
-                                                            <TableRow key={rIdx}>
-                                                                <TableCell className="text-xs py-2">{row.date || row.DATE || ""}</TableCell>
-                                                                <TableCell className="text-xs py-2">{row.line || row.LINE || ""}</TableCell>
-                                                                <TableCell className="text-xs py-2">{row.machine || row.MACHINE || ""}</TableCell>
-                                                                <TableCell className="text-xs py-2">{row.modelName || row.model_name || row.modelname || row["MODEL NAME"] || ""}</TableCell>
-                                                                <TableCell className="text-xs py-2">{row.startTime || row.starttime || row.start_time || row["START TIME"] || ""}</TableCell>
-                                                                <TableCell className="text-xs py-2">{row.endTime || row.endtime || row.end_time || row["END TIME"] || ""}</TableCell>
-                                                                <TableCell className="text-xs py-2 text-right font-semibold">{row.count || row.COUNT || 0}</TableCell>
-                                                                <TableCell className="text-xs py-2 text-right">{row.spm || row.SPM || 0}</TableCell>
-                                                            </TableRow>
-                                                        ))}
-                                                    </TableBody>
-                                                </Table>
-                                            </div>
-
-                                            {/* Pagination UI */}
-                                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-4 pt-4 border-t text-xs">
-                                                <span className="text-xs text-muted-foreground">
-                                                    Showing {data.modelData.length > 0 ? (modelDataPage - 1) * modelDataPageSize + 1 : 0} to {Math.min(modelDataPage * modelDataPageSize, data.modelData.length)} of {data.modelData.length} entries
-                                                </span>
-                                                <div className="flex flex-wrap items-center gap-4">
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="text-xs text-muted-foreground">Rows per page:</span>
-                                                        <Select value={String(modelDataPageSize)} onValueChange={(v) => { setModelDataPageSize(Number(v)); setModelDataPage(1); }}>
-                                                            <SelectTrigger className="w-16 h-8 text-xs bg-background border-border">
-                                                                <SelectValue placeholder={String(modelDataPageSize)} />
-                                                            </SelectTrigger>
-                                                            <SelectContent>
-                                                                {[5, 10, 20, 50, 100].map((size) => (
-                                                                    <SelectItem key={size} value={String(size)}>{size}</SelectItem>
-                                                                ))}
-                                                            </SelectContent>
-                                                        </Select>
-                                                    </div>
-                                                    <div className="flex items-center gap-1.5">
-                                                        <Button
-                                                            variant="outline"
-                                                            size="icon"
-                                                            className="h-8 w-8"
-                                                            onClick={() => setModelDataPage((p) => Math.max(p - 1, 1))}
-                                                            disabled={modelDataPage === 1}
-                                                        >
-                                                            <ChevronLeft className="h-4 w-4" />
-                                                        </Button>
-                                                        <span className="text-xs font-semibold px-2">Page {modelDataPage} of {totalModelDataPages || 1}</span>
-                                                        <Button
-                                                            variant="outline"
-                                                            size="icon"
-                                                            className="h-8 w-8"
-                                                            onClick={() => setModelDataPage((p) => Math.min(p + 1, totalModelDataPages))}
-                                                            disabled={modelDataPage === totalModelDataPages || totalModelDataPages === 0}
-                                                        >
-                                                            <ChevronRight className="h-4 w-4" />
-                                                        </Button>
-                                                    </div>
-                                                </div>
-                                            </div>
+                                            <CommonTable
+                                                data={data.modelData}
+                                                columns={stampingColumns}
+                                                enableFiltering={true}
+                                                enableExport={true}
+                                                exportFileName="Stamping_Production_Log.csv"
+                                                noDataMessage="No production records found"
+                                                initialPageSize={5}
+                                            />
                                         </CardContent>
                                     </Card>
                                 )}
@@ -1144,7 +1182,7 @@ export default function ProductionDashboardPage() {
                         {/* SECTION: COILSHOP TRENDS & COMPONENT DETAILS */}
                         {area === "COILSHOP" && (
                             <>
-                                {/* Coilshop machine trend */}
+                                {/* COILSHOP MACHINE TREND */}
                                 {transformedMachineTrendData && transformedMachineTrendData.length > 0 && (
                                     <Card className="border-border/60 shadow-sm bg-card">
                                         <CardHeader className="pb-2">
@@ -1187,177 +1225,27 @@ export default function ProductionDashboardPage() {
                                     </Card>
                                 )}
 
-                                {/* Coilshop detailed logs */}
+                                {/* COILSHOP DETAILS LOGS */}
                                 {data.modelData && data.modelData.length > 0 && (
                                     <Card className="border-border/60 shadow-sm bg-card">
                                         <CardHeader className="pb-2">
                                             <CardTitle className="text-md font-bold uppercase tracking-tight">Model-Wise Coilshop Logs</CardTitle>
                                         </CardHeader>
                                         <CardContent className="pt-2">
-                                            <div className="overflow-x-auto">
-                                                <Table>
-                                                    <TableHeader>
-                                                        <TableRow>
-                                                            <TableHead className="text-xs uppercase font-bold tracking-wider">Date</TableHead>
-                                                            <TableHead className="text-xs uppercase font-bold tracking-wider">Shift</TableHead>
-                                                            <TableHead className="text-xs uppercase font-bold tracking-wider">Line</TableHead>
-                                                            <TableHead className="text-xs uppercase font-bold tracking-wider">Machine</TableHead>
-                                                            <TableHead className="text-xs uppercase font-bold tracking-wider">Model Name</TableHead>
-                                                            <TableHead className="text-xs uppercase font-bold tracking-wider text-right font-bold">Plan</TableHead>
-                                                            <TableHead className="text-xs uppercase font-bold tracking-wider text-right font-bold">Production</TableHead>
-                                                            <TableHead className="text-xs uppercase font-bold tracking-wider text-right">A (%)</TableHead>
-                                                            <TableHead className="text-xs uppercase font-bold tracking-wider text-right">P (%)</TableHead>
-                                                            <TableHead className="text-xs uppercase font-bold tracking-wider text-right">Q (%)</TableHead>
-                                                            <TableHead className="text-xs uppercase font-bold tracking-wider text-right font-bold">OEE (%)</TableHead>
-                                                        </TableRow>
-                                                    </TableHeader>
-                                                    <TableBody>
-                                                        {paginatedModelData.map((row, rIdx) => (
-                                                            <TableRow key={rIdx}>
-                                                                <TableCell className="text-xs py-2">{row.date || row.DATE || ""}</TableCell>
-                                                                <TableCell className="text-xs py-2">{row.shift || row.SHIFT || ""}</TableCell>
-                                                                <TableCell className="text-xs py-2">{row.line || row.LINE || ""}</TableCell>
-                                                                <TableCell className="text-xs py-2">{row.machine || row.MACHINE || ""}</TableCell>
-                                                                <TableCell className="text-xs py-2">{row.modelName || row.modelname || row.model_name || row["MODEL NAME"] || ""}</TableCell>
-                                                                <TableCell className="text-xs py-2 text-right">{row.plan || row.PLAN || 0}</TableCell>
-                                                                <TableCell className="text-xs py-2 text-right font-semibold">{row.production || row.PRODUCTION || 0}</TableCell>
-                                                                <TableCell className="text-xs py-2 text-right">{row.a || row.A || 0}%</TableCell>
-                                                                <TableCell className="text-xs py-2 text-right">{row.p || row.P || 0}%</TableCell>
-                                                                <TableCell className="text-xs py-2 text-right">{row.q || row.Q || 0}%</TableCell>
-                                                                <TableCell className="text-xs py-2 text-right font-bold">{row.oee || row.OEE || 0}%</TableCell>
-                                                            </TableRow>
-                                                        ))}
-                                                    </TableBody>
-                                                </Table>
-                                            </div>
-
-                                            {/* Pagination UI */}
-                                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-4 pt-4 border-t text-xs">
-                                                <span className="text-xs text-muted-foreground">
-                                                    Showing {data.modelData.length > 0 ? (modelDataPage - 1) * modelDataPageSize + 1 : 0} to {Math.min(modelDataPage * modelDataPageSize, data.modelData.length)} of {data.modelData.length} entries
-                                                </span>
-                                                <div className="flex flex-wrap items-center gap-4">
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="text-xs text-muted-foreground">Rows per page:</span>
-                                                        <Select value={String(modelDataPageSize)} onValueChange={(v) => { setModelDataPageSize(Number(v)); setModelDataPage(1); }}>
-                                                            <SelectTrigger className="w-16 h-8 text-xs bg-background border-border">
-                                                                <SelectValue placeholder={String(modelDataPageSize)} />
-                                                            </SelectTrigger>
-                                                            <SelectContent>
-                                                                {[5, 10, 20, 50, 100].map((size) => (
-                                                                    <SelectItem key={size} value={String(size)}>{size}</SelectItem>
-                                                                ))}
-                                                            </SelectContent>
-                                                        </Select>
-                                                    </div>
-                                                    <div className="flex items-center gap-1.5">
-                                                        <Button
-                                                            variant="outline"
-                                                            size="icon"
-                                                            className="h-8 w-8"
-                                                            onClick={() => setModelDataPage((p) => Math.max(p - 1, 1))}
-                                                            disabled={modelDataPage === 1}
-                                                        >
-                                                            <ChevronLeft className="h-4 w-4" />
-                                                        </Button>
-                                                        <span className="text-xs font-semibold px-2">Page {modelDataPage} of {totalModelDataPages || 1}</span>
-                                                        <Button
-                                                            variant="outline"
-                                                            size="icon"
-                                                            className="h-8 w-8"
-                                                            onClick={() => setModelDataPage((p) => Math.min(p + 1, totalModelDataPages))}
-                                                            disabled={modelDataPage === totalModelDataPages || totalModelDataPages === 0}
-                                                        >
-                                                            <ChevronRight className="h-4 w-4" />
-                                                        </Button>
-                                                    </div>
-                                                </div>
-                                            </div>
+                                            <CommonTable
+                                                data={data.modelData}
+                                                columns={coilshopColumns}
+                                                enableFiltering={true}
+                                                enableExport={true}
+                                                exportFileName="Coilshop_Production_Log.csv"
+                                                noDataMessage="No production records found"
+                                                initialPageSize={5}
+                                            />
                                         </CardContent>
                                     </Card>
                                 )}
                             </>
                         )}
-
-                        {/* Downtime logger list table */}
-                        {/* {downtimeData.length > 0 && (
-                            <Card className="border-border/60 shadow-sm bg-card mt-6">
-                                <CardHeader className="pb-2">
-                                    <CardTitle className="text-md font-bold uppercase tracking-tight">Active Downtime Events</CardTitle>
-                                </CardHeader>
-                                <CardContent className="pt-2">
-                                    <div className="overflow-x-auto">
-                                        <Table>
-                                            <TableHeader>
-                                                <TableRow>
-                                                    <TableHead className="text-xs uppercase font-bold tracking-wider">Date</TableHead>
-                                                    <TableHead className="text-xs uppercase font-bold tracking-wider">Time</TableHead>
-                                                    <TableHead className="text-xs uppercase font-bold tracking-wider">Line</TableHead>
-                                                    <TableHead className="text-xs uppercase font-bold tracking-wider">Type</TableHead>
-                                                    <TableHead className="text-xs uppercase font-bold tracking-wider">Reason</TableHead>
-                                                    <TableHead className="text-xs uppercase font-bold tracking-wider text-right">Duration (min)</TableHead>
-                                                </TableRow>
-                                            </TableHeader>
-                                            <TableBody>
-                                                {paginatedDowntimeData.map((row, rIdx) => (
-                                                    <TableRow key={rIdx}>
-                                                        <TableCell className="text-xs py-2">{row.date || row.DATE || ""}</TableCell>
-                                                        <TableCell className="text-xs py-2">{row.time || row.TIME || ""}</TableCell>
-                                                        <TableCell className="text-xs py-2">{row.line || row.LINE || ""}</TableCell>
-                                                        <TableCell className="text-xs py-2">{row.type || row.TYPE || ""}</TableCell>
-                                                        <TableCell className="text-xs py-2">{row.reason || row.REASON || ""}</TableCell>
-                                                        <TableCell className="text-xs py-2 text-right font-medium">{row.duration || row.DURATION || 0}</TableCell>
-                                                    </TableRow>
-                                                ))}
-                                            </TableBody>
-                                        </Table>
-                                    </div>
-
-                                    // Pagination UI
-                                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-4 pt-4 border-t text-xs">
-                                        <span className="text-xs text-muted-foreground">
-                                            Showing {downtimeData.length > 0 ? (downtimePage - 1) * downtimePageSize + 1 : 0} to {Math.min(downtimePage * downtimePageSize, downtimeData.length)} of {downtimeData.length} entries
-                                        </span>
-                                        <div className="flex flex-wrap items-center gap-4">
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-xs text-muted-foreground">Rows per page:</span>
-                                                <Select value={String(downtimePageSize)} onValueChange={(v) => { setDowntimePageSize(Number(v)); setDowntimePage(1); }}>
-                                                    <SelectTrigger className="w-16 h-8 text-xs bg-background border-border">
-                                                        <SelectValue placeholder={String(downtimePageSize)} />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        {[5, 10, 20, 50, 100].map((size) => (
-                                                            <SelectItem key={size} value={String(size)}>{size}</SelectItem>
-                                                        ))}
-                                                    </SelectContent>
-                                                </Select>
-                                            </div>
-                                            <div className="flex items-center gap-1.5">
-                                                <Button
-                                                    variant="outline"
-                                                    size="icon"
-                                                    className="h-8 w-8"
-                                                    onClick={() => setDowntimePage((p) => Math.max(p - 1, 1))}
-                                                    disabled={downtimePage === 1}
-                                                >
-                                                    <ChevronLeft className="h-4 w-4" />
-                                                </Button>
-                                                <span className="text-xs font-semibold px-2">Page {downtimePage} of {totalDowntimePages || 1}</span>
-                                                <Button
-                                                    variant="outline"
-                                                    size="icon"
-                                                    className="h-8 w-8"
-                                                    onClick={() => setDowntimePage((p) => Math.min(p + 1, totalDowntimePages))}
-                                                    disabled={downtimePage === totalDowntimePages || totalDowntimePages === 0}
-                                                >
-                                                    <ChevronRight className="h-4 w-4" />
-                                                </Button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        )} */}
                     </div>
                 )
             )}

@@ -1,7 +1,7 @@
 // app/(dashboard)/manufacturing/production/rty/[zone]/page.tsx
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import axios from "axios";
@@ -46,7 +46,6 @@ import {
 
 const API_HOST = "http://10.0.7.26:3003";
 
-// Colour palette for the pie chart slices
 const PIE_COLORS = [
     "#3b82f6",
     "#ef4444",
@@ -79,7 +78,6 @@ interface ApiData {
     rtyByArea?: Record<string, number>;
 }
 
-// Donut Pie Chart using ReactECharts
 const DefectPieChart = ({
     data,
     zone,
@@ -182,7 +180,6 @@ const DefectPieChart = ({
     return <ReactECharts option={option} style={{ height: "320px", width: "100%" }} />;
 };
 
-// Horizontal bar chart for quick visual comparison
 const DefectBarChart = ({
     data,
     theme,
@@ -257,21 +254,20 @@ export default function ZoneRtyPage() {
     const { resolvedTheme } = useTheme();
     const [mounted, setMounted] = useState(false);
 
-    // Filter states
+    // FILTER STATES
     const [fromDate, setFromDate] = useState("");
     const [toDate, setToDate] = useState("");
     const [selectedLine, setSelectedLine] = useState("ODU-Line");
 
-    // API states
+    // API STATES
     const [apiData, setApiData] = useState<ApiData | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    // Table pagination
+    // PAGINATION CONFIG
     const [currentPage, setCurrentPage] = useState(1);
     const [pageSize, setPageSize] = useState(10);
 
-    // On mount: restore session storage filters
     useEffect(() => {
         setMounted(true);
         const todayStr = new Date().toISOString().split("T")[0];
@@ -316,7 +312,6 @@ export default function ZoneRtyPage() {
         }
     }, [fromDate, toDate, selectedLine, mounted]);
 
-    // Derived data for the current zone
     const pieData = useMemo<{ name: string; value: number }[]>(() => {
         if (!apiData?.defectByArea || !zone) return [];
         const raw = apiData.defectByArea[zone] || apiData.defectByArea[zone.toLowerCase()] || [];
@@ -337,14 +332,13 @@ export default function ZoneRtyPage() {
         return apiData.rtyByArea[zone] ?? apiData.rtyByArea[zone.toLowerCase()] ?? null;
     }, [apiData, zone]);
 
-    // Paginated defect detail rows
     const totalPages = Math.ceil(defectRows.length / pageSize);
     const paginatedRows = useMemo(() => {
         const start = (currentPage - 1) * pageSize;
         return defectRows.slice(start, start + pageSize);
     }, [defectRows, currentPage, pageSize]);
 
-    // CSV Export
+    // CSV EXPORT
     const handleExport = () => {
         if (!defectRows.length) {
             alert("No defect data available to export.");
@@ -402,7 +396,7 @@ export default function ZoneRtyPage() {
 
     return (
         <div className="space-y-6 max-w-8xl mx-auto p-2">
-            {/* ── Header ──────────────────────────────────────────── */}
+            {/* HEADER SECTION */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div className="flex items-center gap-3">
                     <Button
@@ -429,7 +423,7 @@ export default function ZoneRtyPage() {
                     </div>
                 </div>
 
-                {/* Filters & Export */}
+                {/* FILTERS & EXPORT */}
                 {mounted && (
                     <div className="flex flex-wrap gap-2.5 items-end bg-card p-3 rounded-xl border border-border/60 shadow-sm">
                         <div className="space-y-1">
@@ -510,7 +504,7 @@ export default function ZoneRtyPage() {
                 )}
             </div>
 
-            {/* ── Error State ─────────────────────────────────────── */}
+            {/* ERROR ALERT */}
             {error && (
                 <Card className="border-destructive/20 bg-destructive/5">
                     <CardContent className="flex items-center gap-2 text-destructive pt-6">
@@ -520,7 +514,7 @@ export default function ZoneRtyPage() {
                 </Card>
             )}
 
-            {/* ── Loading Skeleton ─────────────────────────────────── */}
+            {/* LOADING SKELETON */}
             {loading && !apiData ? (
                 <div className="space-y-6">
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -543,10 +537,10 @@ export default function ZoneRtyPage() {
                 </div>
             ) : apiData ? (
                 <div className="space-y-6">
-                    {/* ── Charts row ─────────────────────────────────── */}
+                    {/* CHARTS ROW */}
                     {pieData.length > 0 ? (
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                            {/* Donut Pie */}
+                            {/* DONUT PIE */}
                             <Card className="border-border/60 shadow-sm bg-card">
                                 <CardHeader className="pb-2">
                                     <CardTitle className="text-sm font-bold uppercase tracking-tight flex items-center gap-1.5">
@@ -566,7 +560,7 @@ export default function ZoneRtyPage() {
                                 </CardContent>
                             </Card>
 
-                            {/* Horizontal Bar */}
+                            {/* HORIZONTAL BAR */}
                             <Card className="border-border/60 shadow-sm bg-card">
                                 <CardHeader className="pb-2">
                                     <CardTitle className="text-sm font-bold uppercase tracking-tight flex items-center gap-1.5">
@@ -597,7 +591,7 @@ export default function ZoneRtyPage() {
                         </Card>
                     )}
 
-                    {/* ── Defect Details Table ──────────────────────── */}
+                    {/* DEFECT DETAILS TABLE */}
                     <Card className="border-border/60 shadow-sm bg-card">
                         <CardHeader className="pb-2">
                             <div className="flex items-center justify-between flex-wrap gap-2">
@@ -700,7 +694,7 @@ export default function ZoneRtyPage() {
                                         </Table>
                                     </div>
 
-                                    {/* Pagination */}
+                                    {/* PAGINATION UI */}
                                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-4 pt-4 border-t text-xs">
                                         <span className="text-xs text-muted-foreground">
                                             Showing{" "}
@@ -794,7 +788,7 @@ export default function ZoneRtyPage() {
                     </Card>
                 </div>
             ) : (
-                // No data state
+                // NO DATA STATE
                 <Card className="border-border/60 bg-card">
                     <CardContent className="py-16 flex flex-col items-center gap-3 text-muted-foreground">
                         <AlertCircle className="h-10 w-10 opacity-20" />

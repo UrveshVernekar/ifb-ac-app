@@ -1,7 +1,7 @@
 // app/(dashboard)/manufacturing/stock-transfer/page.tsx
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import axios from "axios";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -15,14 +15,6 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from "@/components/ui/table";
-import {
     Dialog,
     DialogContent,
     DialogDescription,
@@ -32,10 +24,11 @@ import {
 } from "@/components/ui/dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, RefreshCw, Send, ArrowLeftRight, CheckCircle2, AlertCircle, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowLeft, RefreshCw, Send, ArrowLeftRight, CheckCircle2, AlertCircle } from "lucide-react";
 import Link from "next/link";
+import CommonTable, { ColumnConfig } from "@/components/shared/CommonTable";
 
-const API_HOST = "http://localhost:3003";
+const API_HOST = "http://10.0.7.26:3003";
 
 interface StockTransferRow {
     postingDate: string;
@@ -66,13 +59,6 @@ export default function StockTransferPage() {
     // Log list data
     const [rows, setRows] = useState<StockTransferRow[]>([]);
 
-    // Pagination controls
-    const [currentPage, setCurrentPage] = useState(1);
-    const [pageSize, setPageSize] = useState(5);
-
-    const totalPages = Math.ceil(rows.length / pageSize);
-    const startIndex = (currentPage - 1) * pageSize;
-    const paginatedRows = rows.slice(startIndex, startIndex + pageSize);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [refreshTrigger, setRefreshTrigger] = useState(false);
@@ -106,18 +92,18 @@ export default function StockTransferPage() {
             try {
                 const res = await axios.get(`${API_HOST}/api/stock-transfer/data/get-mapping`);
                 if (res.data.success) {
-                    const locs = res.data.locationOptions.map((item: any) => ({
+                    const locs = res?.data?.data?.locationOptions?.map((item: any) => ({
                         label: item.label,
                         value: item.value,
-                    }));
-                    const parts = res.data.partOptions.map((item: any) => ({
+                    })) || [];
+                    const parts = res?.data?.data?.partOptions?.map((item: any) => ({
                         label: item.label,
                         value: item.value,
-                    }));
+                    })) || [];
                     setLocationOptions(locs);
                     setPartOptions(parts);
 
-                    if (!location && locs.length > 0) {
+                    if (!location && locs && locs.length > 0) {
                         setLocation(locs[0].value);
                         sessionStorage.setItem("locationValue", locs[0].value);
                     }
@@ -158,10 +144,8 @@ export default function StockTransferPage() {
                     createdAt: row["CREATED AT"] || row.createdAt || row.CreatedAt || "",
                 }));
                 setRows(mapped);
-                setCurrentPage(1);
             } else {
                 setRows([]);
-                setCurrentPage(1);
             }
         } catch (err) {
             console.error("Stock logs fetch error:", err);
@@ -170,6 +154,81 @@ export default function StockTransferPage() {
             setLoading(false);
         }
     };
+
+    const columns = React.useMemo<ColumnConfig<StockTransferRow>[]>(() => [
+        {
+            header: "Posting Date",
+            accessorKey: "postingDate",
+            isFilterable: true,
+            isSortable: true,
+            cell: (row: StockTransferRow) => {
+                let postDate = row.postingDate;
+                try {
+                    const d = new Date(row.postingDate);
+                    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+                    postDate = `${d.getDate().toString().padStart(2, '0')}-${months[d.getMonth()]}-${d.getFullYear()}`;
+                } catch (e) { }
+                return postDate;
+            }
+        },
+        {
+            header: "Part Code",
+            accessorKey: "partCode",
+            isFilterable: true,
+            isSortable: true,
+            className: "font-semibold",
+        },
+        {
+            header: "Part Description",
+            accessorKey: "partDesc",
+            isFilterable: true,
+            isSortable: true,
+        },
+        {
+            header: "Qty",
+            accessorKey: "quantity",
+            className: "text-right font-bold text-blue-600",
+            cell: (row: StockTransferRow) => row.quantity,
+        },
+        {
+            header: "Source",
+            accessorKey: "source",
+            isFilterable: true,
+            isSortable: true,
+        },
+        {
+            header: "Destination",
+            accessorKey: "destination",
+            isFilterable: true,
+            isSortable: true,
+        },
+        {
+            header: "Status",
+            accessorKey: "status",
+            isFilterable: true,
+            isSortable: true,
+            cell: (row: StockTransferRow) => (
+                <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${row.status === "S"
+                    ? "bg-blue-500/10 text-blue-500 border border-blue-500/20"
+                    : "bg-rose-500/10 text-rose-500 border border-rose-500/20"
+                    }`}>
+                    {row.status === "S" ? "SUCCESS" : "ERROR"}
+                </span>
+            ),
+        },
+        {
+            header: "Remarks",
+            accessorKey: "remarks",
+            className: "max-w-[120px] truncate text-muted-foreground",
+            cell: (row: StockTransferRow) => <span title={row.remarks}>{row.remarks || "-"}</span>,
+        },
+        {
+            header: "Created By",
+            accessorKey: "createdBy",
+            isFilterable: true,
+            isSortable: true,
+        }
+    ], []);
 
     useEffect(() => {
         if (mounted && location) {
@@ -325,104 +384,16 @@ export default function StockTransferPage() {
                                 <Skeleton key={i} className="h-8 w-full" />
                             ))}
                         </div>
-                    ) : rows.length > 0 ? (
-                        <div className="space-y-4">
-                            <div className="overflow-x-auto border border-border/40 rounded-lg bg-background">
-                                <Table>
-                                    <TableHeader>
-                                        <TableRow>
-                                            <TableHead className="text-xs font-bold py-2.5">Posting Date</TableHead>
-                                            <TableHead className="text-xs font-bold py-2.5">Part Code</TableHead>
-                                            <TableHead className="text-xs font-bold py-2.5">Part Description</TableHead>
-                                            <TableHead className="text-xs font-bold py-2.5 text-right font-bold">Qty</TableHead>
-                                            <TableHead className="text-xs font-bold py-2.5">Source</TableHead>
-                                            <TableHead className="text-xs font-bold py-2.5">Destination</TableHead>
-                                            <TableHead className="text-xs font-bold py-2.5">Status</TableHead>
-                                            <TableHead className="text-xs font-bold py-2.5">Remarks</TableHead>
-                                            <TableHead className="text-xs font-bold py-2.5">Created By</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {paginatedRows.map((row, rIdx) => {
-                                            // Format posting date
-                                            let postDate = row.postingDate;
-                                            try {
-                                                const d = new Date(row.postingDate);
-                                                const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-                                                postDate = `${d.getDate().toString().padStart(2, '0')}-${months[d.getMonth()]}-${d.getFullYear()}`;
-                                            } catch (e) { }
-
-                                            return (
-                                                <TableRow key={rIdx}>
-                                                    <TableCell className="text-xs py-2 font-medium">{postDate}</TableCell>
-                                                    <TableCell className="text-xs py-2 font-semibold">{row.partCode}</TableCell>
-                                                    <TableCell className="text-xs py-2">{row.partDesc}</TableCell>
-                                                    <TableCell className="text-xs py-2 text-right font-bold text-blue-600">{row.quantity}</TableCell>
-                                                    <TableCell className="text-xs py-2">{row.source}</TableCell>
-                                                    <TableCell className="text-xs py-2">{row.destination}</TableCell>
-                                                    <TableCell className="text-xs py-2">
-                                                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${row.status === "S" ? "bg-blue-500/10 text-blue-500 border border-blue-500/20" : "bg-rose-500/10 text-rose-500 border border-rose-500/20"
-                                                            }`}>
-                                                            {row.status === "S" ? "SUCCESS" : "ERROR"}
-                                                        </span>
-                                                    </TableCell>
-                                                    <TableCell className="text-xs py-2 text-muted-foreground max-w-[120px] truncate" title={row.remarks}>{row.remarks || "-"}</TableCell>
-                                                    <TableCell className="text-xs py-2">{row.createdBy}</TableCell>
-                                                </TableRow>
-                                            );
-                                        })}
-                                    </TableBody>
-                                </Table>
-                            </div>
-
-                            {/* Pagination UI */}
-                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-2 pt-2 border-t">
-                                <span className="text-xs text-muted-foreground">
-                                    Showing {rows.length > 0 ? startIndex + 1 : 0} to {Math.min(startIndex + pageSize, rows.length)} of {rows.length} entries
-                                </span>
-                                <div className="flex flex-wrap items-center gap-4">
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-xs text-muted-foreground">Rows per page:</span>
-                                        <Select value={String(pageSize)} onValueChange={(v) => { setPageSize(Number(v)); setCurrentPage(1); }}>
-                                            <SelectTrigger className="w-16 h-8 text-xs bg-background border-border">
-                                                <SelectValue placeholder={String(pageSize)} />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {[5, 10, 20, 50, 100].map((size) => (
-                                                    <SelectItem key={size} value={String(size)}>{size}</SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-                                    <div className="flex items-center gap-1.5">
-                                        <Button
-                                            variant="outline"
-                                            size="icon"
-                                            className="h-8 w-8"
-                                            onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
-                                            disabled={currentPage === 1}
-                                        >
-                                            <ChevronLeft className="h-4 w-4" />
-                                        </Button>
-                                        <span className="text-xs font-semibold px-2">Page {currentPage} of {totalPages || 1}</span>
-                                        <Button
-                                            variant="outline"
-                                            size="icon"
-                                            className="h-8 w-8"
-                                            onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
-                                            disabled={currentPage === totalPages || totalPages === 0}
-                                        >
-                                            <ChevronRight className="h-4 w-4" />
-                                        </Button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
                     ) : (
-                        <div className="flex flex-col items-center justify-center py-16 text-sm text-muted-foreground">
-                            <ArrowLeftRight className="w-10 h-10 text-muted-foreground/30 mb-3" />
-                            No stock transfers logged for this period
-                        </div>
+                        <CommonTable
+                            data={rows}
+                            columns={columns}
+                            enableFiltering={true}
+                            enableExport={true}
+                            exportFileName="Stock_Transfers.csv"
+                            noDataMessage="No stock transfers logged for this period"
+                            initialPageSize={5}
+                        />
                     )}
                 </CardContent>
             </Card>

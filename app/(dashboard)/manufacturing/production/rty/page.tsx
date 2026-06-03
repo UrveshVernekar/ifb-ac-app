@@ -1,7 +1,7 @@
 // app/(dashboard)/manufacturing/production/rty/page.tsx
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import axios from "axios";
@@ -63,7 +63,6 @@ const SpeedometerChart = ({ value, theme }: { value: number; theme: string }) =>
     const color = value >= 85 ? "#22c55e" : value >= 70 ? "#eab308" : "#ef4444";
     const trackColor = isDark ? "#27272a" : "#e2e8f0";
     const textColor = isDark ? "#f4f4f5" : "#1a202c";
-    const labelColor = isDark ? "#a1a1aa" : "#64748b";
 
     const option = {
         backgroundColor: "transparent",
@@ -127,7 +126,7 @@ const SpeedometerChart = ({ value, theme }: { value: number; theme: string }) =>
     return <ReactECharts option={option} style={{ height: "200px", width: "100%" }} />;
 };
 
-// Daily RTY Trend Chart
+// DAILY RTY TREND CHART
 const RtyTrendChart = ({ data, theme }: { data: any; theme: string }) => {
     const isDark = theme === "dark";
     const textColor = isDark ? '#a1a1aa' : '#71717a';
@@ -203,7 +202,7 @@ const RtyTrendChart = ({ data, theme }: { data: any; theme: string }) => {
                 name: "Target",
                 type: "line",
                 data: targets,
-                smooth: true, // Smooth curved lines as requested!
+                smooth: true,
                 lineStyle: { width: 3, type: "dashed", color: "#3b82f6" },
                 itemStyle: { color: "#3b82f6" },
                 symbol: "circle",
@@ -215,7 +214,7 @@ const RtyTrendChart = ({ data, theme }: { data: any; theme: string }) => {
     return <ReactECharts option={option} style={{ height: "320px", width: "100%" }} />;
 };
 
-// Zone-wise FPY Status Stacked Chart
+// ZONE-WISE FPY STATUS STACHED CHART
 const ZoneFpyChart = ({ series, xAxisLabels, theme }: { series: any[]; xAxisLabels: string[]; theme: string }) => {
     const isDark = theme === "dark";
     const textColor = isDark ? '#a1a1aa' : '#71717a';
@@ -309,7 +308,7 @@ const ZoneFpyChart = ({ series, xAxisLabels, theme }: { series: any[]; xAxisLabe
             const isLine = serie.type === "line";
             return {
                 ...serie,
-                smooth: isLine ? true : undefined, // Smooth line curves
+                smooth: isLine ? true : undefined,
                 label: isLine
                     ? {
                         show: true,
@@ -339,17 +338,16 @@ export default function RtyDashboardPage() {
     const { resolvedTheme } = useTheme();
     const [mounted, setMounted] = useState(false);
 
-    // Filter states
+    // FILTER STATES
     const [fromDate, setFromDate] = useState("");
     const [toDate, setToDate] = useState("");
     const [selectedLine, setSelectedLine] = useState("ODU-Line");
 
-    // API states
+    // API STATES
     const [data, setData] = useState<ApiResponse | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    // Initial load
     useEffect(() => {
         setMounted(true);
         const todayStr = new Date().toISOString().split("T")[0];
@@ -392,13 +390,11 @@ export default function RtyDashboardPage() {
         }
     }, [fromDate, toDate, selectedLine, mounted]);
 
-    // Handle filter modifications
     const handleLineChange = (val: string) => {
         setSelectedLine(val);
         sessionStorage.setItem("manufacturingMachines", val);
     };
 
-    // Client-side CSV Exporter
     const handleExport = () => {
         if (!data?.defectDetails) {
             alert("No defect data available to export.");
@@ -458,8 +454,8 @@ export default function RtyDashboardPage() {
             <Card
                 key={item.label}
                 className={`bg-card border-border/60 shadow-sm transition-all ${isClickable
-                        ? "cursor-pointer hover:shadow-md hover:border-blue-500/50 hover:-translate-y-0.5 group"
-                        : ""
+                    ? "cursor-pointer hover:shadow-md hover:border-blue-500/50 hover:-translate-y-0.5 group"
+                    : ""
                     }`}
             >
                 <CardHeader className="pb-1 pt-4 px-4 flex flex-row items-center justify-between space-y-0">
@@ -494,7 +490,7 @@ export default function RtyDashboardPage() {
 
     return (
         <div className="space-y-6 max-w-8xl mx-auto p-2">
-            {/* Header row */}
+            {/* HEADER SECTION */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div className="flex items-center gap-3">
                     <Button variant="outline" size="icon" className="h-9 w-9" onClick={() => router.push("/manufacturing/production")}>
@@ -510,7 +506,7 @@ export default function RtyDashboardPage() {
                     </div>
                 </div>
 
-                {/* Filters & Export */}
+                {/* FILTERS & EXPORT */}
                 {mounted && (
                     <div className="flex flex-wrap gap-2.5 items-end bg-card p-3 rounded-xl border border-border/60 shadow-sm">
                         <div className="space-y-1">
@@ -563,7 +559,7 @@ export default function RtyDashboardPage() {
                 )}
             </div>
 
-            {/* Error messaging */}
+            {/* ERROR ALERT */}
             {error && (
                 <Card className="border-destructive/20 bg-destructive/5">
                     <CardContent className="flex items-center gap-2 text-destructive pt-6">
@@ -573,7 +569,7 @@ export default function RtyDashboardPage() {
                 </Card>
             )}
 
-            {/* Main view container */}
+            {/* MAIN CONTAINER */}
             {loading && !data ? (
                 <div className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -586,9 +582,9 @@ export default function RtyDashboardPage() {
             ) : (
                 data && (
                     <div className="space-y-6">
-                        {/* Speedometer & KPI cards grid */}
+                        {/* KPI CARDS GRID */}
                         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                            {/* RTY Gauge card */}
+                            {/* RTY GAUGE CARD */}
                             <Card className="border-border/60 shadow-sm bg-card lg:col-span-4 flex flex-col justify-center">
                                 <CardHeader className="pb-0 pt-4 text-center">
                                     <CardTitle className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
@@ -600,7 +596,7 @@ export default function RtyDashboardPage() {
                                 </CardContent>
                             </Card>
 
-                            {/* KPI Metrics */}
+                            {/* KPI METRICS */}
                             <div className="lg:col-span-8 grid grid-cols-2 sm:grid-cols-3 gap-4">
                                 {data.rtyStatus?.map((item) => {
                                     const icons: Record<string, React.ReactNode> = {
@@ -611,7 +607,7 @@ export default function RtyDashboardPage() {
                                         "YIELD %": <TrendingUp className="h-4 w-4 text-blue-500" />,
                                     };
                                     const labelUpper = item.label.toUpperCase();
-                                    // Zone cards have labels like "ARAMBH ZONE" – derive the route key
+
                                     const isZoneCard = labelUpper.endsWith(" ZONE");
                                     const zoneKey = isZoneCard
                                         ? item.label.toLowerCase().replace(/\s+zone$/i, "").trim()
@@ -629,7 +625,7 @@ export default function RtyDashboardPage() {
                             </div>
                         </div>
 
-                        {/* Zone-wise individual yield summaries (Interactive) */}
+                        {/* ZONE-WISE INDIVIDUAL SUMMARIES */}
                         {data.rtyByArea && Object.keys(data.rtyByArea).length > 0 && (
                             <div className="space-y-2">
                                 <div className="flex items-center gap-1.5 pl-0.5">
@@ -660,9 +656,9 @@ export default function RtyDashboardPage() {
                             </div>
                         )}
 
-                        {/* Charts sections */}
+                        {/* CHARTS SECTIONS */}
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                            {/* Daily RTY Trend chart */}
+                            {/* DAILY RTY TREND CHART */}
                             {data.dailyRTYChartData && (
                                 <Card className="border-border/60 shadow-sm bg-card">
                                     <CardHeader className="pb-2">
@@ -678,7 +674,7 @@ export default function RtyDashboardPage() {
                                 </Card>
                             )}
 
-                            {/* Zone-wise FPY Status stacked chart */}
+                            {/* ZONE-WISE FPY STATUS STACKED CHART */}
                             {data.dailyRTYStackedChartData && (
                                 <Card className="border-border/60 shadow-sm bg-card">
                                     <CardHeader className="pb-2">

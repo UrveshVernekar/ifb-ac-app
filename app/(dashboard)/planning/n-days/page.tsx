@@ -11,7 +11,7 @@ import {
     ArrowLeft,
     AlertCircle,
     LayoutDashboard,
-    // TrendingUp
+    TrendingUp
 } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -52,7 +52,7 @@ export default function PlanningPage() {
     const [error, setError] = useState<string | null>(null);
     const [refreshTrigger, setRefreshTrigger] = useState<boolean>(false);
 
-    // Mount & restore machine selection
+    // MOUNT & RESTORE MACHINE SELECTION
     useEffect(() => {
         const timer = setTimeout(() => {
             setMounted(true);
@@ -114,15 +114,15 @@ export default function PlanningPage() {
         };
     }, [mounted, refreshTrigger, fetchPlanningData]);
 
-    // const calculateTotal = (plan: PlanItem[] = []) =>
-    //     plan.reduce((sum, item) => sum + Number(item.plan || 0), 0);
+    const calculateTotal = (plan: PlanItem[] = []) =>
+        plan.reduce((sum, item) => sum + Number(item.plan || 0), 0);
 
     if (!mounted) return null;
 
     return (
         <div className="min-h-screen bg-background pb-10">
             <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6 sm:space-y-8">
-                {/* Header */}
+                {/* HEADER SECTION */}
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pt-6">
                     <div className="flex items-center gap-3 sm:gap-4">
                         <Link href="/planning">
@@ -165,26 +165,28 @@ export default function PlanningPage() {
                     </div>
                 </div>
 
-                {/* Machine Selection */}
+                {/* LINE SELECTION */}
                 <Card className="border shadow-sm">
-                    <CardHeader className="pb-4">
-                        <CardTitle className="flex items-center gap-3 text-lg sm:text-xl">
-                            <LayoutDashboard className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
-                            Production Line
-                        </CardTitle>
-                        <CardDescription className="text-sm">
-                            Select the line to view its 3-day production plan
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent className="pt-2 pb-6">
-                        <MachineComponent
-                            selectedMachine={selectedMachine}
-                            onMachineChange={handleMachineChange}
-                        />
+                    <CardContent className="py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                        <div className="space-y-1">
+                            <CardTitle className="flex items-center gap-3 text-lg sm:text-xl">
+                                <LayoutDashboard className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
+                                Production Line
+                            </CardTitle>
+                            <CardDescription className="text-sm">
+                                Select the line to view its 3-day production plan
+                            </CardDescription>
+                        </div>
+                        <div className="shrink-0">
+                            <MachineComponent
+                                selectedMachine={selectedMachine}
+                                onMachineChange={handleMachineChange}
+                            />
+                        </div>
                     </CardContent>
                 </Card>
 
-                {/* Error Alert */}
+                {/* ERROR ALERT */}
                 {error && (
                     <Alert variant="destructive" className="text-sm">
                         <AlertCircle className="h-5 w-5" />
@@ -193,42 +195,10 @@ export default function PlanningPage() {
                     </Alert>
                 )}
 
-                {/* Summary Stats */}
-                {/* {!loading && planningData && (
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        {[
-                            { day: "Day 1", data: planningData.planDay1, color: "blue" },
-                            { day: "Day 2", data: planningData.planDay2, color: "violet" },
-                            { day: "Day 3", data: planningData.planDay3, color: "emerald" }
-                        ].map(({ day, data, color }, idx) => {
-                            const total = calculateTotal(data?.plan);
-                            return (
-                                <Card key={idx} className="overflow-hidden">
-                                    <CardHeader className={`bg-gradient-to-r from-${color}-500/10 to-transparent pb-3`}>
-                                        <CardTitle className="text-base uppercase sm:text-lg">{day}</CardTitle>
-                                    </CardHeader>
-                                    <CardContent className="pt-6">
-                                        <div className="flex items-baseline gap-2">
-                                            <span className="text-3xl sm:text-4xl font-bold text-foreground">
-                                                {total.toLocaleString()}
-                                            </span>
-                                            <span className="text-sm sm:text-base text-muted-foreground">units</span>
-                                        </div>
-                                        <div className="text-xs sm:text-sm text-muted-foreground mt-2 flex items-center gap-1.5">
-                                            <TrendingUp className="w-4 h-4 text-green-500" />
-                                            Total Planned Quantity
-                                        </div>
-                                    </CardContent>
-                                </Card>
-                            );
-                        })}
-                    </div>
-                )} */}
-
-                {/* 3-Day Plans Grid */}
+                {/* 3-DAY PLANS GRID */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
                     {loading && !planningData ? (
-                        // Mobile-friendly Loading Skeletons
+                        // MOBILE-FRIENDLY LOADING SKELETONS
                         [...Array(3)].map((_, i) => (
                             <Card key={i} className="overflow-hidden">
                                 <CardHeader className="bg-muted/60 pb-4">
@@ -273,6 +243,38 @@ export default function PlanningPage() {
                         </>
                     )}
                 </div>
+
+                {/* SUMMARY STATS */}
+                {!loading && planningData && (
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        {[
+                            { day: "Day 1", data: planningData.planDay1, color: "blue" },
+                            { day: "Day 2", data: planningData.planDay2, color: "violet" },
+                            { day: "Day 3", data: planningData.planDay3, color: "emerald" }
+                        ].map(({ day, data, color }, idx) => {
+                            const total = calculateTotal(data?.plan);
+                            return (
+                                <Card key={idx} className="overflow-hidden">
+                                    <CardHeader className={`bg-gradient-to-r from-${color}-500/10 to-transparent pb-3`}>
+                                        <CardTitle className="text-base uppercase sm:text-lg">{day}</CardTitle>
+                                    </CardHeader>
+                                    <CardContent className="pt-6">
+                                        <div className="flex items-baseline gap-2">
+                                            <span className="text-3xl sm:text-4xl font-bold text-foreground">
+                                                {total.toLocaleString()}
+                                            </span>
+                                            <span className="text-sm sm:text-base text-muted-foreground">units</span>
+                                        </div>
+                                        <div className="text-xs sm:text-sm text-muted-foreground mt-2 flex items-center gap-1.5">
+                                            <TrendingUp className="w-4 h-4 text-green-500" />
+                                            Total Planned Quantity
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            );
+                        })}
+                    </div>
+                )}
             </div>
         </div>
     );

@@ -28,13 +28,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
     ArrowLeft,
     RefreshCw,
-    TrendingUp,
     Coins,
     Users,
-    BarChart3,
     AlertCircle,
     CheckCircle2,
-    Plus
 } from "lucide-react";
 import Link from "next/link";
 import { useTheme } from "next-themes";
@@ -44,16 +41,16 @@ const API_HOST = "http://10.0.7.26:3003";
 export default function KPIReportPage() {
     const [mounted, setMounted] = useState(false);
 
-    // Filter controls
+    // FILTER CONTROLS
     const [line, setLine] = useState("IDU-Line");
     const [fyYear, setFyYear] = useState("2027");
 
-    // Loading & state management
+    // LOADING & STATE MANAGEMENT
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [refreshTrigger, setRefreshTrigger] = useState(false);
 
-    // Dialog inputs
+    // DIALOG INPUTS
     const [showCostInput, setShowCostInput] = useState(false);
     const [costModalOpen, setCostModalOpen] = useState(false);
     const [costLine, setCostLine] = useState("IDU-Line");
@@ -74,7 +71,7 @@ export default function KPIReportPage() {
     const [mpSubmitting, setMpSubmitting] = useState(false);
     const [mpFeedback, setMpFeedback] = useState({ type: "", message: "" });
 
-    // KPI Data structures
+    // KPI DATA STRUCTURES
     const [yearlyProd, setYearlyProd] = useState<any>({ plan: [], actual: [], achievement: [], labels: [] });
     const [monthlyProd, setMonthlyProd] = useState<any>({ plan: [], actual: [], achievement: [], labels: [] });
     const [costData, setCostData] = useState<any>({ consumable: [], power: [], manpower: [], scrap: [], target: [], unitCost: [], labels: [] });
@@ -100,20 +97,18 @@ export default function KPIReportPage() {
         setLine(savedLine);
         setFyYear(savedYear);
 
-        // Retrieve user rights check
         try {
             const login = JSON.parse(sessionStorage.getItem("logindata") || "{}");
             const hasInputRights = login?.id === "10010082" || login?.id === "10008141" || login?.plant_head === 1;
             setShowCostInput(hasInputRights);
             setShowManpowerInput(hasInputRights);
         } catch (e) {
-            // Defaut fallback in case sessionStorage logindata is missing
             setShowCostInput(true);
             setShowManpowerInput(true);
         }
     }, []);
 
-    // Fetch live dashboard KPI metrics
+    // FETCH KPI METRICS DATA
     const fetchKPIData = async () => {
         setLoading(true);
         setError(null);
@@ -184,7 +179,6 @@ export default function KPIReportPage() {
         }
     }, [line, fyYear, refreshTrigger, mounted]);
 
-    // Helpers to scale chart upper limits nice and round
     const getUpperLimit = (values: number[]) => {
         if (!values || values.length === 0) return 100;
         const max = Math.max(...values);
@@ -195,7 +189,6 @@ export default function KPIReportPage() {
         return niceCoefficient * magnitude;
     };
 
-    // Chart Options Definitions (Using standard ECharts configuration object format)
     const getProductionChartOptions = (pData: any, isMonthly = false) => {
         const maxVal = getUpperLimit([...pData.plan, ...pData.actual]);
         return {
@@ -470,7 +463,7 @@ export default function KPIReportPage() {
         };
     };
 
-    // Submissions
+    // SUBMISSIONS
     const handleCostSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setCostFeedback({ type: "", message: "" });
@@ -543,7 +536,7 @@ export default function KPIReportPage() {
 
     return (
         <div className="space-y-6 max-w-8xl mx-auto p-2">
-            {/* Action Bar Header */}
+            {/* HEADER SECTION */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div className="flex items-center gap-3">
                     <Link href="/manufacturing">
@@ -562,7 +555,7 @@ export default function KPIReportPage() {
                 </div>
 
                 <div className="flex flex-wrap gap-2 items-end">
-                    {/* Period filters */}
+                    {/* PERIOD FILTERS */}
                     {mounted && (
                         <div className="flex items-center gap-2 bg-card border p-2 rounded-xl shadow-sm h-9">
                             <Select value={fyYear} onValueChange={(v) => {
@@ -603,7 +596,7 @@ export default function KPIReportPage() {
                         </div>
                     )}
 
-                    {/* Input logs buttons */}
+                    {/* INPUT LOGS BUTTONS */}
                     {showManpowerInput && (
                         <Button onClick={() => setMpModalOpen(true)} variant="outline" size="sm" className="h-9 gap-1.5 text-xs font-semibold">
                             <Users className="w-4 h-4 text-blue-500" /> Absenteeism Data
@@ -618,7 +611,7 @@ export default function KPIReportPage() {
                 </div>
             </div>
 
-            {/* Error alerts */}
+            {/* ERROR ALERTS */}
             {error && (
                 <Alert variant="destructive" className="max-w-md mx-auto">
                     <AlertCircle className="h-4 w-4" />
@@ -626,7 +619,7 @@ export default function KPIReportPage() {
                 </Alert>
             )}
 
-            {/* KPI Charts Grid */}
+            {/* KPI CHARTS GRID */}
             {loading && !yearlyProd.plan.length ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {[...Array(4)].map((_, i) => (
@@ -638,7 +631,7 @@ export default function KPIReportPage() {
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* 1. Yearly production */}
+                    {/* 1. YEARLY PRODUCTION */}
                     <Card className="border-border/60 bg-card shadow-sm col-span-full">
                         <CardHeader className="pb-2">
                             <CardTitle className="text-sm font-bold uppercase tracking-wide">Yearly Production Achievement</CardTitle>
@@ -652,7 +645,7 @@ export default function KPIReportPage() {
                         </CardContent>
                     </Card>
 
-                    {/* 2. Monthly production */}
+                    {/* 2. MONTHLY PRODUCTION */}
                     <Card className="border-border/60 bg-card shadow-sm col-span-full">
                         <CardHeader className="pb-2">
                             <CardTitle className="text-sm font-bold uppercase tracking-wide">Monthly Production Target achievement</CardTitle>
@@ -680,7 +673,7 @@ export default function KPIReportPage() {
                         </CardContent>
                     </Card>
 
-                    {/* 4. Absenteeism */}
+                    {/* 4. ABSENTEEISM */}
                     <Card className="border-border/60 bg-card shadow-sm">
                         <CardHeader className="pb-2">
                             <CardTitle className="text-sm font-bold uppercase tracking-wide">Manpower Absenteeism Rate</CardTitle>
@@ -694,7 +687,7 @@ export default function KPIReportPage() {
                         </CardContent>
                     </Card>
 
-                    {/* 5. Yield FPY RTY */}
+                    {/* 5. RTY */}
                     <Card className="border-border/60 bg-card shadow-sm">
                         <CardHeader className="pb-2">
                             <CardTitle className="text-sm font-bold uppercase tracking-wide">Rolled Throughput Yield (RTY)</CardTitle>
@@ -722,7 +715,7 @@ export default function KPIReportPage() {
                         </CardContent>
                     </Card>
 
-                    {/* 7. Cost Consumables */}
+                    {/* 7. COST CONSUMABLES */}
                     <Card className="border-border/60 bg-card shadow-sm col-span-full">
                         <CardHeader className="pb-2">
                             <CardTitle className="text-sm font-bold uppercase tracking-wide">Consumable Cost Trends</CardTitle>

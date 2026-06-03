@@ -11,14 +11,6 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from "@/components/ui/table";
-import {
     Dialog,
     DialogContent,
     DialogDescription,
@@ -35,17 +27,9 @@ import {
     AlertCircle,
     CheckCircle2,
     ChevronDown,
-    ChevronUp,
-    ChevronLeft,
-    ChevronRight
+    ChevronUp
 } from "lucide-react";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
+import CommonTable, { ColumnConfig } from "@/components/shared/CommonTable";
 
 const API_HOST = "http://10.0.7.26:3003";
 
@@ -69,14 +53,7 @@ export default function AccessoryValidationPage() {
     const [error, setError] = useState<string | null>(null);
     const [refreshTrigger, setRefreshTrigger] = useState(false);
 
-    const [currentPage, setCurrentPage] = useState(1);
-    const [pageSize, setPageSize] = useState(5);
-
-    const totalPages = Math.ceil(tableData.length / pageSize);
-    const startIndex = (currentPage - 1) * pageSize;
-    const paginatedData = tableData.slice(startIndex, startIndex + pageSize);
-
-    // Form inputs (Create)
+    // FORM INPUTS (CREATE)
     const [formExpanded, setFormExpanded] = useState(true);
     const [formLoading, setFormLoading] = useState(false);
     const [formFeedback, setFormFeedback] = useState({ type: "", message: "" });
@@ -91,7 +68,7 @@ export default function AccessoryValidationPage() {
 
     const [createErrors, setCreateErrors] = useState<Record<string, string>>({});
 
-    // Form inputs (Edit Dialog)
+    // FORM INPUTS (EDIT DIALOG)
     const [editDialogOpen, setEditDialogOpen] = useState(false);
     const [editingItem, setEditingItem] = useState<AccessoryMappingItem | null>(null);
     const [editLoading, setEditLoading] = useState(false);
@@ -107,7 +84,7 @@ export default function AccessoryValidationPage() {
 
     const [editErrors, setEditErrors] = useState<Record<string, string>>({});
 
-    // Delete Confirmation
+    // DELETE CONFIRMATION
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [deletingItem, setDeletingItem] = useState<AccessoryMappingItem | null>(null);
     const [deleteLoading, setDeleteLoading] = useState(false);
@@ -123,10 +100,8 @@ export default function AccessoryValidationPage() {
             const response = await axios.get(`${API_HOST}/api/production/data/accessory-mapping/get-data`);
             if (response.data && response.data.success) {
                 setTableData(response.data.data || []);
-                setCurrentPage(1);
             } else {
                 setTableData([]);
-                setCurrentPage(1);
             }
         } catch (err) {
             console.error("Error fetching accessory validation list:", err);
@@ -142,7 +117,7 @@ export default function AccessoryValidationPage() {
         }
     }, [refreshTrigger, mounted]);
 
-    // Validation schema helper
+    // VALIDATION SCHEMA HELPER
     const validateForm = (data: {
         modelName: string;
         modelCode: string;
@@ -182,7 +157,7 @@ export default function AccessoryValidationPage() {
         return errs;
     };
 
-    // Form submit handlers
+    // FORM SUBMIT HANDLERS
     const handleSubmitMapping = async (e: React.FormEvent) => {
         e.preventDefault();
         setFormFeedback({ type: "", message: "" });
@@ -226,7 +201,7 @@ export default function AccessoryValidationPage() {
 
                 setFormFeedback({ type: "success", message });
 
-                // Clear fields
+                // CLEAR FIELDS
                 setModelName("");
                 setModelCode("");
                 setModelDescription("");
@@ -349,9 +324,106 @@ export default function AccessoryValidationPage() {
         }
     };
 
+    const columns = React.useMemo<ColumnConfig<AccessoryMappingItem>[]>(() => [
+        {
+            header: "Model Name",
+            accessorKey: "modelName",
+            isFilterable: true,
+            isSortable: true,
+            className: "py-2.5 font-bold"
+        },
+        {
+            header: "Model Code",
+            accessorKey: "modelCode",
+            isFilterable: true,
+            isSortable: true,
+            className: "py-2.5 font-semibold text-blue-600"
+        },
+        {
+            header: "Description",
+            accessorKey: "modelDescription",
+            isFilterable: true,
+            isSortable: true,
+            className: "py-2.5 text-muted-foreground max-w-[150px] truncate",
+            cell: (row: AccessoryMappingItem) => (
+                <span title={row.modelDescription}>{row.modelDescription}</span>
+            )
+        },
+        {
+            header: "Bag Partcode",
+            accessorKey: "bagPartcode",
+            isFilterable: true,
+            isSortable: true,
+            className: "py-2.5"
+        },
+        {
+            header: "Remote Partcode",
+            accessorKey: "remotePartcode",
+            isFilterable: true,
+            isSortable: true,
+            className: "py-2.5"
+        },
+        {
+            header: "Assembly Code",
+            accessorKey: "assemblyCode",
+            isFilterable: true,
+            isSortable: true,
+            className: "py-2.5"
+        },
+        {
+            header: "Vendor Prefix",
+            accessorKey: "vendorPrefix",
+            isFilterable: true,
+            isSortable: true,
+            className: "py-2.5 text-center font-semibold text-foreground/80",
+            headerClassName: "text-center"
+        },
+        {
+            header: "Created At",
+            accessorKey: "createdAt",
+            isFilterable: true,
+            isSortable: true,
+            className: "py-2.5 whitespace-nowrap text-muted-foreground",
+            cell: (row: AccessoryMappingItem) => formatDate(row.createdAt)
+        },
+        {
+            header: "Updated By",
+            accessorKey: "updatedBy",
+            isFilterable: true,
+            isSortable: true,
+            className: "py-2.5"
+        },
+        {
+            header: "Actions",
+            accessorKey: "actions",
+            className: "py-2.5 text-center",
+            headerClassName: "text-center",
+            cell: (row: AccessoryMappingItem) => (
+                <div className="flex gap-1 justify-center">
+                    <Button
+                        onClick={() => handleEditClick(row)}
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-blue-500 hover:text-blue-600 hover:bg-blue-500/10"
+                    >
+                        <Edit className="w-3.5 h-3.5" />
+                    </Button>
+                    <Button
+                        onClick={() => handleDeleteClick(row)}
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-rose-500 hover:text-rose-600 hover:bg-rose-500/10"
+                    >
+                        <Trash2 className="w-3.5 h-3.5" />
+                    </Button>
+                </div>
+            )
+        }
+    ], []);
+
     return (
         <div className="space-y-6 max-w-8xl mx-auto p-2">
-            {/* HEADER */}
+            {/* HEADER SECTION */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div className="flex items-center gap-3">
                     <Link href="/manufacturing">
@@ -544,109 +616,16 @@ export default function AccessoryValidationPage() {
                                 <Skeleton key={i} className="h-8 w-full" />
                             ))}
                         </div>
-                    ) : tableData.length > 0 ? (
-                        <div className="space-y-4">
-                            <div className="overflow-x-auto border border-border/40 rounded-lg bg-background">
-                                <Table>
-                                    <TableHeader className="bg-slate-900/50">
-                                        <TableRow>
-                                            <TableHead className="text-xs font-bold py-2.5">Model Name</TableHead>
-                                            <TableHead className="text-xs font-bold py-2.5">Model Code</TableHead>
-                                            <TableHead className="text-xs font-bold py-2.5">Description</TableHead>
-                                            <TableHead className="text-xs font-bold py-2.5">Bag Partcode</TableHead>
-                                            <TableHead className="text-xs font-bold py-2.5">Remote Partcode</TableHead>
-                                            <TableHead className="text-xs font-bold py-2.5">Assembly Code</TableHead>
-                                            <TableHead className="text-xs font-bold py-2.5 text-center">Vendor Prefix</TableHead>
-                                            <TableHead className="text-xs font-bold py-2.5">Created At</TableHead>
-                                            <TableHead className="text-xs font-bold py-2.5">Updated By</TableHead>
-                                            <TableHead className="text-xs font-bold py-2.5 text-center">Actions</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {paginatedData.map((row) => (
-                                            <TableRow key={row.id} className="hover:bg-muted/40 text-xs">
-                                                <TableCell className="py-2.5 font-bold">{row.modelName}</TableCell>
-                                                <TableCell className="py-2.5 font-semibold text-blue-600">{row.modelCode}</TableCell>
-                                                <TableCell className="py-2.5 text-muted-foreground max-w-[150px] truncate" title={row.modelDescription}>{row.modelDescription}</TableCell>
-                                                <TableCell className="py-2.5">{row.bagPartcode}</TableCell>
-                                                <TableCell className="py-2.5">{row.remotePartcode}</TableCell>
-                                                <TableCell className="py-2.5">{row.assemblyCode}</TableCell>
-                                                <TableCell className="py-2.5 text-center font-semibold text-foreground/80">{row.vendorPrefix}</TableCell>
-                                                <TableCell className="py-2.5 whitespace-nowrap text-muted-foreground">{formatDate(row.createdAt)}</TableCell>
-                                                <TableCell className="py-2.5">{row.updatedBy}</TableCell>
-                                                <TableCell className="py-2.5 text-center">
-                                                    <div className="flex gap-1 justify-center">
-                                                        <Button
-                                                            onClick={() => handleEditClick(row)}
-                                                            variant="ghost"
-                                                            size="icon"
-                                                            className="h-7 w-7 text-blue-500 hover:text-blue-600 hover:bg-blue-500/10"
-                                                        >
-                                                            <Edit className="w-3.5 h-3.5" />
-                                                        </Button>
-                                                        <Button
-                                                            onClick={() => handleDeleteClick(row)}
-                                                            variant="ghost"
-                                                            size="icon"
-                                                            className="h-7 w-7 text-rose-500 hover:text-rose-600 hover:bg-rose-500/10"
-                                                        >
-                                                            <Trash2 className="w-3.5 h-3.5" />
-                                                        </Button>
-                                                    </div>
-                                                </TableCell>
-                                            </TableRow>
-                                        ))}
-                                    </TableBody>
-                                </Table>
-                            </div>
-
-                            {/* Pagination UI */}
-                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-2 pt-2 border-t">
-                                <span className="text-xs text-muted-foreground">
-                                    Showing {tableData.length > 0 ? startIndex + 1 : 0} to {Math.min(startIndex + pageSize, tableData.length)} of {tableData.length} entries
-                                </span>
-                                <div className="flex flex-wrap items-center gap-4">
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-xs text-muted-foreground">Rows per page:</span>
-                                        <Select value={String(pageSize)} onValueChange={(v) => { setPageSize(Number(v)); setCurrentPage(1); }}>
-                                            <SelectTrigger className="w-16 h-8 text-xs bg-background border-border">
-                                                <SelectValue placeholder={String(pageSize)} />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {[5, 10, 20, 50, 100].map((size) => (
-                                                    <SelectItem key={size} value={String(size)}>{size}</SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-                                    <div className="flex items-center gap-1.5">
-                                        <Button
-                                            variant="outline"
-                                            size="icon"
-                                            className="h-8 w-8"
-                                            onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
-                                            disabled={currentPage === 1}
-                                        >
-                                            <ChevronLeft className="h-4 w-4" />
-                                        </Button>
-                                        <span className="text-xs font-semibold px-2">Page {currentPage} of {totalPages || 1}</span>
-                                        <Button
-                                            variant="outline"
-                                            size="icon"
-                                            className="h-8 w-8"
-                                            onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
-                                            disabled={currentPage === totalPages || totalPages === 0}
-                                        >
-                                            <ChevronRight className="h-4 w-4" />
-                                        </Button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
                     ) : (
-                        <div className="text-center py-12 text-sm text-muted-foreground italic">
-                            No accessory validation mappings registered.
-                        </div>
+                        <CommonTable
+                            data={tableData}
+                            columns={columns}
+                            enableFiltering={true}
+                            enableExport={true}
+                            exportFileName="Accessory_Mappings.csv"
+                            noDataMessage="No accessory validation mappings registered."
+                            initialPageSize={5}
+                        />
                     )}
                 </CardContent>
             </Card>
