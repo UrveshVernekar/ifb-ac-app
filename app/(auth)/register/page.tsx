@@ -8,6 +8,7 @@ import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { encryptValue, getApiBaseUrl } from "@/lib/auth-client";
 
 export default function RegisterPage() {
     const router = useRouter();
@@ -65,15 +66,30 @@ export default function RegisterPage() {
 
         setIsSubmitting(true);
         try {
-            // Simulate API call
-            await new Promise(resolve => setTimeout(resolve, 1200));
+            const apiBase = getApiBaseUrl();
+            const res = await fetch(`${apiBase}/auth/register`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    email: email.toLowerCase().trim(),
+                    name: name.trim(),
+                    employeeCode: encryptValue(employeeCode.trim()),
+                    password: encryptValue(password),
+                }),
+            });
+            const data = await res.json();
+
+            if (!data?.success) {
+                toast.error(data?.message || "Failed to create account. Please try again.");
+                return;
+            }
 
             toast.success("Account created successfully! Redirecting...");
             setTimeout(() => {
                 router.push("/login");
             }, 1500);
         } catch (error) {
-            toast.error("Failed to create account. Please try again.");
+            toast.error(error instanceof Error ? error.message : "Failed to create account. Please try again.");
         } finally {
             setIsSubmitting(false);
         }
