@@ -91,7 +91,8 @@ export default function LoginPage() {
       }
 
       setSession(data.user);
-      router.push("/manufacturing");
+      // router.push("/manufacturing");
+      router.push("/safety");
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Unable to login");
     } finally {
