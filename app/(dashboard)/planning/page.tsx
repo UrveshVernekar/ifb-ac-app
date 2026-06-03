@@ -63,30 +63,30 @@ export default function PlanningHub() {
                 }
             ]
         },
-        {
-            title: "Resource & Material Planning",
-            icon: <TrendingUp className="w-5 h-5 text-emerald-500" />,
-            tiles: [
-                {
-                    title: "Material Reservation",
-                    icon: Package,
-                    iconColor: "text-orange-500",
-                    bgColor: "bg-orange-500/10 border-orange-500/20",
-                    path: "#",
-                    description: "Reserve, track, and manage raw material allocations for production runs",
-                    status: "planned"
-                },
-                {
-                    title: "Capacity Analysis",
-                    icon: BarChart3,
-                    iconColor: "text-amber-500",
-                    bgColor: "bg-amber-500/10 border-amber-500/20",
-                    path: "#",
-                    description: "Analyze machine load, labor availability, and line constraints",
-                    status: "planned"
-                }
-            ]
-        }
+        // {
+        //     title: "Resource & Material Planning",
+        //     icon: <TrendingUp className="w-5 h-5 text-emerald-500" />,
+        //     tiles: [
+        //         {
+        //             title: "Material Reservation",
+        //             icon: Package,
+        //             iconColor: "text-orange-500",
+        //             bgColor: "bg-orange-500/10 border-orange-500/20",
+        //             path: "#",
+        //             description: "Reserve, track, and manage raw material allocations for production runs",
+        //             status: "planned"
+        //         },
+        //         {
+        //             title: "Capacity Analysis",
+        //             icon: BarChart3,
+        //             iconColor: "text-amber-500",
+        //             bgColor: "bg-amber-500/10 border-amber-500/20",
+        //             path: "#",
+        //             description: "Analyze machine load, labor availability, and line constraints",
+        //             status: "planned"
+        //         }
+        //     ]
+        // }
     ];
 
     const getStatusBadge = (status?: Tile["status"]) => {

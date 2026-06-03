@@ -1,7 +1,7 @@
 // app/(dashboard)/planning/n-days/page.tsx
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import Link from "next/link";
 import {
@@ -10,7 +10,8 @@ import {
     Clock,
     ArrowLeft,
     AlertCircle,
-    LayoutDashboard
+    LayoutDashboard,
+    // TrendingUp
 } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -51,14 +52,13 @@ export default function PlanningPage() {
     const [error, setError] = useState<string | null>(null);
     const [refreshTrigger, setRefreshTrigger] = useState<boolean>(false);
 
-    // Mount check (async state update to avoid lint error)
+    // Mount & restore machine selection
     useEffect(() => {
         const timer = setTimeout(() => {
             setMounted(true);
             const savedMachine = sessionStorage.getItem("machineSessionAC");
             if (savedMachine) {
                 try {
-                    // Legacies stored it as JSON array e.g. [{"value": "ODU", "label": "ODU LINE"}]
                     const parsed = JSON.parse(savedMachine);
                     if (Array.isArray(parsed) && parsed[0]?.value) {
                         setSelectedMachine(parsed[0].value);
@@ -66,7 +66,7 @@ export default function PlanningPage() {
                         setSelectedMachine(parsed);
                     }
                 } catch (e) {
-                    console.error("Failed to parse saved machine session", e);
+                    console.error("Failed to parse saved machine", e);
                 }
             }
         }, 0);
@@ -74,7 +74,6 @@ export default function PlanningPage() {
         return () => clearTimeout(timer);
     }, []);
 
-    // Persist machine selection in the format expected by the application
     const handleMachineChange = (machine: string) => {
         setSelectedMachine(machine);
         const legacyFormat = [{ value: machine, label: machine === "ODU" ? "ODU LINE" : "IDU LINE" }];
@@ -82,200 +81,199 @@ export default function PlanningPage() {
         sessionStorage.setItem("manufacturingMachinesAC", machine);
     };
 
-    // Fetch live planning data
     const fetchPlanningData = useCallback(async () => {
         setLoading(true);
         setError(null);
         try {
             const response = await axios.get(`${API_HOST}/api/planning/data/dashboard`, {
-                params: {
-                    area: "ASSEMBLY LINES",
-                    machine: selectedMachine,
-                }
+                params: { area: "ASSEMBLY LINES", machine: selectedMachine },
             });
 
-            if (response.data && response.data.result) {
+            if (response.data?.result) {
                 setPlanningData(response.data.result);
             } else {
-                setError("No planning data received from the server.");
+                setError("No planning data received from server.");
             }
         } catch (err) {
-            console.error("Fetch planning data error:", err);
-            setError("Failed to load planning data. Make sure the backend server is running.");
+            console.error(err);
+            setError("Failed to load planning data. Please check server connection.");
         } finally {
             setLoading(false);
         }
     }, [selectedMachine]);
 
-    // Initial fetch and automatic polling (every 60 seconds)
     useEffect(() => {
-        let timerId: NodeJS.Timeout;
-        let intervalId: NodeJS.Timeout;
+        if (!mounted) return;
 
-        if (mounted) {
-            // Asynchronous call in effect to avoid synchronous setState warning
-            timerId = setTimeout(() => {
-                fetchPlanningData();
-            }, 0);
-
-            intervalId = setInterval(fetchPlanningData, 60000);
-        }
+        const timer = setTimeout(fetchPlanningData, 100);
+        const interval = setInterval(fetchPlanningData, 60000);
 
         return () => {
-            if (timerId) clearTimeout(timerId);
-            if (intervalId) clearInterval(intervalId);
+            clearTimeout(timer);
+            clearInterval(interval);
         };
     }, [mounted, refreshTrigger, fetchPlanningData]);
+
+    // const calculateTotal = (plan: PlanItem[] = []) =>
+    //     plan.reduce((sum, item) => sum + Number(item.plan || 0), 0);
 
     if (!mounted) return null;
 
     return (
-        <div className="space-y-6 max-w-8xl mx-auto p-2">
-            {/* Header Area */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div className="flex items-center gap-3">
-                    <Link href="/planning">
-                        <Button variant="outline" size="icon" className="h-9 w-9">
-                            <ArrowLeft className="h-4 w-4" />
+        <div className="min-h-screen bg-background pb-10">
+            <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6 sm:space-y-8">
+                {/* Header */}
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pt-6">
+                    <div className="flex items-center gap-3 sm:gap-4">
+                        <Link href="/planning">
+                            <Button variant="outline" size="icon" className="h-10 w-10 rounded-xl shrink-0">
+                                <ArrowLeft className="h-5 w-5" />
+                            </Button>
+                        </Link>
+                        <div>
+                            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight flex items-center gap-3">
+                                <Calendar className="w-7 h-7 sm:w-8 sm:h-8 text-blue-600" />
+                                Production Planning
+                            </h1>
+                            <p className="text-sm sm:text-base text-muted-foreground mt-1">
+                                3-Day Assembly Line Schedule
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="flex items-center gap-3 flex-wrap">
+                        {planningData?.updateTimestamp && (
+                            <Badge
+                                variant="outline"
+                                className="px-3 py-1.5 text-xs sm:text-sm flex items-center gap-2 bg-card whitespace-nowrap w-full sm:w-auto"
+                            >
+                                <Clock className="w-4 h-4" />
+                                <span className="hidden sm:inline">Updated:</span>
+                                {planningData.updateTimestamp}
+                            </Badge>
+                        )}
+                        <Button
+                            onClick={() => setRefreshTrigger(prev => !prev)}
+                            variant="default"
+                            size="lg"
+                            disabled={loading}
+                            className="gap-2 w-full sm:w-auto"
+                        >
+                            <RefreshCw className={`w-5 h-5 ${loading ? "animate-spin" : ""}`} />
+                            Refresh
                         </Button>
-                    </Link>
-                    <div>
-                        <h1 className="text-2xl font-bold text-foreground uppercase tracking-tight flex items-center gap-2">
-                            <Calendar className="w-6 h-6 text-blue-500" />
-                            Production Planning
-                        </h1>
-                        <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1.5">
-                            <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
-                            Live 3-day assembly line schedule plans
-                        </p>
                     </div>
                 </div>
 
-                <div className="flex items-center gap-3">
-                    {planningData?.updateTimestamp && (
-                        <Badge
-                            variant="outline"
-                            className="bg-amber-500/5 text-amber-500 border-amber-500/20 px-2.5 py-1 text-xs flex items-center gap-1.5"
-                        >
-                            <Clock className="w-3.5 h-3.5" />
-                            Last Updated: {planningData.updateTimestamp}
-                        </Badge>
+                {/* Machine Selection */}
+                <Card className="border shadow-sm">
+                    <CardHeader className="pb-4">
+                        <CardTitle className="flex items-center gap-3 text-lg sm:text-xl">
+                            <LayoutDashboard className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
+                            Production Line
+                        </CardTitle>
+                        <CardDescription className="text-sm">
+                            Select the line to view its 3-day production plan
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent className="pt-2 pb-6">
+                        <MachineComponent
+                            selectedMachine={selectedMachine}
+                            onMachineChange={handleMachineChange}
+                        />
+                    </CardContent>
+                </Card>
+
+                {/* Error Alert */}
+                {error && (
+                    <Alert variant="destructive" className="text-sm">
+                        <AlertCircle className="h-5 w-5" />
+                        <AlertTitle>Error</AlertTitle>
+                        <AlertDescription>{error}</AlertDescription>
+                    </Alert>
+                )}
+
+                {/* Summary Stats */}
+                {/* {!loading && planningData && (
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        {[
+                            { day: "Day 1", data: planningData.planDay1, color: "blue" },
+                            { day: "Day 2", data: planningData.planDay2, color: "violet" },
+                            { day: "Day 3", data: planningData.planDay3, color: "emerald" }
+                        ].map(({ day, data, color }, idx) => {
+                            const total = calculateTotal(data?.plan);
+                            return (
+                                <Card key={idx} className="overflow-hidden">
+                                    <CardHeader className={`bg-gradient-to-r from-${color}-500/10 to-transparent pb-3`}>
+                                        <CardTitle className="text-base uppercase sm:text-lg">{day}</CardTitle>
+                                    </CardHeader>
+                                    <CardContent className="pt-6">
+                                        <div className="flex items-baseline gap-2">
+                                            <span className="text-3xl sm:text-4xl font-bold text-foreground">
+                                                {total.toLocaleString()}
+                                            </span>
+                                            <span className="text-sm sm:text-base text-muted-foreground">units</span>
+                                        </div>
+                                        <div className="text-xs sm:text-sm text-muted-foreground mt-2 flex items-center gap-1.5">
+                                            <TrendingUp className="w-4 h-4 text-green-500" />
+                                            Total Planned Quantity
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            );
+                        })}
+                    </div>
+                )} */}
+
+                {/* 3-Day Plans Grid */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+                    {loading && !planningData ? (
+                        // Mobile-friendly Loading Skeletons
+                        [...Array(3)].map((_, i) => (
+                            <Card key={i} className="overflow-hidden">
+                                <CardHeader className="bg-muted/60 pb-4">
+                                    <Skeleton className="h-7 w-32 mx-auto" />
+                                </CardHeader>
+                                <CardContent className="pt-6 space-y-4 px-4 sm:px-6">
+                                    {[...Array(5)].map((_, j) => (
+                                        <Skeleton key={j} className="h-12 w-full rounded-lg" />
+                                    ))}
+                                </CardContent>
+                            </Card>
+                        ))
+                    ) : (
+                        <>
+                            {["planDay1", "planDay2", "planDay3"].map((key, index) => {
+                                const dayPlan = planningData?.[key as keyof PlanningData] as DayPlan | undefined;
+                                const dayNumber = index + 1;
+
+                                return (
+                                    <Card
+                                        key={key}
+                                        className="flex flex-col overflow-hidden border shadow-sm hover:shadow transition-all duration-200 pt-0"
+                                    >
+                                        <CardHeader className="bg-gradient-to-br from-blue-600/30 via-violet-500/30 to-violet-900/30 text-center py-2">
+                                            <CardTitle className="text-2xl font-semibold tracking-tight">
+                                                DAY {dayNumber}
+                                            </CardTitle>
+                                            <CardDescription>
+                                                {dayPlan?.plan?.length || 0} models scheduled
+                                            </CardDescription>
+                                        </CardHeader>
+
+                                        <CardContent className="flex-1 pt-6 px-3 sm:px-6">
+                                            <PlanTable
+                                                headers={dayPlan?.headers || ["Seq", "Model Name", "Plan Qty"]}
+                                                rows={dayPlan?.plan || []}
+                                            />
+                                        </CardContent>
+                                    </Card>
+                                );
+                            })}
+                        </>
                     )}
-                    <Button
-                        onClick={() => setRefreshTrigger(prev => !prev)}
-                        variant="secondary"
-                        size="sm"
-                        className="h-9 gap-1.5 text-xs font-semibold"
-                        disabled={loading}
-                    >
-                        <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
-                        Reload
-                    </Button>
                 </div>
             </div>
-
-            {/* Selection Card */}
-            <Card className="border-border/60 shadow-sm bg-card">
-                <CardHeader className="pb-4">
-                    <CardTitle className="text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
-                        <LayoutDashboard className="w-4 h-4 text-blue-500" />
-                        Line Configuration
-                    </CardTitle>
-                    <CardDescription className="text-xs">
-                        Select the production line to display current plans
-                    </CardDescription>
-                </CardHeader>
-                <CardContent className="pt-0">
-                    <MachineComponent
-                        selectedMachine={selectedMachine}
-                        onMachineChange={handleMachineChange}
-                    />
-                </CardContent>
-            </Card>
-
-            {/* Error Message */}
-            {error && (
-                <Alert variant="destructive" className="border-destructive/20 bg-destructive/5">
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertTitle className="text-xs font-bold uppercase">Error Loading Data</AlertTitle>
-                    <AlertDescription className="text-xs">{error}</AlertDescription>
-                </Alert>
-            )}
-
-            {/* 3 Days Plan Display */}
-            {loading && !planningData ? (
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    {[...Array(3)].map((_, i) => (
-                        <Card key={i} className="border-border/60 shadow-sm bg-card">
-                            <CardHeader className="pb-3 border-b border-border/40">
-                                <Skeleton className="h-5 w-24 mb-1" />
-                                <Skeleton className="h-3 w-40" />
-                            </CardHeader>
-                            <CardContent className="pt-4 space-y-3">
-                                {[...Array(4)].map((_, j) => (
-                                    <Skeleton key={j} className="h-9 w-full" />
-                                ))}
-                            </CardContent>
-                        </Card>
-                    ))}
-                </div>
-            ) : (
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    {/* Day 1 Plan */}
-                    <Card className="border-border/60 shadow-sm bg-card flex flex-col">
-                        <CardHeader className="pb-3 border-b border-border/40 bg-muted/20">
-                            <CardTitle className="text-sm font-bold uppercase tracking-wider text-foreground">
-                                Day 1 Plan
-                            </CardTitle>
-                            <CardDescription className="text-[11px]">
-                                Sequence scheduled for execution
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent className="pt-4 flex-grow px-2 md:px-4">
-                            <PlanTable
-                                headers={planningData?.planDay1?.headers || ["Seq", "Model Name", "Plan Qty"]}
-                                rows={planningData?.planDay1?.plan || []}
-                            />
-                        </CardContent>
-                    </Card>
-
-                    {/* Day 2 Plan */}
-                    <Card className="border-border/60 shadow-sm bg-card flex flex-col">
-                        <CardHeader className="pb-3 border-b border-border/40 bg-muted/20">
-                            <CardTitle className="text-sm font-bold uppercase tracking-wider text-foreground">
-                                Day 2 Plan
-                            </CardTitle>
-                            <CardDescription className="text-[11px]">
-                                Production schedule forecast
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent className="pt-4 flex-grow px-2 md:px-4">
-                            <PlanTable
-                                headers={planningData?.planDay2?.headers || ["Seq", "Model Name", "Plan Qty"]}
-                                rows={planningData?.planDay2?.plan || []}
-                            />
-                        </CardContent>
-                    </Card>
-
-                    {/* Day 3 Plan */}
-                    <Card className="border-border/60 shadow-sm bg-card flex flex-col">
-                        <CardHeader className="pb-3 border-b border-border/40 bg-muted/20">
-                            <CardTitle className="text-sm font-bold uppercase tracking-wider text-foreground">
-                                Day 3 Plan
-                            </CardTitle>
-                            <CardDescription className="text-[11px]">
-                                Extended production schedule forecast
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent className="pt-4 flex-grow px-2 md:px-4">
-                            <PlanTable
-                                headers={planningData?.planDay3?.headers || ["Seq", "Model Name", "Plan Qty"]}
-                                rows={planningData?.planDay3?.plan || []}
-                            />
-                        </CardContent>
-                    </Card>
-                </div>
-            )}
         </div>
     );
 }

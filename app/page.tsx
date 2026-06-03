@@ -9,7 +9,8 @@ export default function Home() {
   useEffect(() => {
     const isAuthenticated = localStorage.getItem('isAuthenticated');
     if (isAuthenticated) {
-      router.replace('/manufacturing');
+      // router.replace('/manufacturing');
+      router.replace('/safety');
     } else {
       router.replace('/login');
     }
