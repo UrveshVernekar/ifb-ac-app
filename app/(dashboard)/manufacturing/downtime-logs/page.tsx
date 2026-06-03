@@ -1,7 +1,7 @@
 // app/(dashboard)/manufacturing/downtime-logs/page.tsx
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import axios from "axios";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -15,14 +15,6 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from "@/components/ui/table";
 import {
     Dialog,
     DialogContent,
@@ -44,11 +36,10 @@ import {
     HelpCircle,
     AlertCircle,
     User,
-    CheckCircle2,
-    ChevronLeft,
-    ChevronRight
+    CheckCircle2
 } from "lucide-react";
 import Link from "next/link";
+import CommonTable, { ColumnConfig } from "@/components/shared/CommonTable";
 
 const API_HOST = "http://10.0.7.26:3003";
 
@@ -70,31 +61,23 @@ interface DowntimeLogItem {
 export default function DowntimeLogsPage() {
     const [mounted, setMounted] = useState(false);
 
-    // List Filters
+    // LIST FILTERS
     const [fromDate, setFromDate] = useState("");
     const [toDate, setToDate] = useState("");
     const [filterLine, setFilterLine] = useState<"ODU-Line" | "IDU-Line">("ODU-Line");
 
-    // Data lists
+    // DATA LISTS
     const [logs, setLogs] = useState<DowntimeLogItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [refreshTrigger, setRefreshTrigger] = useState(false);
 
-    // Pagination controls
-    const [currentPage, setCurrentPage] = useState(1);
-    const [pageSize, setPageSize] = useState(5);
-
-    const totalPages = Math.ceil(logs.length / pageSize);
-    const startIndex = (currentPage - 1) * pageSize;
-    const paginatedLogs = logs.slice(startIndex, startIndex + pageSize);
-
-    // Form/Modal states
+    // FORM/MODAL STATES
     const [modalOpen, setModalOpen] = useState(false);
     const [isEdit, setIsEdit] = useState(false);
     const [editingId, setEditingId] = useState<number | null>(null);
 
-    // Form fields
+    // FORM FIELDS
     const [formDate, setFormDate] = useState("");
     const [formLine, setFormLine] = useState<"ODU-Line" | "IDU-Line">("ODU-Line");
     const [formType, setFormType] = useState("AVAILABILITY");
@@ -105,22 +88,22 @@ export default function DowntimeLogsPage() {
     const [formIncharge, setFormIncharge] = useState("");
     const [formHod, setFormHod] = useState("");
 
-    // Dropdown options loaded from API
+    // DROPDOWN OPTIONS
     const [hourSlots, setHourSlots] = useState<{ label: string; value: string }[]>([]);
     const [reasonOptions, setReasonOptions] = useState<{ label: string; value: string }[]>([]);
     const [employeeOptions, setEmployeeOptions] = useState<{ label: string; value: string; email?: string }[]>([]);
     const [hodOptions, setHodOptions] = useState<{ label: string; value: string; email?: string }[]>([]);
 
-    // Form submission feedback
+    // FORM SUBMISSION FEEDBACK
     const [formSubmitting, setFormSubmitting] = useState(false);
     const [formFeedback, setFormFeedback] = useState<{ type: "success" | "error" | ""; message: string }>({ type: "", message: "" });
 
-    // Delete Confirmation states
+    // DELETE CONFIRMATION STATES
     const [deleteOpen, setDeleteOpen] = useState(false);
     const [itemToDelete, setItemToDelete] = useState<DowntimeLogItem | null>(null);
     const [deleteSubmitting, setDeleteSubmitting] = useState(false);
 
-    // Initialize dates and session
+    // INITIALIZE DATES & SESSION
     useEffect(() => {
         setMounted(true);
         const todayStr = new Date().toISOString().split("T")[0];
@@ -133,11 +116,10 @@ export default function DowntimeLogsPage() {
         setToDate(savedTo);
         setFilterLine(savedLine);
 
-        // Prepopulate form date
         setFormDate(todayStr);
     }, []);
 
-    // Fetch Downtime Logs
+    // FETCH DOWNTIME LOGS
     const fetchLogs = useCallback(async () => {
         if (!fromDate || !toDate) return;
         setLoading(true);
@@ -152,10 +134,8 @@ export default function DowntimeLogsPage() {
             });
             if (res.data.success) {
                 setLogs(res.data.data);
-                setCurrentPage(1);
             } else {
                 setLogs([]);
-                setCurrentPage(1);
             }
         } catch (err) {
             console.error("Downtime fetch error:", err);
@@ -165,13 +145,100 @@ export default function DowntimeLogsPage() {
         }
     }, [fromDate, toDate, filterLine]);
 
+    const columns = useMemo<ColumnConfig<DowntimeLogItem>[]>(() => [
+        {
+            header: "Date",
+            accessorKey: "date",
+            isFilterable: true,
+            isSortable: true,
+            cell: (row) => {
+                let displayDate = row.date;
+                try {
+                    const d = new Date(row.date);
+                    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+                    displayDate = `${d.getDate().toString().padStart(2, '0')}-${months[d.getMonth()]}-${d.getFullYear()}`;
+                } catch (e) { }
+                return displayDate;
+            }
+        },
+        {
+            header: "Time",
+            accessorKey: "time",
+            cell: (row) => row.time || "N/A",
+        },
+        {
+            header: "Type",
+            accessorKey: "type",
+            isFilterable: true,
+            isSortable: true,
+            cell: (row) => (
+                <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${row.type === "AVAILABILITY"
+                    ? "bg-rose-500/10 text-rose-500"
+                    : row.type === "PERFORMANCE"
+                        ? "bg-amber-500/10 text-amber-500"
+                        : "bg-blue-500/10 text-blue-500"
+                    }`}>
+                    {row.type}
+                </span>
+            ),
+        },
+        {
+            header: "Reason",
+            accessorKey: "reason",
+            isFilterable: true,
+            isSortable: true,
+            className: "font-semibold text-foreground/80",
+        },
+        {
+            header: "Duration (min)",
+            accessorKey: "duration",
+            className: "font-bold text-rose-500 text-right",
+            cell: (row) => row.duration,
+        },
+        {
+            header: "Person Incharge",
+            accessorKey: "person_incharge",
+            isFilterable: true,
+            isSortable: true,
+            className: "max-w-[120px] truncate",
+            cell: (row) => row.person_incharge || "N/A",
+        },
+        {
+            header: "Remarks",
+            accessorKey: "remarks",
+            className: "max-w-[150px] truncate text-muted-foreground",
+            cell: (row) => <span title={row.remarks}>{row.remarks || "-"}</span>,
+        },
+        {
+            header: "Actions",
+            accessorKey: "id",
+            isFilterable: false,
+            isSortable: false,
+            cell: (row) => (
+                <div className="flex items-center justify-center gap-1">
+                    <Button onClick={() => handleOpenEdit(row)} variant="ghost" size="icon" className="h-7 w-7 text-blue-500 hover:text-blue-600 hover:bg-blue-500/10">
+                        <Edit className="w-3.5 h-3.5" />
+                    </Button>
+                    <Button onClick={() => handleOpenDelete(row)} variant="ghost" size="icon" className="h-7 w-7 text-rose-500 hover:text-rose-600 hover:bg-rose-500/10">
+                        <Trash2 className="w-3.5 h-3.5" />
+                    </Button>
+                    <Link href={`/manufacturing/downtime-logs/${row.id}`}>
+                        <Button variant="outline" size="xs" className="h-7 px-2 border-blue-500/30 text-blue-600 hover:bg-blue-500/10 text-[10px] font-bold">
+                            5 Why
+                        </Button>
+                    </Link>
+                </div>
+            )
+        }
+    ], []);
+
     useEffect(() => {
         if (mounted) {
             fetchLogs();
         }
     }, [fetchLogs, refreshTrigger, mounted]);
 
-    // Load form dynamic options
+    // LOAD FORM DYNAMIC OPTIONS
     useEffect(() => {
         if (!mounted || !modalOpen) return;
 
@@ -226,7 +293,7 @@ export default function DowntimeLogsPage() {
         loadEmployees();
     }, [modalOpen, mounted]);
 
-    // Handle open creation modal
+    // HANDLE OPEN CREATION MODAL
     const handleOpenCreate = () => {
         setIsEdit(false);
         setEditingId(null);
@@ -243,7 +310,7 @@ export default function DowntimeLogsPage() {
         setModalOpen(true);
     };
 
-    // Handle open edit modal
+    // HANDLE OPEN EDIT MODAL
     const handleOpenEdit = (item: DowntimeLogItem) => {
         setIsEdit(true);
         setEditingId(item.id);
@@ -260,7 +327,7 @@ export default function DowntimeLogsPage() {
         setModalOpen(true);
     };
 
-    // Handle submit form
+    // HANDLE SUBMIT FORM
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setFormFeedback({ type: "", message: "" });
@@ -319,13 +386,13 @@ export default function DowntimeLogsPage() {
         }
     };
 
-    // Open Delete confirmation
+    // OPEN DELET CONFIRMATION
     const handleOpenDelete = (item: DowntimeLogItem) => {
         setItemToDelete(item);
         setDeleteOpen(true);
     };
 
-    // Submit Delete request
+    // SUBMIT DELETE REQUES
     const handleDeleteConfirm = async () => {
         if (!itemToDelete) return;
         setDeleteSubmitting(true);
@@ -345,7 +412,7 @@ export default function DowntimeLogsPage() {
 
     return (
         <div className="space-y-6 max-w-8xl mx-auto p-2">
-            {/* Header section */}
+            {/* HEADER SELECTION */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div className="flex items-center gap-3">
                     <Link href="/manufacturing">
@@ -420,7 +487,7 @@ export default function DowntimeLogsPage() {
                 </div>
             </div>
 
-            {/* List Log Table */}
+            {/* LIST LOG TABLE */}
             <Card className="border-border/60 shadow-sm bg-card">
                 <CardContent className="pt-6">
                     {error && (
@@ -436,120 +503,16 @@ export default function DowntimeLogsPage() {
                                 <Skeleton key={i} className="h-8 w-full" />
                             ))}
                         </div>
-                    ) : logs.length > 0 ? (
-                        <div className="space-y-4">
-                            <div className="overflow-x-auto border border-border/40 rounded-lg bg-background">
-                                <Table>
-                                    <TableHeader>
-                                        <TableRow>
-                                            <TableHead className="text-xs font-bold py-2.5">Date</TableHead>
-                                            <TableHead className="text-xs font-bold py-2.5">Time</TableHead>
-                                            <TableHead className="text-xs font-bold py-2.5">Type</TableHead>
-                                            <TableHead className="text-xs font-bold py-2.5">Reason</TableHead>
-                                            <TableHead className="text-xs font-bold py-2.5 text-right">Duration (min)</TableHead>
-                                            <TableHead className="text-xs font-bold py-2.5">Person Incharge</TableHead>
-                                            <TableHead className="text-xs font-bold py-2.5">Remarks</TableHead>
-                                            <TableHead className="text-xs font-bold py-2.5 text-center">Actions</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {paginatedLogs.map((log) => {
-                                            // Format date to DD-MMM-YYYY
-                                            let displayDate = log.date;
-                                            try {
-                                                const d = new Date(log.date);
-                                                const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-                                                displayDate = `${d.getDate().toString().padStart(2, '0')}-${months[d.getMonth()]}-${d.getFullYear()}`;
-                                            } catch (e) { }
-
-                                            return (
-                                                <TableRow key={log.id}>
-                                                    <TableCell className="text-xs py-2 font-medium">{displayDate}</TableCell>
-                                                    <TableCell className="text-xs py-2">{log.time || "N/A"}</TableCell>
-                                                    <TableCell className="text-xs py-2">
-                                                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${log.type === "AVAILABILITY"
-                                                            ? "bg-rose-500/10 text-rose-500"
-                                                            : log.type === "PERFORMANCE"
-                                                                ? "bg-amber-500/10 text-amber-500"
-                                                                : "bg-blue-500/10 text-blue-500"
-                                                            }`}>
-                                                            {log.type}
-                                                        </span>
-                                                    </TableCell>
-                                                    <TableCell className="text-xs py-2 font-semibold text-foreground/80">{log.reason}</TableCell>
-                                                    <TableCell className="text-xs py-2 text-right font-bold text-rose-500">{log.duration}</TableCell>
-                                                    <TableCell className="text-xs py-2 max-w-[120px] truncate">{log.person_incharge || "N/A"}</TableCell>
-                                                    <TableCell className="text-xs py-2 max-w-[150px] truncate text-muted-foreground" title={log.remarks}>{log.remarks || "-"}</TableCell>
-                                                    <TableCell className="text-xs py-2 text-center">
-                                                        <div className="flex items-center justify-center gap-1">
-                                                            <Button onClick={() => handleOpenEdit(log)} variant="ghost" size="icon" className="h-7 w-7 text-blue-500 hover:text-blue-600 hover:bg-blue-500/10">
-                                                                <Edit className="w-3.5 h-3.5" />
-                                                            </Button>
-                                                            <Button onClick={() => handleOpenDelete(log)} variant="ghost" size="icon" className="h-7 w-7 text-rose-500 hover:text-rose-600 hover:bg-rose-500/10">
-                                                                <Trash2 className="w-3.5 h-3.5" />
-                                                            </Button>
-                                                            <Link href={`/manufacturing/downtime-logs/${log.id}`}>
-                                                                <Button variant="outline" size="xs" className="h-7 px-2 border-blue-500/30 text-blue-600 hover:bg-blue-500/10 text-[10px] font-bold">
-                                                                    5 Why
-                                                                </Button>
-                                                            </Link>
-                                                        </div>
-                                                    </TableCell>
-                                                </TableRow>
-                                            );
-                                        })}
-                                    </TableBody>
-                                </Table>
-                            </div>
-
-                            {/* Pagination UI */}
-                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-2 pt-2 border-t">
-                                <span className="text-xs text-muted-foreground">
-                                    Showing {logs.length > 0 ? startIndex + 1 : 0} to {Math.min(startIndex + pageSize, logs.length)} of {logs.length} entries
-                                </span>
-                                <div className="flex flex-wrap items-center gap-4">
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-xs text-muted-foreground">Rows per page:</span>
-                                        <Select value={String(pageSize)} onValueChange={(v) => { setPageSize(Number(v)); setCurrentPage(1); }}>
-                                            <SelectTrigger className="w-16 h-8 text-xs bg-background border-border">
-                                                <SelectValue placeholder={String(pageSize)} />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {[5, 10, 20, 50, 100].map((size) => (
-                                                    <SelectItem key={size} value={String(size)}>{size}</SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-                                    <div className="flex items-center gap-1.5">
-                                        <Button
-                                            variant="outline"
-                                            size="icon"
-                                            className="h-8 w-8"
-                                            onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
-                                            disabled={currentPage === 1}
-                                        >
-                                            <ChevronLeft className="h-4 w-4" />
-                                        </Button>
-                                        <span className="text-xs font-semibold px-2">Page {currentPage} of {totalPages || 1}</span>
-                                        <Button
-                                            variant="outline"
-                                            size="icon"
-                                            className="h-8 w-8"
-                                            onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
-                                            disabled={currentPage === totalPages || totalPages === 0}
-                                        >
-                                            <ChevronRight className="h-4 w-4" />
-                                        </Button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
                     ) : (
-                        <div className="flex flex-col items-center justify-center py-16 text-sm text-muted-foreground">
-                            <Clock className="w-10 h-10 text-muted-foreground/30 mb-3" />
-                            No downtime events recorded for this period
-                        </div>
+                        <CommonTable
+                            data={logs}
+                            columns={columns}
+                            enableFiltering={true}
+                            enableExport={true}
+                            exportFileName="Downtime_Logs.csv"
+                            noDataMessage="No downtime events recorded for this period"
+                            initialPageSize={5}
+                        />
                     )}
                 </CardContent>
             </Card>

@@ -1,13 +1,6 @@
 // app/(dashboard)/planning/components/PlanTable.tsx
-import React from "react";
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from "@/components/ui/table";
+import { useMemo } from "react";
+import CommonTable, { ColumnConfig } from "@/components/shared/CommonTable";
 
 interface PlanRow {
     sequence: number | string;
@@ -22,39 +15,49 @@ interface PlanTableProps {
 }
 
 export default function PlanTable({ headers = [], rows = [] }: PlanTableProps) {
+    const columns = useMemo<ColumnConfig<PlanRow>[]>(() => {
+        return headers.map((header, idx) => {
+            const headerStr = String(header ?? "").trim();
+            const lower = headerStr.toLowerCase();
+            let accessorKey = headerStr || `col_${idx}`;
+            let className = "";
+
+            if (lower.includes("seq") || idx === 0) {
+                accessorKey = "sequence";
+                className = "font-semibold";
+            } else if (lower.includes("model") || idx === 1) {
+                accessorKey = "modelName";
+                className = "font-medium text-foreground/90";
+            } else {
+                className = "font-bold text-blue-600 dark:text-blue-400";
+            }
+
+            return {
+                header,
+                accessorKey,
+                className,
+                isFilterable: false,
+                isSortable: false,
+                cell: (row) => {
+                    if (accessorKey === "sequence") return row.sequence;
+                    if (accessorKey === "modelName") return row.modelName;
+
+                    const val = row[accessorKey as keyof PlanRow] ?? row[headerStr as keyof PlanRow] ?? row["plan"];
+                    return val ?? "";
+                }
+            };
+        });
+    }, [headers]);
+
     return (
-        <div className="overflow-x-auto border border-border/40 rounded-xl bg-card shadow-sm w-full">
-            <Table>
-                <TableHeader>
-                    <TableRow className="bg-slate-900 dark:bg-slate-950 hover:bg-slate-900 dark:hover:bg-slate-950 border-b border-border/40">
-                        {headers.map((header, idx) => (
-                            <TableHead 
-                                key={idx} 
-                                className="text-amber-500 font-extrabold text-center uppercase tracking-wider text-xs h-10"
-                            >
-                                {header}
-                            </TableHead>
-                        ))}
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {rows.length > 0 ? (
-                        rows.map((row, rIdx) => (
-                            <TableRow key={row?.sequence ?? rIdx} className="hover:bg-muted/40 transition-colors border-b border-border/30">
-                                <TableCell className="text-center font-semibold text-xs py-3">{row?.sequence}</TableCell>
-                                <TableCell className="text-center font-medium text-xs py-3 text-foreground/90">{row?.modelName}</TableCell>
-                                <TableCell className="text-center font-bold text-xs py-3 text-blue-600 dark:text-blue-400">{row?.plan}</TableCell>
-                            </TableRow>
-                        ))
-                    ) : (
-                        <TableRow>
-                            <TableCell colSpan={headers.length || 3} className="text-center py-8 text-xs text-muted-foreground">
-                                No planning items scheduled
-                            </TableCell>
-                        </TableRow>
-                    )}
-                </TableBody>
-            </Table>
-        </div>
+        <CommonTable
+            data={rows}
+            columns={columns}
+            enableFiltering={false}
+            enableExport={false}
+            showColumnVisibility={false}
+            noDataMessage="No planning items scheduled"
+            initialPageSize={10}
+        />
     );
 }

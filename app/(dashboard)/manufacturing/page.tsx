@@ -14,7 +14,6 @@ import {
     ArrowRight,
     Gauge,
     ShieldCheck,
-    Activity
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -147,7 +146,7 @@ export default function ManufacturingHub() {
 
     return (
         <div className="space-y-10 max-w-8xl mx-auto p-6">
-            {/* HEADER */}
+            {/* HEADER SECTION */}
             <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
                 <div className="space-y-3">
                     <div className="flex items-center gap-2">

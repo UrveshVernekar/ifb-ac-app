@@ -20,10 +20,8 @@ import {
     ArrowLeft,
     RefreshCw,
     AlertCircle,
-    Calendar,
     TrendingUp,
     Activity,
-    Target,
     Layers,
     Cpu,
     ChevronLeft,
@@ -94,19 +92,19 @@ export default function PerformanceDashboardPage() {
     const isDark = resolvedTheme === "dark";
     const [mounted, setMounted] = useState(false);
 
-    // Filters from session storage
+    // SESSION STORAGE FILTERS
     const [area, setArea] = useState<"ASSEMBLY LINES" | "STAMPING" | "COILSHOP">("ASSEMBLY LINES");
     const [fromDate, setFromDate] = useState("");
     const [toDate, setToDate] = useState("");
     const [selectedLines, setSelectedLines] = useState<string[]>([]);
     const [selectedSubMachines, setSelectedSubMachines] = useState<string[]>([]);
 
-    // API states
+    // API STATES
     const [data, setData] = useState<ApiResponse | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    // Pagination controls
+    // PAGINATION CONTROLS
     const [currentPage, setCurrentPage] = useState(1);
     const [pageSize, setPageSize] = useState(5);
 
@@ -121,7 +119,6 @@ export default function PerformanceDashboardPage() {
         return data.performanceLoss.slice(startIndex, startIndex + pageSize);
     }, [data?.performanceLoss, startIndex, pageSize]);
 
-    // Load filters from session storage
     useEffect(() => {
         setMounted(true);
         const todayStr = new Date().toISOString().split("T")[0];
@@ -152,7 +149,7 @@ export default function PerformanceDashboardPage() {
         }
     }, []);
 
-    // Options mapping
+    // OPTIONS MAPPING
     const assemblyOptions = [
         { value: "IDU-Line", label: "IDU LINE" },
         { value: "ODU-Line", label: "ODU LINE" },
@@ -188,7 +185,6 @@ export default function PerformanceDashboardPage() {
         { label: "Auto Brazing 2", value: "13" },
     ];
 
-    // Compute sub options based on selected main lines
     const subOptions = useMemo(() => {
         let result: { label: string; value: string }[] = [];
         if (area === "STAMPING") {
@@ -209,7 +205,6 @@ export default function PerformanceDashboardPage() {
         return result;
     }, [area, selectedLines]);
 
-    // Fetch Performance Details
     const fetchData = async () => {
         if (!fromDate || !toDate) return;
         setLoading(true);
@@ -307,7 +302,6 @@ export default function PerformanceDashboardPage() {
         sessionStorage.setItem("subMachineSession", updated.join(","));
     };
 
-    // Map ECharts series format to Recharts flat row data format
     const composedTrendData = useMemo(() => {
         if (!data?.performanceTrend || !data.performanceTrend.xAxisLabels) return [];
         const labels = data.performanceTrend.xAxisLabels;
@@ -329,7 +323,7 @@ export default function PerformanceDashboardPage() {
 
     return (
         <div className="space-y-6 max-w-8xl mx-auto p-2">
-            {/* Header */}
+            {/* HEADER SECTION */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div className="flex items-center gap-3">
                     <Link href="/manufacturing/production">
@@ -348,7 +342,7 @@ export default function PerformanceDashboardPage() {
                     </div>
                 </div>
 
-                {/* Filters */}
+                {/* FILTERS */}
                 {mounted && (
                     <div className="flex flex-wrap gap-2.5 items-end bg-card p-3 rounded-xl border border-border/60 shadow-sm">
                         <div className="space-y-1">
@@ -398,11 +392,11 @@ export default function PerformanceDashboardPage() {
                 )}
             </div>
 
-            {/* Line / Machine Selector Segment */}
+            {/* LINE / MACHINE SELECTOR SEGMENT */}
             {mounted && (
                 <Card className="border-border/60 shadow-sm bg-card p-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {/* Main Lines selection */}
+                        {/* MAIN LINES SELECTION */}
                         <div className="space-y-2">
                             <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider block flex items-center gap-1.5">
                                 <Layers className="w-4 h-4 text-blue-500" />
@@ -426,7 +420,7 @@ export default function PerformanceDashboardPage() {
                             </div>
                         </div>
 
-                        {/* Sub machines checkboxes */}
+                        {/* SUB-MACHINES CHECKBOXES */}
                         {subOptions.length > 0 && (
                             <div className="space-y-2">
                                 <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider block flex items-center gap-1.5">
@@ -455,7 +449,7 @@ export default function PerformanceDashboardPage() {
                 </Card>
             )}
 
-            {/* Error bound status */}
+            {/* ERROR ALERT */}
             {error && (
                 <Card className="border-destructive/20 bg-destructive/5">
                     <CardContent className="flex items-center gap-2 text-destructive pt-6">
@@ -465,7 +459,7 @@ export default function PerformanceDashboardPage() {
                 </Card>
             )}
 
-            {/* Content loading / display */}
+            {/* LOADING SKELETON */}
             {loading && !data ? (
                 <div className="space-y-6">
                     <Card className="p-6"><Skeleton className="h-20 w-full" /></Card>
@@ -477,7 +471,7 @@ export default function PerformanceDashboardPage() {
             ) : (
                 data && (
                     <div className="space-y-6">
-                        {/* Overall Card */}
+                        {/* OVERALL VARD */}
                         {data.performance !== undefined && (
                             <Card className={`border shadow-sm max-w-sm ${getOeeColor(data.performance, 90)}`}>
                                 <CardHeader className="pb-1 pt-4 text-center">
@@ -492,9 +486,9 @@ export default function PerformanceDashboardPage() {
                             </Card>
                         )}
 
-                        {/* Trend charts */}
+                        {/* TREND CHARTS */}
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                            {/* Daily Performance Bar Chart */}
+                            {/* DAILY PERFORMANCE TREND */}
                             {data.dailyPerformance && data.dailyPerformance.length > 0 && (
                                 <Card className="border border-border/60 shadow-sm bg-card">
                                     <CardHeader className="pb-2">
@@ -527,7 +521,7 @@ export default function PerformanceDashboardPage() {
                                 </Card>
                             )}
 
-                            {/* Composed Production & Target Trend Chart */}
+                            {/* COMPOSED PRODUCTION & TARGET TREND */}
                             {data.performanceTrend && data.performanceTrend.seriesData && (
                                 <Card className="border border-border/60 shadow-sm bg-card">
                                     <CardHeader className="pb-2">
@@ -573,7 +567,7 @@ export default function PerformanceDashboardPage() {
                             )}
                         </div>
 
-                        {/* Performance Losses Table */}
+                        {/* PERFORMANCE LOSSES TABLE */}
                         {data.performanceLoss && data.performanceLoss.length > 0 && (
                             <Card className="border border-border/60 shadow-sm bg-card mt-6">
                                 <CardHeader className="pb-2">
@@ -620,7 +614,7 @@ export default function PerformanceDashboardPage() {
                                         </Table>
                                     </div>
 
-                                    {/* Pagination UI */}
+                                    {/* PAGINATION */}
                                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-4 pt-4 border-t text-xs">
                                         <span className="text-xs text-muted-foreground">
                                             Showing {data.performanceLoss.length > 0 ? startIndex + 1 : 0} to {Math.min(startIndex + pageSize, data.performanceLoss.length)} of {data.performanceLoss.length} entries

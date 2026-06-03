@@ -20,10 +20,8 @@ import {
     ArrowLeft,
     RefreshCw,
     AlertCircle,
-    Calendar,
     TrendingUp,
     CheckCircle2,
-    Target,
     Layers,
     Cpu,
     PieChart as PieIcon,
@@ -74,7 +72,7 @@ interface ApiResponse {
     dailyQuality?: DailyQualityItem[];
     topDefects?: DefectRow[];
     topDefectChart?: DefectChartItem[];
-    // Assembly Lines advanced metrics
+
     qualityCheckDefectStatus?: PpmCardItem[];
     functionalTestingDefectStatus?: PpmCardItem[];
     qualityNGModelData?: {
@@ -90,19 +88,18 @@ export default function QualityDashboardPage() {
     const isDark = resolvedTheme === "dark";
     const [mounted, setMounted] = useState(false);
 
-    // Filters from session storage
+    // SESSION STORAGE FILTERS
     const [area, setArea] = useState<"ASSEMBLY LINES" | "STAMPING" | "COILSHOP">("ASSEMBLY LINES");
     const [fromDate, setFromDate] = useState("");
     const [toDate, setToDate] = useState("");
     const [selectedLines, setSelectedLines] = useState<string[]>([]);
     const [selectedSubMachines, setSelectedSubMachines] = useState<string[]>([]);
 
-    // API states
+    // API STATES
     const [data, setData] = useState<ApiResponse | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    // Load filters from session storage
     useEffect(() => {
         setMounted(true);
         const todayStr = new Date().toISOString().split("T")[0];
@@ -133,7 +130,7 @@ export default function QualityDashboardPage() {
         }
     }, []);
 
-    // Options mapping
+    // OPTIONS MAPPING
     const assemblyOptions = [
         { value: "IDU-Line", label: "IDU LINE" },
         { value: "ODU-Line", label: "ODU LINE" },
@@ -169,7 +166,6 @@ export default function QualityDashboardPage() {
         { label: "Auto Brazing 2", value: "13" },
     ];
 
-    // Compute sub options based on selected main lines
     const subOptions = useMemo(() => {
         let result: { label: string; value: string }[] = [];
         if (area === "STAMPING") {
@@ -190,7 +186,7 @@ export default function QualityDashboardPage() {
         return result;
     }, [area, selectedLines]);
 
-    // Fetch Quality Details
+    // FETCH QUALITY DATA
     const fetchData = async () => {
         if (!fromDate || !toDate) return;
         setLoading(true);
@@ -294,12 +290,11 @@ export default function QualityDashboardPage() {
         return "text-rose-500 border-rose-500/20 bg-rose-500/5";
     };
 
-    // Color list for defect charts
     const chartColors = ["#ef4444", "#3b82f6", "#f59e0b", "#10b981", "#8b5cf6", "#06b6d4"];
 
     return (
         <div className="space-y-6 max-w-8xl mx-auto p-2">
-            {/* Header */}
+            {/* HEADER SECTION */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div className="flex items-center gap-3">
                     <Link href="/manufacturing/production">
@@ -318,7 +313,7 @@ export default function QualityDashboardPage() {
                     </div>
                 </div>
 
-                {/* Filters */}
+                {/* FILTERS */}
                 {mounted && (
                     <div className="flex flex-wrap gap-2.5 items-end bg-card p-3 rounded-xl border border-border/60 shadow-sm">
                         <div className="space-y-1">
@@ -368,11 +363,11 @@ export default function QualityDashboardPage() {
                 )}
             </div>
 
-            {/* Line / Machine Selector Segment */}
+            {/* LINE / MACHINE SELECTOR SEGMENT */}
             {mounted && (
                 <Card className="border-border/60 shadow-sm bg-card p-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {/* Main Lines selection */}
+                        {/* MAIN LINES SELECTION */}
                         <div className="space-y-2">
                             <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider block flex items-center gap-1.5">
                                 <Layers className="w-4 h-4 text-blue-500" />
@@ -396,7 +391,7 @@ export default function QualityDashboardPage() {
                             </div>
                         </div>
 
-                        {/* Sub machines checkboxes */}
+                        {/* SUB-MACHINE CHECKBOXES */}
                         {subOptions.length > 0 && (
                             <div className="space-y-2">
                                 <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider block flex items-center gap-1.5">
@@ -425,7 +420,7 @@ export default function QualityDashboardPage() {
                 </Card>
             )}
 
-            {/* Error bound status */}
+            {/* ERROR ALERT */}
             {error && (
                 <Card className="border-destructive/20 bg-destructive/5">
                     <CardContent className="flex items-center gap-2 text-destructive pt-6">
@@ -435,7 +430,7 @@ export default function QualityDashboardPage() {
                 </Card>
             )}
 
-            {/* Loader / Content */}
+            {/* LOADING SKELETON */}
             {loading && !data ? (
                 <div className="space-y-6">
                     <Card className="p-6"><Skeleton className="h-20 w-full" /></Card>
@@ -447,7 +442,7 @@ export default function QualityDashboardPage() {
             ) : (
                 data && (
                     <div className="space-y-6">
-                        {/* Overall Card */}
+                        {/* OVERALL CARD */}
                         {data.quality !== undefined && (
                             <Card className={`border shadow-sm max-w-sm ${getOeeColor(data.quality, 95)}`}>
                                 <CardHeader className="pb-1 pt-4 text-center">
@@ -462,7 +457,7 @@ export default function QualityDashboardPage() {
                             </Card>
                         )}
 
-                        {/* Daily Quality Trend Bar Chart */}
+                        {/* DAILY QUALITY TREND */}
                         {data.dailyQuality && data.dailyQuality.length > 0 && (
                             <Card className="border border-border/60 shadow-sm bg-card">
                                 <CardHeader className="pb-2">
@@ -495,7 +490,7 @@ export default function QualityDashboardPage() {
                             </Card>
                         )}
 
-                        {/* Top Defects Visual Layout */}
+                        {/* TOP DEFECTS VISUAL LAYOUT */}
                         {data.topDefects && data.topDefects.length > 0 && (
                             <Card className="border border-border/60 shadow-sm bg-card">
                                 <CardHeader className="pb-2">
@@ -507,7 +502,7 @@ export default function QualityDashboardPage() {
                                 </CardHeader>
                                 <CardContent className="pt-2">
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-                                        {/* Pie Chart */}
+                                        {/* PIE CHART */}
                                         <div className="flex flex-col items-center">
                                             {data.topDefectChart && data.topDefectChart.length > 0 ? (
                                                 <div className="h-64 w-full">
@@ -535,7 +530,7 @@ export default function QualityDashboardPage() {
                                             )}
                                         </div>
 
-                                        {/* Grid Data List */}
+                                        {/* GRID DATA LIST */}
                                         <div className="overflow-x-auto border border-border/30 rounded-lg">
                                             <Table>
                                                 <TableHeader className="bg-muted/30">
@@ -566,12 +561,12 @@ export default function QualityDashboardPage() {
                             </Card>
                         )}
 
-                        {/* ASSEMBLY LINES ONLY - Advanced PPM and Functional testing widgets */}
+                        {/* ASSEMBLY LINES ONLY - ADVANCED PPM & FUNCTIONAL TESTING WIDGETS */}
                         {area === "ASSEMBLY LINES" && (
                             <div className="space-y-6">
-                                {/* Advanced PPM Grids */}
+                                {/* ADVANCED PPM GRIDS */}
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    {/* Quality check defects ppm */}
+                                    {/* QUALITY CHECK DEFECTS PPM */}
                                     {data.qualityCheckDefectStatus && (
                                         <Card className="border border-border/60 shadow-sm bg-card">
                                             <CardHeader className="pb-2">
@@ -591,7 +586,7 @@ export default function QualityDashboardPage() {
                                         </Card>
                                     )}
 
-                                    {/* Functional test defect composition */}
+                                    {/* FUNCTIONAL TEST DEFECT COMPOSITION */}
                                     {data.functionalTestingDefectStatus && (
                                         <Card className="border border-border/60 shadow-sm bg-card">
                                             <CardHeader className="pb-2">
@@ -612,18 +607,18 @@ export default function QualityDashboardPage() {
                                     )}
                                 </div>
 
-                                {/* Model-wise functional NG statistics */}
+                                {/* MODEL-WISE FUNCTIONAL NG STATISTICS */}
                                 {data.qualityNGModelData && data.qualityNGModelData.headers && (
                                     <Card className="border border-border/60 shadow-sm bg-card">
                                         <CardHeader className="pb-2">
                                             <CardTitle className="text-sm font-bold uppercase tracking-tight flex items-center gap-1.5">
                                                 <Layers className="w-4 h-4 text-blue-500" />
-                                                Model-Wise Functional NG Output
+                                                MODEL-WISE FUNCTIONAL NG OUTPUT
                                             </CardTitle>
                                         </CardHeader>
                                         <CardContent className="pt-2">
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
-                                                {/* Left side composition Pie chart */}
+                                                {/* LEFT SIDE COMPOSITION PIE CHART */}
                                                 <div className="flex flex-col items-center">
                                                     {data.functionalNGComposition && data.functionalNGComposition.length > 0 ? (
                                                         <div className="h-64 w-full">
@@ -651,7 +646,7 @@ export default function QualityDashboardPage() {
                                                     )}
                                                 </div>
 
-                                                {/* Right side table */}
+                                                {/* RIGHT SIDE TABLE */}
                                                 <div className="overflow-x-auto border border-border/30 rounded-lg">
                                                     <Table>
                                                         <TableHeader className="bg-muted/30">
@@ -681,7 +676,7 @@ export default function QualityDashboardPage() {
                                     </Card>
                                 )}
 
-                                {/* Vision data system validation logs */}
+                                {/* VISION DATA SYSTEM VALIDATION LOGS */}
                                 {data.visionStatus && (
                                     <Card className="border border-border/60 shadow-sm bg-card mt-6">
                                         <CardHeader className="pb-2">
