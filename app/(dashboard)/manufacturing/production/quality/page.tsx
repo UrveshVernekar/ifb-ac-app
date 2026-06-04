@@ -32,7 +32,8 @@ import {
     ChartTooltip,
     ChartTooltipContent,
 } from "@/components/ui/chart";
-import { Bar, BarChart, XAxis, YAxis, LabelList, Cell, CartesianGrid, PieChart, Pie, Legend } from "recharts";
+import { Bar, BarChart, XAxis, YAxis, LabelList, Cell, CartesianGrid, PieChart, Pie } from "recharts";
+import { DatePicker } from "@/components/manufacturing/DatePicker";
 import Link from "next/link";
 
 // const API_HOST = "http://10.0.7.26:3003";
@@ -335,7 +336,7 @@ export default function QualityDashboardPage() {
 
                         <div className="space-y-1">
                             <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block ml-0.5">From</span>
-                            <Input
+                            {/* <Input
                                 type="date"
                                 value={fromDate}
                                 onChange={(e) => {
@@ -343,12 +344,20 @@ export default function QualityDashboardPage() {
                                     sessionStorage.setItem("manufacturingFromDate", e.target.value);
                                 }}
                                 className="w-auto bg-background border-border h-9 text-xs"
+                            /> */}
+
+                            <DatePicker
+                                value={fromDate}
+                                onChange={(dateStr) => {
+                                    setFromDate(dateStr);
+                                    sessionStorage.setItem("manufacturingFromDate", dateStr);
+                                }}
                             />
                         </div>
 
                         <div className="space-y-1">
                             <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block ml-0.5">To</span>
-                            <Input
+                            {/* <Input
                                 type="date"
                                 value={toDate}
                                 onChange={(e) => {
@@ -356,6 +365,14 @@ export default function QualityDashboardPage() {
                                     sessionStorage.setItem("manufacturingToDate", e.target.value);
                                 }}
                                 className="w-auto bg-background border-border h-9 text-xs"
+                            /> */}
+
+                            <DatePicker
+                                value={toDate}
+                                onChange={(dateStr) => {
+                                    setToDate(dateStr);
+                                    sessionStorage.setItem("manufacturingToDate", dateStr);
+                                }}
                             />
                         </div>
 

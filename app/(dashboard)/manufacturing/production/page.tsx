@@ -36,11 +36,12 @@ import {
     ChartTooltipContent,
 } from "@/components/ui/chart";
 import { Bar, BarChart, XAxis, YAxis, LabelList, Legend, Cell, CartesianGrid, Line, ComposedChart } from "recharts";
-import { Input } from "@/components/ui/input";
+// import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import CommonTable, { ColumnConfig } from "@/components/shared/CommonTable";
+import { DatePicker } from "@/components/manufacturing/DatePicker";
 
 // const API_HOST = "http://10.0.7.26:3003";
 const API_HOST = process.env.NEXT_PUBLIC_API_BASE_URL;
@@ -745,7 +746,7 @@ export default function ProductionDashboardPage() {
 
                 {/* FILTER / DATES CONTROLS */}
                 {mounted && (
-                    <div className="flex flex-wrap gap-2.5 items-end bg-card p-3 rounded-xl border border-border/60 shadow-sm">
+                    <div className="flex flex-wrap gap-2 items-end bg-card p-3 rounded-xl border border-border/60 shadow-sm">
                         <div className="space-y-1">
                             <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block ml-0.5">Area</span>
                             <Select value={area} onValueChange={(v) => handleAreaChange(v as any)}>
@@ -762,7 +763,7 @@ export default function ProductionDashboardPage() {
 
                         <div className="space-y-1">
                             <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block ml-0.5">From</span>
-                            <Input
+                            {/* <Input
                                 type="date"
                                 value={fromDate}
                                 onChange={(e) => {
@@ -770,12 +771,20 @@ export default function ProductionDashboardPage() {
                                     sessionStorage.setItem("manufacturingFromDate", e.target.value);
                                 }}
                                 className="w-auto bg-background border-border h-9 text-xs"
+                            /> */}
+
+                            <DatePicker
+                                value={fromDate}
+                                onChange={(dateStr) => {
+                                    setFromDate(dateStr);
+                                    sessionStorage.setItem("manufacturingFromDate", dateStr);
+                                }}
                             />
                         </div>
 
                         <div className="space-y-1">
                             <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block ml-0.5">To</span>
-                            <Input
+                            {/* <Input
                                 type="date"
                                 value={toDate}
                                 onChange={(e) => {
@@ -783,6 +792,14 @@ export default function ProductionDashboardPage() {
                                     sessionStorage.setItem("manufacturingToDate", e.target.value);
                                 }}
                                 className="w-auto bg-background border-border h-9 text-xs"
+                            /> */}
+
+                            <DatePicker
+                                value={toDate}
+                                onChange={(dateStr) => {
+                                    setToDate(dateStr);
+                                    sessionStorage.setItem("manufacturingToDate", dateStr);
+                                }}
                             />
                         </div>
 
@@ -1026,12 +1043,12 @@ export default function ProductionDashboardPage() {
                                                         PRODUCTION PLAN
                                                     </CardTitle>
                                                 </div>
-                                                <Input
+                                                {/* <Input
                                                     placeholder="Search model name or model code..."
                                                     value={searchTerm}
                                                     onChange={(e) => setSearchTerm(e.target.value)}
                                                     className="w-full sm:w-64 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400"
-                                                />
+                                                /> */}
                                             </div>
                                         </CardHeader>
                                         <CardContent className="pt-2">

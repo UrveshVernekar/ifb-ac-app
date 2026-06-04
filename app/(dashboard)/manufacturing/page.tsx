@@ -23,7 +23,7 @@ interface Tile {
     icon: React.ComponentType<any>;
     iconColor: string;
     bgColor: string;
-    path: string;
+    path?: string;
     description: string;
     status?: "live" | "warning" | "completed" | "planned";
 }
@@ -91,7 +91,7 @@ export default function ManufacturingHub() {
                     icon: Package,
                     iconColor: "text-orange-500",
                     bgColor: "bg-orange-500/10 border-orange-500/20",
-                    path: "/planning",
+                    // path: "/planning",
                     description: "Reserve, track, and manage raw material allocation"
                 },
                 {
@@ -178,7 +178,7 @@ export default function ManufacturingHub() {
                                 return (
                                     <Link
                                         key={tile.title}
-                                        href={tile.path}
+                                        href={tile.path ?? "#"}
                                         className="group block h-full"
                                     >
                                         <Card className="h-full border border-border/60 hover:border-blue-500/50 hover:shadow-xl transition-all duration-300 relative overflow-hidden flex flex-col bg-card">

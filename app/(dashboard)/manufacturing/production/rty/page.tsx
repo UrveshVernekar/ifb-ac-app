@@ -31,6 +31,7 @@ import {
     MapPin
 } from "lucide-react";
 import Link from "next/link";
+import { DatePicker } from "@/components/manufacturing/DatePicker";
 
 // const API_HOST = "http://10.0.7.26:3003";
 const API_HOST = process.env.NEXT_PUBLIC_API_BASE_URL;
@@ -359,7 +360,7 @@ export default function RtyDashboardPage() {
 
         setFromDate(savedFrom || todayStr);
         setToDate(savedTo || todayStr);
-        setSelectedLine(savedMachine.split(",")[0]); // default to first saved machine
+        setSelectedLine(savedMachine.split(",")[0]);
     }, []);
 
     const fetchData = async () => {
@@ -525,7 +526,7 @@ export default function RtyDashboardPage() {
 
                         <div className="space-y-1">
                             <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block ml-0.5">From</span>
-                            <Input
+                            {/* <Input
                                 type="date"
                                 value={fromDate}
                                 onChange={(e) => {
@@ -533,12 +534,20 @@ export default function RtyDashboardPage() {
                                     sessionStorage.setItem("manufacturingFromDate", e.target.value);
                                 }}
                                 className="w-auto bg-background border-border h-9 text-xs"
+                            /> */}
+
+                            <DatePicker
+                                value={fromDate}
+                                onChange={(dateStr) => {
+                                    setFromDate(dateStr);
+                                    sessionStorage.setItem("manufacturingFromDate", dateStr);
+                                }}
                             />
                         </div>
 
                         <div className="space-y-1">
                             <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block ml-0.5">To</span>
-                            <Input
+                            {/* <Input
                                 type="date"
                                 value={toDate}
                                 onChange={(e) => {
@@ -546,6 +555,14 @@ export default function RtyDashboardPage() {
                                     sessionStorage.setItem("manufacturingToDate", e.target.value);
                                 }}
                                 className="w-auto bg-background border-border h-9 text-xs"
+                            /> */}
+
+                            <DatePicker
+                                value={toDate}
+                                onChange={(dateStr) => {
+                                    setToDate(dateStr);
+                                    sessionStorage.setItem("manufacturingToDate", dateStr);
+                                }}
                             />
                         </div>
 

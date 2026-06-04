@@ -18,6 +18,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ArrowLeft, Calendar, Clock, RefreshCw, Send, CheckCircle2, AlertCircle } from "lucide-react";
 import Link from "next/link";
+import { DatePicker } from "@/components/manufacturing/DatePicker";
 import CommonTable, { ColumnConfig } from "@/components/shared/CommonTable";
 
 // const API_HOST = "http://10.0.7.26:3003";
@@ -254,12 +255,19 @@ export default function ShiftConfigPage() {
                                 <Label className="text-xs font-bold text-muted-foreground uppercase flex items-center gap-1.5 ml-0.5">
                                     <Calendar className="w-3.5 h-3.5" /> Date *
                                 </Label>
-                                <Input
+                                {/* <Input
                                     type="date"
                                     value={formDate}
                                     onChange={(e) => setFormDate(e.target.value)}
                                     className="bg-background border-border h-9 text-xs"
                                     required
+                                /> */}
+
+                                <DatePicker
+                                    value={formDate}
+                                    onChange={(dateStr) => {
+                                        setFormDate(dateStr);
+                                    }}
                                 />
                             </div>
 
@@ -331,18 +339,33 @@ export default function ShiftConfigPage() {
                         </div>
                         {mounted && (
                             <div className="flex flex-wrap gap-2 items-center">
-                                <Input
+                                {/* <Input
                                     type="date"
                                     value={filterFrom}
                                     onChange={(e) => setFilterFrom(e.target.value)}
                                     className="w-auto bg-background border-border h-8 text-[11px] py-1"
+                                /> */}
+
+                                <DatePicker
+                                    value={filterFrom}
+                                    onChange={(dateStr) => {
+                                        setFilterFrom(dateStr);
+                                    }}
                                 />
+
                                 <span className="text-muted-foreground text-xs">to</span>
-                                <Input
+                                {/* <Input
                                     type="date"
                                     value={filterTo}
                                     onChange={(e) => setFilterTo(e.target.value)}
                                     className="w-auto bg-background border-border h-8 text-[11px] py-1"
+                                /> */}
+
+                                <DatePicker
+                                    value={filterTo}
+                                    onChange={(dateStr) => {
+                                        setFilterTo(dateStr);
+                                    }}
                                 />
                                 <Select value={filterLine} onValueChange={(v) => setFilterLine(v as any)}>
                                     <SelectTrigger className="w-[110px] bg-background border-border h-8 text-[11px] py-1">

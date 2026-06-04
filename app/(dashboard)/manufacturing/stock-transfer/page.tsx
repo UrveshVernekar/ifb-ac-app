@@ -26,6 +26,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, RefreshCw, Send, ArrowLeftRight, CheckCircle2, AlertCircle } from "lucide-react";
 import Link from "next/link";
+import { DatePicker } from "@/components/manufacturing/DatePicker";
 import CommonTable, { ColumnConfig } from "@/components/shared/CommonTable";
 
 // const API_HOST = "http://10.0.7.26:3003";
@@ -293,7 +294,7 @@ export default function StockTransferPage() {
     };
 
     return (
-        <div className="space-y-6 max-w-7xl mx-auto p-2">
+        <div className="space-y-6 max-w-8xl mx-auto p-2">
             {/* Header section */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div className="flex items-center gap-3">
@@ -317,7 +318,7 @@ export default function StockTransferPage() {
                         <div className="flex items-center gap-2 bg-card border p-2 rounded-xl shadow-sm h-9">
                             <div className="flex items-center gap-1">
                                 <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider ml-1">From</span>
-                                <Input
+                                {/* <Input
                                     type="date"
                                     value={fromDate}
                                     onChange={(e) => {
@@ -325,12 +326,20 @@ export default function StockTransferPage() {
                                         sessionStorage.setItem("acStockTransferFromDate", e.target.value);
                                     }}
                                     className="w-auto bg-background border-none h-7 text-[11px] py-1"
+                                /> */}
+
+                                <DatePicker
+                                    value={fromDate}
+                                    onChange={(dateStr) => {
+                                        setFromDate(dateStr);
+                                        sessionStorage.setItem("acStockTransferFromDate", dateStr);
+                                    }}
                                 />
                             </div>
 
                             <div className="flex items-center gap-1">
                                 <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">To</span>
-                                <Input
+                                {/* <Input
                                     type="date"
                                     value={toDate}
                                     onChange={(e) => {
@@ -338,6 +347,14 @@ export default function StockTransferPage() {
                                         sessionStorage.setItem("acStockTransferToDate", e.target.value);
                                     }}
                                     className="w-auto bg-background border-none h-7 text-[11px] py-1"
+                                /> */}
+
+                                <DatePicker
+                                    value={toDate}
+                                    onChange={(dateStr) => {
+                                        setToDate(dateStr);
+                                        sessionStorage.setItem("acStockTransferToDate", dateStr);
+                                    }}
                                 />
                             </div>
 
