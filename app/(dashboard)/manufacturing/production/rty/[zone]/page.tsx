@@ -44,7 +44,8 @@ import {
     BarChart3,
 } from "lucide-react";
 
-const API_HOST = "http://10.0.7.26:3003";
+// const API_HOST = "http://10.0.7.26:3003";
+const API_HOST = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 const PIE_COLORS = [
     "#3b82f6",
@@ -284,7 +285,7 @@ export default function ZoneRtyPage() {
         setLoading(true);
         setError(null);
         try {
-            const res = await axios.get(`${API_HOST}/api/production/data`, {
+            const res = await axios.get(`${API_HOST}/production/data`, {
                 params: {
                     area: "ASSEMBLY LINES",
                     machines: selectedLine,

@@ -19,7 +19,8 @@ import {
 import { useTheme } from "next-themes";
 import { toast } from "sonner";
 
-const API_HOST = "http://10.0.7.26:3003";
+// const API_HOST = "http://10.0.7.26:3003";
+const API_HOST = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 const categoryStyles: Record<string, { bg: string, border: string, icon: React.ReactNode }> = {
     Availability: { bg: "bg-blue-50 dark:bg-blue-950/30", border: "border-blue-500", icon: <Clock className="w-5 h-5 text-blue-500" /> },
@@ -78,7 +79,7 @@ export default function CoilshopDataEntry() {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const res = await axios.get(`${API_HOST}/api/production/coilshop/details`);
+                const res = await axios.get(`${API_HOST}/production/coilshop/details`);
                 setAllMachines(res?.data?.data?.machineData || []);
                 setAllModels(res?.data?.data?.modelData || []);
                 setLossData(res?.data?.data?.lossData || []);
@@ -184,7 +185,7 @@ export default function CoilshopDataEntry() {
                 return;
             }
 
-            await axios.post(`${API_HOST}/api/production/coilshop/post`, payload);
+            await axios.post(`${API_HOST}/production/coilshop/post`, payload);
 
             toast.success("Data Submitted Successfully!");
 

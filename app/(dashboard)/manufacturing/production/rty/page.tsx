@@ -32,7 +32,8 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
-const API_HOST = "http://10.0.7.26:3003";
+// const API_HOST = "http://10.0.7.26:3003";
+const API_HOST = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 interface ProductionStatus {
     label: string;
@@ -367,7 +368,7 @@ export default function RtyDashboardPage() {
         setError(null);
 
         try {
-            const res = await axios.get(`${API_HOST}/api/production/data`, {
+            const res = await axios.get(`${API_HOST}/production/data`, {
                 params: {
                     area: "ASSEMBLY LINES",
                     machines: selectedLine,

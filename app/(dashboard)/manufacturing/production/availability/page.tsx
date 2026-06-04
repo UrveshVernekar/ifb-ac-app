@@ -35,7 +35,8 @@ import {
 import { Bar, BarChart, XAxis, YAxis, LabelList, Cell, CartesianGrid } from "recharts";
 import Link from "next/link";
 
-const API_HOST = "http://10.0.7.26:3003";
+// const API_HOST = "http://10.0.7.26:3003";
+const API_HOST = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 // === TYPES ===
 interface DailyAvailabilityItem {
@@ -138,7 +139,7 @@ export default function AvailabilityDashboardPage() {
 
         try {
             const [res, downtimeRes] = await Promise.all([
-                axios.get(`${API_HOST}/api/production/data`, {
+                axios.get(`${API_HOST}/production/data`, {
                     params: {
                         area,
                         machines: machineQuery,
@@ -146,7 +147,7 @@ export default function AvailabilityDashboardPage() {
                         toDate,
                     }
                 }),
-                axios.get(`${API_HOST}/api/production/downtime`, {
+                axios.get(`${API_HOST}/production/downtime`, {
                     params: {
                         line: area === "ASSEMBLY LINES" ? machineQuery : (area === "STAMPING" ? "AUTO LINE" : "COILSHOP IDU"),
                         fromDate,

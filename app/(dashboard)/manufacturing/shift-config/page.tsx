@@ -20,7 +20,8 @@ import { ArrowLeft, Calendar, Clock, RefreshCw, Send, CheckCircle2, AlertCircle 
 import Link from "next/link";
 import CommonTable, { ColumnConfig } from "@/components/shared/CommonTable";
 
-const API_HOST = "http://10.0.7.26:3003";
+// const API_HOST = "http://10.0.7.26:3003";
+const API_HOST = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 interface ShiftConfigItem {
     id: number;
@@ -71,7 +72,7 @@ export default function ShiftConfigPage() {
         setLoading(true);
         setError(null);
         try {
-            const response = await axios.get(`${API_HOST}/api/production/data/shift-config`, {
+            const response = await axios.get(`${API_HOST}/production/data/shift-config`, {
                 params: {
                     fromDate: filterFrom,
                     toDate: filterTo,
@@ -194,7 +195,7 @@ export default function ShiftConfigPage() {
 
         setFormSubmitting(true);
         try {
-            const res = await axios.post(`${API_HOST}/api/production/data/shift-config`, payload);
+            const res = await axios.post(`${API_HOST}/production/data/shift-config`, payload);
             if (res.data.success || res.status === 200 || res.status === 201) {
                 setFormStatus({ type: "success", message: "Shift configuration saved successfully." });
                 setExtensionHours("");

@@ -37,7 +37,8 @@ import {
 import Link from "next/link";
 import CommonTable, { ColumnConfig } from "@/components/shared/CommonTable";
 
-const API_HOST = "http://10.0.7.26:3003";
+// const API_HOST = "http://10.0.7.26:3003";
+const API_HOST = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 interface DowntimeLogItem {
     id: number;
@@ -121,7 +122,7 @@ export default function DowntimeLogsPage() {
         setLoading(true);
         setError(null);
         try {
-            const res = await axios.get(`${API_HOST}/api/production/downtime`, {
+            const res = await axios.get(`${API_HOST}/production/downtime`, {
                 params: {
                     line: filterLine,
                     fromDate,
@@ -241,7 +242,7 @@ export default function DowntimeLogsPage() {
         const loadHourSlots = async () => {
             if (!formDate) return;
             try {
-                const res = await axios.get(`${API_HOST}/api/production/downtime/hour-slots`, {
+                const res = await axios.get(`${API_HOST}/production/downtime/hour-slots`, {
                     params: { date: formDate, line: formLine }
                 });
                 if (res.data.success) setHourSlots(res.data.data);
@@ -258,7 +259,7 @@ export default function DowntimeLogsPage() {
 
         const loadReasons = async () => {
             try {
-                const res = await axios.get(`${API_HOST}/api/production/downtime/downtime-reasons`, {
+                const res = await axios.get(`${API_HOST}/production/downtime/downtime-reasons`, {
                     params: { line: formLine }
                 });
                 if (res.data.success) setReasonOptions(res.data.data);
@@ -276,8 +277,8 @@ export default function DowntimeLogsPage() {
         const loadEmployees = async () => {
             try {
                 const [empRes, hodRes] = await Promise.all([
-                    axios.get(`${API_HOST}/api/ac/hr/employees/employee-options`),
-                    axios.get(`${API_HOST}/api/ac/hr/employees/department-heads`)
+                    axios.get(`${API_HOST}/ac/hr/employees/employee-options`),
+                    axios.get(`${API_HOST}/ac/hr/employees/department-heads`)
                 ]);
                 if (empRes.data.success) setEmployeeOptions(empRes.data.data);
                 if (hodRes.data.success) setHodOptions(hodRes.data.data);
@@ -361,7 +362,7 @@ export default function DowntimeLogsPage() {
 
         setFormSubmitting(true);
         try {
-            const endpoint = isEdit ? "/api/production/downtime/update" : "/api/production/downtime";
+            const endpoint = isEdit ? "/production/downtime/update" : "/production/downtime";
             const res = await axios.post(`${API_HOST}${endpoint}`, payload);
 
             if (res.data.success) {
@@ -393,7 +394,7 @@ export default function DowntimeLogsPage() {
         if (!itemToDelete) return;
         setDeleteSubmitting(true);
         try {
-            const res = await axios.post(`${API_HOST}/api/production/downtime/delete`, itemToDelete);
+            const res = await axios.post(`${API_HOST}/production/downtime/delete`, itemToDelete);
             if (res.data.success) {
                 setRefreshTrigger(prev => !prev);
                 setDeleteOpen(false);
