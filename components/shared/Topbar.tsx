@@ -24,7 +24,7 @@ export default function Topbar({ onToggleSidebar, collapsed }: TopbarProps) {
                     </button>
                     <div className="hidden md:flex items-center gap-3">
                         <h1 className="text-lg font-semibold tracking-tight text-foreground">
-                            IIOT Portal • Manufacturing Platform
+                            IIOT Portal • AC Division
                         </h1>
                     </div>
                 </div>

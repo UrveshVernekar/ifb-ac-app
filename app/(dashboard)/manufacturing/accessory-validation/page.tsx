@@ -30,7 +30,8 @@ import {
 } from "lucide-react";
 import CommonTable, { ColumnConfig } from "@/components/shared/CommonTable";
 
-const API_HOST = "http://10.0.7.26:3003";
+// const API_HOST = "http://10.0.7.26:3003";
+const API_HOST = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 interface AccessoryMappingItem {
     id: number;
@@ -96,7 +97,7 @@ export default function AccessoryValidationPage() {
         setLoading(true);
         setError(null);
         try {
-            const response = await axios.get(`${API_HOST}/api/production/data/accessory-mapping/get-data`);
+            const response = await axios.get(`${API_HOST}/production/data/accessory-mapping/get-data`);
             if (response.data && response.data.success) {
                 setTableData(response.data.data || []);
             } else {
@@ -187,7 +188,7 @@ export default function AccessoryValidationPage() {
                 updatedBy: employeeName
             };
 
-            const res = await axios.post(`${API_HOST}/api/production/data/accessory-mapping/post`, payload);
+            const res = await axios.post(`${API_HOST}/production/data/accessory-mapping/post`, payload);
 
             if (res.status === 200 || res.status === 201) {
                 const resData = res.data;
@@ -269,7 +270,7 @@ export default function AccessoryValidationPage() {
                 updatedBy: employeeName
             };
 
-            const res = await axios.post(`${API_HOST}/api/production/data/accessory-mapping/edit`, payload);
+            const res = await axios.post(`${API_HOST}/production/data/accessory-mapping/edit`, payload);
 
             if (res.data?.success || res.status === 200 || res.status === 201) {
                 setEditFeedback({ type: "success", message: "Data successfully updated!" });
@@ -296,7 +297,7 @@ export default function AccessoryValidationPage() {
         setDeleteLoading(true);
 
         try {
-            const res = await axios.post(`${API_HOST}/api/production/data/accessory-mapping/delete`, { id: deletingItem.id });
+            const res = await axios.post(`${API_HOST}/production/data/accessory-mapping/delete`, { id: deletingItem.id });
             if (res.data?.success || res.status === 200) {
                 setRefreshTrigger(p => !p);
                 setDeleteDialogOpen(false);

@@ -23,7 +23,8 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import MachineComponent from "../components/MachineComponent";
 import PlanTable from "../components/PlanTable";
 
-const API_HOST = "http://10.0.7.26:3003";
+// const API_HOST = "http://10.0.7.26:3003";
+const API_HOST = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 interface PlanItem {
     sequence: number | string;
@@ -85,7 +86,7 @@ export default function PlanningPage() {
         setLoading(true);
         setError(null);
         try {
-            const response = await axios.get(`${API_HOST}/api/planning/data/dashboard`, {
+            const response = await axios.get(`${API_HOST}/planning/data/dashboard`, {
                 params: { area: "ASSEMBLY LINES", machine: selectedMachine },
             });
 

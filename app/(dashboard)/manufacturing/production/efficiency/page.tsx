@@ -34,7 +34,8 @@ import {
 import { Bar, BarChart, XAxis, YAxis, LabelList, Cell, CartesianGrid, PieChart, Pie, Legend } from "recharts";
 import Link from "next/link";
 
-const API_HOST = "http://10.0.7.26:3003";
+// const API_HOST = "http://10.0.7.26:3003";
+const API_HOST = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 // === TYPES ===
 interface EfficiencyStatus {
@@ -132,7 +133,7 @@ export default function EfficiencyDashboardPage() {
         }
 
         try {
-            const res = await axios.get(`${API_HOST}/api/production/data`, {
+            const res = await axios.get(`${API_HOST}/production/data`, {
                 params: {
                     area,
                     machines: machineQuery,

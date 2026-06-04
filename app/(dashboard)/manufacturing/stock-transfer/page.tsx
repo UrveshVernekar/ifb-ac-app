@@ -28,7 +28,8 @@ import { ArrowLeft, RefreshCw, Send, ArrowLeftRight, CheckCircle2, AlertCircle }
 import Link from "next/link";
 import CommonTable, { ColumnConfig } from "@/components/shared/CommonTable";
 
-const API_HOST = "http://10.0.7.26:3003";
+// const API_HOST = "http://10.0.7.26:3003";
+const API_HOST = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 interface StockTransferRow {
     postingDate: string;
@@ -90,7 +91,7 @@ export default function StockTransferPage() {
         if (!mounted) return;
         const fetchMapping = async () => {
             try {
-                const res = await axios.get(`${API_HOST}/api/stock-transfer/data/get-mapping`);
+                const res = await axios.get(`${API_HOST}/stock-transfer/data/get-mapping`);
                 if (res.data.success) {
                     const locs = res?.data?.data?.locationOptions?.map((item: any) => ({
                         label: item.label,
@@ -122,7 +123,7 @@ export default function StockTransferPage() {
         setLoading(true);
         setError(null);
         try {
-            const res = await axios.get(`${API_HOST}/api/stock-transfer/data/get-stock`, {
+            const res = await axios.get(`${API_HOST}/stock-transfer/data/get-stock`, {
                 params: {
                     fromDate,
                     toDate,
@@ -265,7 +266,7 @@ export default function StockTransferPage() {
 
         setFormSubmitting(true);
         try {
-            const res = await axios.post(`${API_HOST}/api/stock-transfer/data/post-stock`, payload);
+            const res = await axios.post(`${API_HOST}/stock-transfer/data/post-stock`, payload);
             if (res.data.success) {
                 if (res.data.postStatus === "S") {
                     setFormFeedback({ type: "success", message: "Stock transferred successfully." });

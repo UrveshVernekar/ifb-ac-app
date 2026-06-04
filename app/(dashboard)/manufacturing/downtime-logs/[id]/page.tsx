@@ -40,7 +40,8 @@ import {
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
-const API_HOST = "http://10.0.7.26:3003";
+// const API_HOST = "http://10.0.7.26:3003";
+const API_HOST = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 interface ActionItem {
     id: number | null;
@@ -82,13 +83,13 @@ export default function DowntimeDetailsPage({ params }: { params: Promise<{ id: 
         setError(null);
         try {
             // Load employee list options
-            const empRes = await axios.get(`${API_HOST}/api/ac/hr/employees/employee-options`);
+            const empRes = await axios.get(`${API_HOST}/ac/hr/employees/employee-options`);
             if (empRes.data.success) {
                 setEmployeeOptions(empRes.data.data);
             }
 
             // Load downtime record
-            const { data } = await axios.get(`${API_HOST}/api/production/downtime/record?downtimeId=${id}`);
+            const { data } = await axios.get(`${API_HOST}/production/downtime/record?downtimeId=${id}`);
             if (data.success && data.data?.length > 0) {
                 const rec = data.data[0];
                 setRecord(rec);
@@ -194,7 +195,7 @@ export default function DowntimeDetailsPage({ params }: { params: Promise<{ id: 
         };
 
         try {
-            const { data } = await axios.post(`${API_HOST}/api/production/downtime/analysis`, payload);
+            const { data } = await axios.post(`${API_HOST}/production/downtime/analysis`, payload);
             if (data.success) {
                 setActionFeedback({ type: "success", message: "5 Why analysis saved successfully!" });
                 fetchRecordAndOptions();
@@ -213,7 +214,7 @@ export default function DowntimeDetailsPage({ params }: { params: Promise<{ id: 
     const handleApprove = async (status: "CLOSE" | "REOPEN" | "REJECT") => {
         if (!record) return;
         try {
-            await axios.post(`${API_HOST}/api/production/downtime/approve`, { downtimeID: record.id, status });
+            await axios.post(`${API_HOST}/production/downtime/approve`, { downtimeID: record.id, status });
             let message = "";
             if (status === "CLOSE") message = "Record approved and closed successfully!";
             else if (status === "REJECT") message = "Record rejected successfully!";

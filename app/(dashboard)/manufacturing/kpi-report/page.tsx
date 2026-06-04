@@ -36,7 +36,8 @@ import {
 import Link from "next/link";
 import { useTheme } from "next-themes";
 
-const API_HOST = "http://10.0.7.26:3003";
+// const API_HOST = "http://10.0.7.26:3003";
+const API_HOST = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 export default function KPIReportPage() {
     const [mounted, setMounted] = useState(false);
@@ -113,7 +114,7 @@ export default function KPIReportPage() {
         setLoading(true);
         setError(null);
         try {
-            const res = await axios.get(`${API_HOST}/api/production/kpi-data`, {
+            const res = await axios.get(`${API_HOST}/production/kpi-data`, {
                 params: { area: line, year: fyYear }
             });
             const data = res.data.data || res.data;
@@ -474,7 +475,7 @@ export default function KPIReportPage() {
 
         setCostSubmitting(true);
         try {
-            const res = await axios.post(`${API_HOST}/api/production/kpi-data/cost-data`, {
+            const res = await axios.post(`${API_HOST}/production/kpi-data/cost-data`, {
                 area: costLine,
                 year: Number(costYear),
                 month: costMonth,
@@ -511,7 +512,7 @@ export default function KPIReportPage() {
 
         setMpSubmitting(true);
         try {
-            const res = await axios.post(`${API_HOST}/api/production/kpi-data/manpower-data`, {
+            const res = await axios.post(`${API_HOST}/production/kpi-data/manpower-data`, {
                 area: mpLine,
                 year: Number(mpYear),
                 month: mpMonth,
