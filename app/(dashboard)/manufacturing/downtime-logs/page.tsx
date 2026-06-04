@@ -35,6 +35,7 @@ import {
     CheckCircle2
 } from "lucide-react";
 import Link from "next/link";
+import { DatePicker } from "@/components/manufacturing/DatePicker";
 import CommonTable, { ColumnConfig } from "@/components/shared/CommonTable";
 
 // const API_HOST = "http://10.0.7.26:3003";
@@ -430,9 +431,9 @@ export default function DowntimeLogsPage() {
                 <div className="flex flex-wrap gap-2 items-center">
                     {mounted && (
                         <div className="flex flex-wrap gap-2 items-center bg-card border border-border/60 p-2 rounded-xl shadow-sm">
-                            <div className="flex items-center gap-1.5">
+                            <div className="space-y-1">
                                 <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider ml-1">From</span>
-                                <Input
+                                {/* <Input
                                     type="date"
                                     value={fromDate}
                                     onChange={(e) => {
@@ -440,12 +441,20 @@ export default function DowntimeLogsPage() {
                                         sessionStorage.setItem("acDowntimeFromDate", e.target.value);
                                     }}
                                     className="w-auto bg-background border-border h-8 text-[11px] py-1"
+                                /> */}
+
+                                <DatePicker
+                                    value={fromDate}
+                                    onChange={(dateStr) => {
+                                        setFromDate(dateStr);
+                                        sessionStorage.setItem("acDowntimeFromDate", dateStr);
+                                    }}
                                 />
                             </div>
 
-                            <div className="flex items-center gap-1.5">
+                            <div className="space-y-1">
                                 <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">To</span>
-                                <Input
+                                {/* <Input
                                     type="date"
                                     value={toDate}
                                     onChange={(e) => {
@@ -453,24 +462,35 @@ export default function DowntimeLogsPage() {
                                         sessionStorage.setItem("acDowntimeToDate", e.target.value);
                                     }}
                                     className="w-auto bg-background border-border h-8 text-[11px] py-1"
+                                /> */}
+
+                                <DatePicker
+                                    value={toDate}
+                                    onChange={(dateStr) => {
+                                        setToDate(dateStr);
+                                        sessionStorage.setItem("acDowntimeToDate", dateStr);
+                                    }}
                                 />
                             </div>
 
-                            <Select
-                                value={filterLine}
-                                onValueChange={(v: any) => {
-                                    setFilterLine(v);
-                                    sessionStorage.setItem("acDowntimeType", v);
-                                }}
-                            >
-                                <SelectTrigger className="w-[110px] bg-background border-border h-8 text-[11px] py-1">
-                                    <SelectValue placeholder="Line" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="IDU-Line">IDU LINE</SelectItem>
-                                    <SelectItem value="ODU-Line">ODU LINE</SelectItem>
-                                </SelectContent>
-                            </Select>
+                            <div className="space-y-1">
+                                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Line</span>
+                                <Select
+                                    value={filterLine}
+                                    onValueChange={(v: any) => {
+                                        setFilterLine(v);
+                                        sessionStorage.setItem("acDowntimeType", v);
+                                    }}
+                                >
+                                    <SelectTrigger className="w-[110px] bg-background border-border h-8 text-[11px] py-1">
+                                        <SelectValue placeholder="Line" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="IDU-Line">IDU LINE</SelectItem>
+                                        <SelectItem value="ODU-Line">ODU LINE</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
 
                             <Button onClick={() => setRefreshTrigger(p => !p)} variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground">
                                 <RefreshCw className="w-3.5 h-3.5" />
@@ -535,12 +555,20 @@ export default function DowntimeLogsPage() {
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-1">
                                 <Label className="text-[10px] font-bold uppercase text-muted-foreground ml-0.5">Date *</Label>
-                                <Input
+                                {/* <Input
                                     type="date"
                                     value={formDate}
                                     onChange={(e) => setFormDate(e.target.value)}
                                     className="bg-background border-border h-9 text-xs"
                                     required
+                                /> */}
+
+                                <DatePicker
+                                    value={formDate}
+                                    onChange={(dateStr) => {
+                                        setFormDate(dateStr);
+                                        // sessionStorage.setItem("manufacturingFromDate", dateStr);
+                                    }}
                                 />
                             </div>
 

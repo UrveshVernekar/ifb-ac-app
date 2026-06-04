@@ -1,7 +1,7 @@
 // app/(dashboard)/manufacturing/downtime-logs/[id]/page.tsx
 "use client";
 
-import React, { useState, useEffect, use } from "react";
+import { useState, useEffect, use } from "react";
 import axios from "axios";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
