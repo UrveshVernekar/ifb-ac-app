@@ -607,29 +607,31 @@ export default function DowntimeLogsPage() {
                     {mounted && (
                         <div className="flex flex-wrap gap-2 items-center bg-card border border-border/60 p-2 rounded-xl shadow-sm">
                             <div className="space-y-1">
-                                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider ml-1">From</span>
+                                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block ml-1">From</span>
                                 <DatePicker
                                     value={fromDate}
                                     onChange={(dateStr) => {
                                         setFromDate(dateStr);
                                         sessionStorage.setItem("acDowntimeFromDate", dateStr);
                                     }}
+                                    className="h-8 text-[11px] py-1"
                                 />
                             </div>
 
                             <div className="space-y-1">
-                                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">To</span>
+                                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">To</span>
                                 <DatePicker
                                     value={toDate}
                                     onChange={(dateStr) => {
                                         setToDate(dateStr);
                                         sessionStorage.setItem("acDowntimeToDate", dateStr);
                                     }}
+                                    className="h-8 text-[11px] py-1"
                                 />
                             </div>
 
                             <div className="space-y-1">
-                                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Line</span>
+                                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">Line</span>
                                 <Select
                                     value={filterLine}
                                     onValueChange={(v: any) => {
@@ -649,7 +651,7 @@ export default function DowntimeLogsPage() {
 
                             {/* Department Dropdown Filter */}
                             <div className="space-y-1">
-                                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Department</span>
+                                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">Department</span>
                                 <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
                                     <SelectTrigger className="w-[150px] bg-background border-border h-8 text-[11px] py-1">
                                         <SelectValue placeholder="All Departments" />
@@ -664,14 +666,14 @@ export default function DowntimeLogsPage() {
                                 </Select>
                             </div>
 
-                            <Button onClick={() => setRefreshTrigger(p => !p)} variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground mt-4 sm:mt-0">
+                            {/* <Button onClick={() => setRefreshTrigger(p => !p)} variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground mt-4 sm:mt-0">
                                 <RefreshCw className="w-3.5 h-3.5" />
-                            </Button>
+                            </Button> */}
                         </div>
                     )}
 
                     <Button onClick={handleOpenCreate} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs h-9 gap-1.5 cursor-pointer">
-                        <Plus className="w-4 h-4" /> Record Downtime
+                        <Plus className="w-4 h-4" /> Downtime
                     </Button>
                 </div>
             </div>
