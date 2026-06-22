@@ -40,6 +40,7 @@ interface CommonTableProps<T> {
     noDataMessage?: string;
     initialPageSize?: number;
     rowClassName?: (row: T) => string;
+    showTotal?: boolean;
 }
 
 export default function CommonTable<T>({
@@ -52,6 +53,7 @@ export default function CommonTable<T>({
     noDataMessage = "No records found",
     initialPageSize = 10,
     rowClassName,
+    showTotal = false,
 }: CommonTableProps<T>) {
     // COLUMN VISIBILITY STATE
     const [visibleKeys, setVisibleKeys] = useState<Set<string>>(() => {
@@ -186,6 +188,38 @@ export default function CommonTable<T>({
         return columns.filter((col) => visibleKeys.has(String(col.accessorKey)));
     }, [columns, visibleKeys]);
 
+    // CALCULATE COLUMN TOTALS
+    const totalRow = useMemo(() => {
+        if (!showTotal) return null;
+
+        const totals: Record<string, any> = {};
+        visibleColumns.forEach((col, index) => {
+            const key = String(col.accessorKey);
+            if (index === 0) {
+                totals[key] = "TOTAL";
+                return;
+            }
+
+            // Check if all values in this column are numeric
+            const values = sortedData.map((row) => row[col.accessorKey as keyof T]);
+            const allNumeric = values.every(
+                (v) => v === undefined || v === null || v === "" || !isNaN(Number(v))
+            );
+
+            if (allNumeric && values.length > 0) {
+                const sum = values.reduce((acc, v) => {
+                    const num = Number(v);
+                    return acc + (isNaN(num) ? 0 : num);
+                }, 0);
+                totals[key] = sum;
+            } else {
+                totals[key] = "";
+            }
+        });
+
+        return totals;
+    }, [sortedData, visibleColumns, showTotal]);
+
     // Export to Excel-compatible CSV
     const handleExport = () => {
         // BUILD CSV CONTENT
@@ -216,6 +250,17 @@ export default function CommonTable<T>({
                 })
                 .join(",");
         });
+
+        if (showTotal && totalRow) {
+            const totalLine = visibleColumns
+                .map((col) => {
+                    const key = String(col.accessorKey);
+                    const val = totalRow[key] !== undefined && totalRow[key] !== null ? String(totalRow[key]) : "";
+                    return `"${val.replace(/"/g, '""')}"`;
+                })
+                .join(",");
+            rowsLines.push(totalLine);
+        }
 
         const csvContent = [headersLine, ...rowsLines].join("\n");
         // UTF-8 BOM
@@ -383,6 +428,24 @@ export default function CommonTable<T>({
                                 >
                                     {noDataMessage}
                                 </TableCell>
+                            </TableRow>
+                        )}
+                        {showTotal && totalRow && sortedData.length > 0 && (
+                            <TableRow className="bg-slate-100 dark:bg-slate-900 border-t-2 border-border/80 font-bold hover:bg-slate-100 dark:hover:bg-slate-900">
+                                {visibleColumns.map((col, index) => {
+                                    const key = String(col.accessorKey);
+                                    return (
+                                        <TableCell
+                                            key={`total-${key}`}
+                                            className={cn(
+                                                "text-center text-xs py-3 font-bold text-foreground",
+                                                col.className
+                                            )}
+                                        >
+                                            {totalRow[key]}
+                                        </TableCell>
+                                    );
+                                })}
                             </TableRow>
                         )}
                     </TableBody>

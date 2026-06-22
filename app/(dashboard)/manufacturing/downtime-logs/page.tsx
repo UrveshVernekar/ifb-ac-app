@@ -15,16 +15,9 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-} from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
     ArrowLeft,
     RefreshCw,
@@ -32,13 +25,20 @@ import {
     Edit,
     Trash2,
     AlertCircle,
-    CheckCircle2
+    CheckCircle2,
+    Calendar,
+    Clock,
+    Send,
+    ChevronDown,
+    ChevronUp
 } from "lucide-react";
 import Link from "next/link";
 import { DatePicker } from "@/components/manufacturing/DatePicker";
 import CommonTable, { ColumnConfig } from "@/components/shared/CommonTable";
+import CommonDialog from "@/components/shared/CommonDialog";
+import ConfirmDialog from "@/components/shared/ConfirmDialog";
+import { cn } from "@/lib/utils";
 
-// const API_HOST = "http://10.0.7.26:3003";
 const API_HOST = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 interface DowntimeLogItem {
@@ -54,28 +54,51 @@ interface DowntimeLogItem {
     person_incharge_email: string;
     department_incharge: string;
     department_incharge_email: string;
+    department?: string;
+    approved?: number | string;
+    submitted?: number | string;
+}
+
+interface DepartmentSummaryItem {
+    department: string;
+    total: number;
+    pending: number;
+    submitted: number;
+    approved: number;
 }
 
 export default function DowntimeLogsPage() {
     const [mounted, setMounted] = useState(false);
 
-    // LIST FILTERS
+    // ==========================================
+    // FILTER STATES
+    // ==========================================
     const [fromDate, setFromDate] = useState("");
     const [toDate, setToDate] = useState("");
     const [filterLine, setFilterLine] = useState<"ODU-Line" | "IDU-Line">("ODU-Line");
+    const [departmentFilter, setDepartmentFilter] = useState("All");
+    const [statusFilter, setStatusFilter] = useState<"ALL" | "PENDING" | "SUBMITTED" | "APPROVED">("ALL");
 
-    // DATA LISTS
+    // ==========================================
+    // DATA STATES
+    // ==========================================
     const [logs, setLogs] = useState<DowntimeLogItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [refreshTrigger, setRefreshTrigger] = useState(false);
 
-    // FORM/MODAL STATES
+    // Department summary state
+    const [departmentSummary, setDepartmentSummary] = useState<DepartmentSummaryItem[]>([]);
+    const [summaryMinimized, setSummaryMinimized] = useState(false);
+
+    // ==========================================
+    // FORM & DIALOG STATES
+    // ==========================================
     const [modalOpen, setModalOpen] = useState(false);
     const [isEdit, setIsEdit] = useState(false);
     const [editingId, setEditingId] = useState<number | null>(null);
 
-    // FORM FIELDS
+    // Form Fields
     const [formDate, setFormDate] = useState("");
     const [formLine, setFormLine] = useState<"ODU-Line" | "IDU-Line">("ODU-Line");
     const [formType, setFormType] = useState("AVAILABILITY");
@@ -86,22 +109,24 @@ export default function DowntimeLogsPage() {
     const [formIncharge, setFormIncharge] = useState("");
     const [formHod, setFormHod] = useState("");
 
-    // DROPDOWN OPTIONS
+    // Form dropdown configurations
     const [hourSlots, setHourSlots] = useState<{ label: string; value: string }[]>([]);
     const [reasonOptions, setReasonOptions] = useState<{ label: string; value: string }[]>([]);
     const [employeeOptions, setEmployeeOptions] = useState<{ label: string; value: string; email?: string }[]>([]);
     const [hodOptions, setHodOptions] = useState<{ label: string; value: string; email?: string }[]>([]);
 
-    // FORM SUBMISSION FEEDBACK
+    // Form Submission Feedback
     const [formSubmitting, setFormSubmitting] = useState(false);
     const [formFeedback, setFormFeedback] = useState<{ type: "success" | "error" | ""; message: string }>({ type: "", message: "" });
 
-    // DELETE CONFIRMATION STATES
+    // Delete Modal
     const [deleteOpen, setDeleteOpen] = useState(false);
     const [itemToDelete, setItemToDelete] = useState<DowntimeLogItem | null>(null);
     const [deleteSubmitting, setDeleteSubmitting] = useState(false);
 
-    // INITIALIZE DATES & SESSION
+    // ==========================================
+    // INITIALIZATION & SESSION PERSISTENCE
+    // ==========================================
     useEffect(() => {
         setMounted(true);
         const todayStr = new Date().toISOString().split("T")[0];
@@ -113,11 +138,12 @@ export default function DowntimeLogsPage() {
         setFromDate(savedFrom);
         setToDate(savedTo);
         setFilterLine(savedLine);
-
         setFormDate(todayStr);
     }, []);
 
-    // FETCH DOWNTIME LOGS
+    // ==========================================
+    // DATA FETCHING METHODS
+    // ==========================================
     const fetchLogs = useCallback(async () => {
         if (!fromDate || !toDate) return;
         setLoading(true);
@@ -143,6 +169,140 @@ export default function DowntimeLogsPage() {
         }
     }, [fromDate, toDate, filterLine]);
 
+    const fetchSummary = useCallback(async () => {
+        if (!fromDate || !toDate) return;
+        try {
+            const res = await axios.get(`${API_HOST}/production/downtime/department-summary`, {
+                params: {
+                    line: filterLine,
+                    fromDate,
+                    toDate,
+                }
+            });
+            if (res.data.success) {
+                const mapped = res.data.data.map((item: any) => ({
+                    department: item.DEPARTMENT || item.department || "N/A",
+                    total: Number(item.TOTAL || item.total || 0),
+                    pending: Number(item.PENDING || item.pending || 0),
+                    submitted: Number(item.SUBMITTED || item.submitted || 0),
+                    approved: Number(item.APPROVED || item.approved || 0),
+                }));
+                setDepartmentSummary(mapped);
+            } else {
+                setDepartmentSummary([]);
+            }
+        } catch (err) {
+            console.error("Failed to fetch department summary", err);
+            setDepartmentSummary([]);
+        }
+    }, [fromDate, toDate, filterLine]);
+
+    useEffect(() => {
+        if (mounted) {
+            fetchLogs();
+            fetchSummary();
+        }
+    }, [fetchLogs, fetchSummary, refreshTrigger, mounted]);
+
+    // ==========================================
+    // FILTER COMPUTATIONS
+    // ==========================================
+    // Dynamic Department list options
+    const departmentOptions = useMemo<string[]>(() => {
+        const depts = new Set(
+            logs.map(d => d.department).filter((d): d is string => typeof d === "string" && d !== "")
+        );
+        return ["All", ...Array.from(depts)];
+    }, [logs]);
+
+    // Filter logs by selected department filter
+    const departmentFilteredLogs = useMemo(() => {
+        if (departmentFilter === "All" || !departmentFilter) {
+            return logs;
+        }
+        return logs.filter(item => item.department && item.department.toLowerCase() === departmentFilter.toLowerCase());
+    }, [logs, departmentFilter]);
+
+    // Filter logs by selected status filter card
+    const finalTableData = useMemo(() => {
+        if (statusFilter === "ALL") {
+            return departmentFilteredLogs;
+        }
+        if (statusFilter === "PENDING") {
+            return departmentFilteredLogs.filter(item => Number(item.approved) === 0 && Number(item.submitted) === 0);
+        }
+        if (statusFilter === "SUBMITTED") {
+            return departmentFilteredLogs.filter(item => Number(item.submitted) === 1 && Number(item.approved) === 0);
+        }
+        if (statusFilter === "APPROVED") {
+            return departmentFilteredLogs.filter(item => Number(item.approved) === 1);
+        }
+        return departmentFilteredLogs;
+    }, [departmentFilteredLogs, statusFilter]);
+
+    // Status Counts based on department filtered data
+    const totalLogs = departmentFilteredLogs.length;
+    const pendingCount = useMemo(() => {
+        return departmentFilteredLogs.filter(item => Number(item.approved) === 0 && Number(item.submitted) === 0).length;
+    }, [departmentFilteredLogs]);
+    const submittedCount = useMemo(() => {
+        return departmentFilteredLogs.filter(item => Number(item.submitted) === 1 && Number(item.approved) === 0).length;
+    }, [departmentFilteredLogs]);
+    const completedCount = useMemo(() => {
+        return departmentFilteredLogs.filter(item => Number(item.approved) === 1).length;
+    }, [departmentFilteredLogs]);
+
+    // Colored Row Background highlights
+    const getRowClassName = (row: DowntimeLogItem) => {
+        const approved = Number(row.approved);
+        const submitted = Number(row.submitted);
+        if (submitted === 1 && approved === 0) {
+            // Submitted Yellow
+            return "bg-yellow-500/10 hover:bg-yellow-500/15 dark:bg-yellow-500/10 dark:hover:bg-yellow-500/15";
+        }
+        if (approved === 0) {
+            // Pending Amber
+            return "bg-amber-500/10 hover:bg-amber-500/15 dark:bg-amber-500/10 dark:hover:bg-amber-500/15";
+        }
+        if (approved === 1) {
+            // Approved Green
+            return "bg-emerald-500/10 hover:bg-emerald-500/15 dark:bg-emerald-500/10 dark:hover:bg-emerald-500/15";
+        }
+        return "";
+    };
+
+    // Columns config for summary table
+    const summaryColumns = useMemo<ColumnConfig<DepartmentSummaryItem>[]>(() => [
+        {
+            header: "Department",
+            accessorKey: "department",
+            isFilterable: true,
+            isSortable: true,
+            className: "capitalize font-semibold",
+        },
+        {
+            header: "Total",
+            accessorKey: "total",
+            className: "font-semibold text-center text-blue-600 dark:text-blue-400",
+        },
+        {
+            header: "Pending",
+            accessorKey: "pending",
+            className: "text-center text-amber-500 dark:text-amber-400",
+        },
+        {
+            header: "Submitted",
+            accessorKey: "submitted",
+            className: "text-center text-yellow-600 dark:text-yellow-400",
+        },
+        {
+            header: "Approved",
+            accessorKey: "approved",
+            className: "text-center text-emerald-600 dark:text-emerald-400 font-semibold",
+        }
+    ], []);
+
+    // Columns config for main logs table
     const columns = useMemo<ColumnConfig<DowntimeLogItem>[]>(() => [
         {
             header: "Date",
@@ -170,12 +330,14 @@ export default function DowntimeLogsPage() {
             isFilterable: true,
             isSortable: true,
             cell: (row) => (
-                <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${row.type === "AVAILABILITY"
-                    ? "bg-rose-500/10 text-rose-500"
-                    : row.type === "PERFORMANCE"
-                        ? "bg-amber-500/10 text-amber-500"
-                        : "bg-blue-500/10 text-blue-500"
-                    }`}>
+                <span className={cn(
+                    "px-2 py-0.5 rounded text-[10px] font-bold border",
+                    row.type === "AVAILABILITY"
+                        ? "bg-rose-500/10 text-rose-500 border-rose-500/20"
+                        : row.type === "PERFORMANCE"
+                            ? "bg-amber-500/10 text-amber-500 border-amber-500/20"
+                            : "bg-blue-500/10 text-blue-500 border-blue-500/20"
+                )}>
                     {row.type}
                 </span>
             ),
@@ -194,12 +356,11 @@ export default function DowntimeLogsPage() {
             cell: (row) => row.duration,
         },
         {
-            header: "Person Incharge",
-            accessorKey: "person_incharge",
+            header: "Department",
+            accessorKey: "department",
             isFilterable: true,
             isSortable: true,
-            className: "max-w-[120px] truncate",
-            cell: (row) => row.person_incharge || "N/A",
+            className: "capitalize",
         },
         {
             header: "Remarks",
@@ -208,20 +369,40 @@ export default function DowntimeLogsPage() {
             cell: (row) => <span title={row.remarks}>{row.remarks || "-"}</span>,
         },
         {
+            header: "Person Incharge",
+            accessorKey: "person_incharge",
+            isFilterable: true,
+            isSortable: true,
+            className: "max-w-[120px] truncate",
+            cell: (row) => row.person_incharge || "N/A",
+        },
+        {
             header: "Actions",
             accessorKey: "id",
             isFilterable: false,
             isSortable: false,
             cell: (row) => (
                 <div className="flex items-center justify-center gap-1">
-                    <Button onClick={() => handleOpenEdit(row)} variant="ghost" size="icon" className="h-7 w-7 text-blue-500 hover:text-blue-600 hover:bg-blue-500/10">
+                    <Button
+                        onClick={() => handleOpenEdit(row)}
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-blue-500 hover:text-blue-600 hover:bg-blue-500/10"
+                        disabled={Number(row.approved) === 1}
+                    >
                         <Edit className="w-3.5 h-3.5" />
                     </Button>
-                    <Button onClick={() => handleOpenDelete(row)} variant="ghost" size="icon" className="h-7 w-7 text-rose-500 hover:text-rose-600 hover:bg-rose-500/10">
+                    <Button
+                        onClick={() => handleOpenDelete(row)}
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-rose-500 hover:text-rose-600 hover:bg-rose-500/10"
+                        disabled={Number(row.approved) === 1}
+                    >
                         <Trash2 className="w-3.5 h-3.5" />
                     </Button>
                     <Link href={`/manufacturing/downtime-logs/${row.id}`}>
-                        <Button variant="outline" size="xs" className="h-7 px-2 border-blue-500/30 text-blue-600 hover:bg-blue-500/10 text-[10px] font-bold">
+                        <Button variant="outline" size="xs" className="h-7 px-2 border-blue-500/30 text-blue-600 hover:bg-blue-500/10 text-[10px] font-bold cursor-pointer">
                             5 Why
                         </Button>
                     </Link>
@@ -230,13 +411,9 @@ export default function DowntimeLogsPage() {
         }
     ], []);
 
-    useEffect(() => {
-        if (mounted) {
-            fetchLogs();
-        }
-    }, [fetchLogs, refreshTrigger, mounted]);
-
-    // LOAD FORM DYNAMIC OPTIONS
+    // ==========================================
+    // LOAD FORM DYNAMIC OPTIONS (MODAL OPEN)
+    // ==========================================
     useEffect(() => {
         if (!mounted || !modalOpen) return;
 
@@ -291,7 +468,9 @@ export default function DowntimeLogsPage() {
         loadEmployees();
     }, [modalOpen, mounted]);
 
-    // HANDLE OPEN CREATION MODAL
+    // ==========================================
+    // MODAL TRIGGER HANDLERS
+    // ==========================================
     const handleOpenCreate = () => {
         setIsEdit(false);
         setEditingId(null);
@@ -308,7 +487,6 @@ export default function DowntimeLogsPage() {
         setModalOpen(true);
     };
 
-    // HANDLE OPEN EDIT MODAL
     const handleOpenEdit = (item: DowntimeLogItem) => {
         setIsEdit(true);
         setEditingId(item.id);
@@ -325,7 +503,6 @@ export default function DowntimeLogsPage() {
         setModalOpen(true);
     };
 
-    // HANDLE SUBMIT FORM
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setFormFeedback({ type: "", message: "" });
@@ -384,13 +561,11 @@ export default function DowntimeLogsPage() {
         }
     };
 
-    // OPEN DELET CONFIRMATION
     const handleOpenDelete = (item: DowntimeLogItem) => {
         setItemToDelete(item);
         setDeleteOpen(true);
     };
 
-    // SUBMIT DELETE REQUES
     const handleDeleteConfirm = async () => {
         if (!itemToDelete) return;
         setDeleteSubmitting(true);
@@ -433,16 +608,6 @@ export default function DowntimeLogsPage() {
                         <div className="flex flex-wrap gap-2 items-center bg-card border border-border/60 p-2 rounded-xl shadow-sm">
                             <div className="space-y-1">
                                 <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider ml-1">From</span>
-                                {/* <Input
-                                    type="date"
-                                    value={fromDate}
-                                    onChange={(e) => {
-                                        setFromDate(e.target.value);
-                                        sessionStorage.setItem("acDowntimeFromDate", e.target.value);
-                                    }}
-                                    className="w-auto bg-background border-border h-8 text-[11px] py-1"
-                                /> */}
-
                                 <DatePicker
                                     value={fromDate}
                                     onChange={(dateStr) => {
@@ -454,16 +619,6 @@ export default function DowntimeLogsPage() {
 
                             <div className="space-y-1">
                                 <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">To</span>
-                                {/* <Input
-                                    type="date"
-                                    value={toDate}
-                                    onChange={(e) => {
-                                        setToDate(e.target.value);
-                                        sessionStorage.setItem("acDowntimeToDate", e.target.value);
-                                    }}
-                                    className="w-auto bg-background border-border h-8 text-[11px] py-1"
-                                /> */}
-
                                 <DatePicker
                                     value={toDate}
                                     onChange={(dateStr) => {
@@ -492,21 +647,156 @@ export default function DowntimeLogsPage() {
                                 </Select>
                             </div>
 
-                            <Button onClick={() => setRefreshTrigger(p => !p)} variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground">
+                            {/* Department Dropdown Filter */}
+                            <div className="space-y-1">
+                                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Department</span>
+                                <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
+                                    <SelectTrigger className="w-[150px] bg-background border-border h-8 text-[11px] py-1">
+                                        <SelectValue placeholder="All Departments" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {departmentOptions.map(dept => (
+                                            <SelectItem key={dept} value={dept} className="text-[11px]">
+                                                {dept === "All" ? "ALL DEPARTMENTS" : dept.toUpperCase()}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
+                            <Button onClick={() => setRefreshTrigger(p => !p)} variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground mt-4 sm:mt-0">
                                 <RefreshCw className="w-3.5 h-3.5" />
                             </Button>
                         </div>
                     )}
 
-                    <Button onClick={handleOpenCreate} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs h-9 gap-1.5">
+                    <Button onClick={handleOpenCreate} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs h-9 gap-1.5 cursor-pointer">
                         <Plus className="w-4 h-4" /> Record Downtime
                     </Button>
                 </div>
             </div>
 
+            {/* STATUS FILTER SUMMARY CARDS */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                {/* Total Logs */}
+                <div
+                    onClick={() => setStatusFilter("ALL")}
+                    className={cn(
+                        "p-5 rounded-2xl cursor-pointer transition-all duration-200 hover:-translate-y-1 shadow-sm flex items-center justify-between",
+                        statusFilter === "ALL"
+                            ? "bg-blue-600 text-white shadow-blue-500/20 shadow-md ring-2 ring-blue-400"
+                            : "bg-card border border-border/60 hover:bg-muted/40 text-foreground"
+                    )}
+                >
+                    <div>
+                        <span className={cn("text-[10px] font-bold uppercase tracking-wider block", statusFilter === "ALL" ? "text-blue-100" : "text-muted-foreground")}>Total Logs</span>
+                        <span className="text-3xl font-extrabold block mt-1">{totalLogs}</span>
+                    </div>
+                    <div className={cn("p-2 rounded-xl", statusFilter === "ALL" ? "bg-white/20 text-white" : "bg-blue-500/10 text-blue-600 dark:text-blue-400")}>
+                        <Calendar className="w-6 h-6" />
+                    </div>
+                </div>
+
+                {/* Pending Logs */}
+                <div
+                    onClick={() => setStatusFilter("PENDING")}
+                    className={cn(
+                        "p-5 rounded-2xl cursor-pointer transition-all duration-200 hover:-translate-y-1 shadow-sm flex items-center justify-between",
+                        statusFilter === "PENDING"
+                            ? "bg-amber-500 text-white shadow-amber-500/20 shadow-md ring-2 ring-amber-400"
+                            : "bg-card border border-border/60 hover:bg-muted/40 text-foreground"
+                    )}
+                >
+                    <div>
+                        <span className={cn("text-[10px] font-bold uppercase tracking-wider block", statusFilter === "PENDING" ? "text-amber-100" : "text-muted-foreground")}>Pending Logs</span>
+                        <span className="text-3xl font-extrabold block mt-1">{pendingCount}</span>
+                    </div>
+                    <div className={cn("p-2 rounded-xl", statusFilter === "PENDING" ? "bg-white/20 text-white" : "bg-amber-500/10 text-amber-600 dark:text-amber-400")}>
+                        <Clock className="w-6 h-6" />
+                    </div>
+                </div>
+
+                {/* Submitted Logs */}
+                <div
+                    onClick={() => setStatusFilter("SUBMITTED")}
+                    className={cn(
+                        "p-5 rounded-2xl cursor-pointer transition-all duration-200 hover:-translate-y-1 shadow-sm flex items-center justify-between",
+                        statusFilter === "SUBMITTED"
+                            ? "bg-yellow-500 text-white shadow-yellow-500/20 shadow-md ring-2 ring-yellow-400"
+                            : "bg-card border border-border/60 hover:bg-muted/40 text-foreground"
+                    )}
+                >
+                    <div>
+                        <span className={cn("text-[10px] font-bold uppercase tracking-wider block", statusFilter === "SUBMITTED" ? "text-yellow-100" : "text-muted-foreground")}>Submitted Logs</span>
+                        <span className="text-3xl font-extrabold block mt-1">{submittedCount}</span>
+                    </div>
+                    <div className={cn("p-2 rounded-xl", statusFilter === "SUBMITTED" ? "bg-white/20 text-white" : "bg-yellow-500/10 text-yellow-600 dark:text-yellow-400")}>
+                        <Send className="w-6 h-6" />
+                    </div>
+                </div>
+
+                {/* Approved Logs */}
+                <div
+                    onClick={() => setStatusFilter("APPROVED")}
+                    className={cn(
+                        "p-5 rounded-2xl cursor-pointer transition-all duration-200 hover:-translate-y-1 shadow-sm flex items-center justify-between",
+                        statusFilter === "APPROVED"
+                            ? "bg-emerald-600 text-white shadow-emerald-500/20 shadow-md ring-2 ring-emerald-400"
+                            : "bg-card border border-border/60 hover:bg-muted/40 text-foreground"
+                    )}
+                >
+                    <div>
+                        <span className={cn("text-[10px] font-bold uppercase tracking-wider block", statusFilter === "APPROVED" ? "text-emerald-100" : "text-muted-foreground")}>Approved Logs</span>
+                        <span className="text-3xl font-extrabold block mt-1">{completedCount}</span>
+                    </div>
+                    <div className={cn("p-2 rounded-xl", statusFilter === "APPROVED" ? "bg-white/20 text-white" : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400")}>
+                        <CheckCircle2 className="w-6 h-6" />
+                    </div>
+                </div>
+            </div>
+
+            {/* DEPARTMENT-WISE DOWNTIME SUMMARY */}
+            <Collapsible open={!summaryMinimized} onOpenChange={(v) => setSummaryMinimized(!v)} className="space-y-2">
+                <Card className="border-border/60 bg-card shadow-sm">
+                    <CardHeader className="pb-3 flex flex-row items-center justify-between space-y-0">
+                        <div>
+                            <CardTitle className="text-md font-bold uppercase text-blue-600 dark:text-blue-400">Department-wise Downtime Summary</CardTitle>
+                            <CardDescription className="text-xs">Summary of downtime events split across departments</CardDescription>
+                        </div>
+                        <CollapsibleTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground">
+                                {summaryMinimized ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
+                            </Button>
+                        </CollapsibleTrigger>
+                    </CardHeader>
+                    <CollapsibleContent>
+                        <CardContent className="pt-0">
+                            {loading ? (
+                                <Skeleton className="h-28 w-full" />
+                            ) : (
+                                <CommonTable
+                                    data={departmentSummary}
+                                    columns={summaryColumns}
+                                    enableFiltering={false}
+                                    enableExport={true}
+                                    exportFileName={`AC_DOWNTIME_SUMMARY_${filterLine}_${fromDate}_${toDate}.csv`}
+                                    noDataMessage="No department-wise summaries logged"
+                                    showTotal={true}
+                                    initialPageSize={5}
+                                />
+                            )}
+                        </CardContent>
+                    </CollapsibleContent>
+                </Card>
+            </Collapsible>
+
             {/* LIST LOG TABLE */}
             <Card className="border-border/60 shadow-sm bg-card">
-                <CardContent className="pt-6">
+                <CardHeader className="pb-2">
+                    <CardTitle className="text-md font-bold uppercase text-blue-600 dark:text-blue-400">Downtime Log Details</CardTitle>
+                    <CardDescription className="text-xs">Individual logged downtime observations and approval status highlights</CardDescription>
+                </CardHeader>
+                <CardContent className="pt-4">
                     {error && (
                         <Alert variant="destructive" className="mb-4">
                             <AlertCircle className="h-4 w-4" />
@@ -522,220 +812,225 @@ export default function DowntimeLogsPage() {
                         </div>
                     ) : (
                         <CommonTable
-                            data={logs}
+                            data={finalTableData}
                             columns={columns}
                             enableFiltering={true}
                             enableExport={true}
-                            exportFileName="Downtime_Logs.csv"
+                            exportFileName={
+                                departmentFilter !== "All"
+                                    ? `AC_DOWNTIME_${filterLine}_${departmentFilter.toUpperCase()}_${fromDate}_${toDate}.csv`
+                                    : `AC_DOWNTIME_${filterLine}_${fromDate}_${toDate}.csv`
+                            }
                             noDataMessage="No downtime events recorded for this period"
-                            initialPageSize={5}
+                            initialPageSize={10}
+                            rowClassName={getRowClassName}
                         />
                     )}
                 </CardContent>
             </Card>
 
             {/* DOWNTIME DYNAMIC ENTRY / EDIT DIALOG */}
-            <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-                <DialogContent className="sm:max-w-[500px] border-border/80">
-                    <DialogHeader>
-                        <DialogTitle className="text-md font-bold uppercase">{isEdit ? "Update Downtime Entry" : "Record Line Downtime"}</DialogTitle>
-                        <DialogDescription className="text-xs">Specify down slots, root reasons, and responsibility.</DialogDescription>
-                    </DialogHeader>
-
-                    {formFeedback.message && (
-                        <Alert variant={formFeedback.type === "success" ? "default" : "destructive"} className="text-xs py-2 px-3">
-                            <div className="flex gap-2 items-center">
-                                {formFeedback.type === "success" ? <CheckCircle2 className="w-4 h-4 text-blue-500" /> : <AlertCircle className="w-4 h-4" />}
-                                <span className="text-xs font-semibold">{formFeedback.message}</span>
-                            </div>
-                        </Alert>
-                    )}
-
-                    <form onSubmit={handleSubmit} className="space-y-4 pt-2">
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-1">
-                                <Label className="text-[10px] font-bold uppercase text-muted-foreground ml-0.5">Date *</Label>
-                                {/* <Input
-                                    type="date"
-                                    value={formDate}
-                                    onChange={(e) => setFormDate(e.target.value)}
-                                    className="bg-background border-border h-9 text-xs"
-                                    required
-                                /> */}
-
-                                <DatePicker
-                                    value={formDate}
-                                    onChange={(dateStr) => {
-                                        setFormDate(dateStr);
-                                        // sessionStorage.setItem("manufacturingFromDate", dateStr);
-                                    }}
-                                />
-                            </div>
-
-                            <div className="space-y-1">
-                                <Label className="text-[10px] font-bold uppercase text-muted-foreground ml-0.5">Line *</Label>
-                                <Select value={formLine} onValueChange={(v: any) => setFormLine(v)}>
-                                    <SelectTrigger className="w-full bg-background border-border h-9 text-xs">
-                                        <SelectValue placeholder="Line" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="IDU-Line">IDU LINE</SelectItem>
-                                        <SelectItem value="ODU-Line">ODU LINE</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
+            <CommonDialog
+                open={modalOpen}
+                onOpenChange={setModalOpen}
+                title={isEdit ? "Update Downtime Entry" : "Record Line Downtime"}
+                description="Specify down slots, root reasons, and responsibility."
+                className="sm:max-w-[500px]"
+            >
+                {formFeedback.message && (
+                    <Alert variant={formFeedbackFeedback(formFeedback.type)} className="text-xs py-2 px-3 mb-3">
+                        <div className="flex gap-2 items-center">
+                            {formFeedback.type === "success" ? <CheckCircle2 className="w-4 h-4 text-blue-500" /> : <AlertCircle className="w-4 h-4" />}
+                            <span className="text-xs font-semibold">{formFeedback.message}</span>
                         </div>
+                    </Alert>
+                )}
 
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-1">
-                                <Label className="text-[10px] font-bold uppercase text-muted-foreground ml-0.5">Downtime Type *</Label>
-                                <Select value={formType} onValueChange={setFormType}>
-                                    <SelectTrigger className="w-full bg-background border-border h-9 text-xs">
-                                        <SelectValue placeholder="Type" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="AVAILABILITY">AVAILABILITY</SelectItem>
-                                        <SelectItem value="PERFORMANCE">PERFORMANCE</SelectItem>
-                                        <SelectItem value="QUALITY">QUALITY</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-
-                            <div className="space-y-1">
-                                <Label className="text-[10px] font-bold uppercase text-muted-foreground ml-0.5">Hour Slot *</Label>
-                                <Select value={formHourSlot} onValueChange={setFormHourSlot}>
-                                    <SelectTrigger className="w-full bg-background border-border h-9 text-xs">
-                                        <SelectValue placeholder="Slot" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {hourSlots.length > 0 ? (
-                                            hourSlots.map(o => (
-                                                <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
-                                            ))
-                                        ) : (
-                                            <SelectItem value="_" disabled>No slots available</SelectItem>
-                                        )}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-1">
-                                <Label className="text-[10px] font-bold uppercase text-muted-foreground ml-0.5">Downtime Reason *</Label>
-                                <Select value={formReason} onValueChange={setFormReason}>
-                                    <SelectTrigger className="w-full bg-background border-border h-9 text-xs">
-                                        <SelectValue placeholder="Reason" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {reasonOptions.length > 0 ? (
-                                            reasonOptions.map(o => (
-                                                <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
-                                            ))
-                                        ) : (
-                                            <SelectItem value="_" disabled>No reasons loaded</SelectItem>
-                                        )}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-
-                            <div className="space-y-1">
-                                <Label className="text-[10px] font-bold uppercase text-muted-foreground ml-0.5">Downtime Minutes *</Label>
-                                <Input
-                                    type="number"
-                                    min="1"
-                                    placeholder="e.g. 15"
-                                    value={formDuration}
-                                    onChange={(e) => setFormDuration(e.target.value)}
-                                    className="bg-background border-border h-9 text-xs"
-                                    required
-                                />
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-1">
-                                <Label className="text-[10px] font-bold uppercase text-muted-foreground ml-0.5">Person In-charge</Label>
-                                <Select value={formIncharge} onValueChange={setFormIncharge}>
-                                    <SelectTrigger className="w-full bg-background border-border h-9 text-xs">
-                                        <SelectValue placeholder="Select Incharge" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {employeeOptions.map(o => (
-                                            <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-
-                            <div className="space-y-1">
-                                <Label className="text-[10px] font-bold uppercase text-muted-foreground ml-0.5">HOD</Label>
-                                <Select value={formHod} onValueChange={setFormHod}>
-                                    <SelectTrigger className="w-full bg-background border-border h-9 text-xs">
-                                        <SelectValue placeholder="Select HOD" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {hodOptions.map(o => (
-                                            <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                        </div>
-
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-1">
-                            <Label className="text-[10px] font-bold uppercase text-muted-foreground ml-0.5">Remarks / Remarks</Label>
-                            <Textarea
-                                placeholder="Describe the downtime event in detail..."
-                                value={formRemarks}
-                                onChange={(e) => setFormRemarks(e.target.value)}
-                                className="bg-background border-border text-xs min-h-[60px]"
+                            <Label className="text-[10px] font-bold uppercase text-muted-foreground ml-0.5">Date *</Label>
+                            <DatePicker
+                                value={formDate}
+                                onChange={(dateStr) => setFormDate(dateStr)}
                             />
                         </div>
 
-                        <DialogFooter className="pt-2">
-                            <Button
-                                type="button"
-                                size="sm"
-                                onClick={() => setModalOpen(false)}
-                                className="font-semibold text-xs text-white h-9 bg-rose-500 hover:bg-rose-600 hover:text-white dark:bg-rose-500 dark:hover:bg-rose-600"
-                            >
-                                Cancel
-                            </Button>
-                            <Button type="submit" disabled={formSubmitting} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs h-9">
-                                {formSubmitting ? "Submitting..." : "Submit Log"}
-                            </Button>
-                        </DialogFooter>
-                    </form>
-                </DialogContent>
-            </Dialog>
-
-            {/* DELETE CONFIRMATION DIALOG */}
-            <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
-                <DialogContent className="sm:max-w-[400px]">
-                    <DialogHeader>
-                        <DialogTitle className="text-sm font-bold uppercase">Confirm Deletion</DialogTitle>
-                        <DialogDescription className="text-xs">
-                            Are you sure you want to delete this downtime entry? This action is permanent.
-                        </DialogDescription>
-                    </DialogHeader>
-                    {itemToDelete && (
-                        <div className="text-xs py-2 bg-muted/40 p-3 rounded-lg border">
-                            <div><span className="font-bold">Reason:</span> {itemToDelete.reason}</div>
-                            <div><span className="font-bold">Duration:</span> {itemToDelete.duration} mins</div>
-                            <div><span className="font-bold">Line:</span> {itemToDelete.line}</div>
+                        <div className="space-y-1">
+                            <Label className="text-[10px] font-bold uppercase text-muted-foreground ml-0.5">Line *</Label>
+                            <Select value={formLine} onValueChange={(v: any) => setFormLine(v)}>
+                                <SelectTrigger className="w-full bg-background border-border h-9 text-xs">
+                                    <SelectValue placeholder="Line" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="IDU-Line">IDU LINE</SelectItem>
+                                    <SelectItem value="ODU-Line">ODU LINE</SelectItem>
+                                </SelectContent>
+                            </Select>
                         </div>
-                    )}
-                    <DialogFooter className="gap-2 sm:gap-0 pt-2">
-                        <Button type="button" variant="outline" size="sm" onClick={() => setDeleteOpen(false)} className="text-xs">
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                            <Label className="text-[10px] font-bold uppercase text-muted-foreground ml-0.5">Downtime Type *</Label>
+                            <Select value={formType} onValueChange={setFormType}>
+                                <SelectTrigger className="w-full bg-background border-border h-9 text-xs">
+                                    <SelectValue placeholder="Type" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="AVAILABILITY">AVAILABILITY</SelectItem>
+                                    <SelectItem value="PERFORMANCE">PERFORMANCE</SelectItem>
+                                    <SelectItem value="QUALITY">QUALITY</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div className="space-y-1">
+                            <Label className="text-[10px] font-bold uppercase text-muted-foreground ml-0.5">Hour Slot *</Label>
+                            <Select value={formHourSlot} onValueChange={setFormHourSlot}>
+                                <SelectTrigger className="w-full bg-background border-border h-9 text-xs">
+                                    <SelectValue placeholder="Slot" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {hourSlots.length > 0 ? (
+                                        hourSlots.map(o => (
+                                            <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                                        ))
+                                    ) : (
+                                        <SelectItem value="_" disabled className="text-xs">No slots available</SelectItem>
+                                    )}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                            <Label className="text-[10px] font-bold uppercase text-muted-foreground ml-0.5">Downtime Reason *</Label>
+                            <Select value={formReason} onValueChange={setFormReason}>
+                                <SelectTrigger className="w-full bg-background border-border h-9 text-xs">
+                                    <SelectValue placeholder="Reason" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {reasonOptions.length > 0 ? (
+                                        reasonOptions.map(o => (
+                                            <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                                        ))
+                                    ) : (
+                                        <SelectItem value="_" disabled className="text-xs">No reasons loaded</SelectItem>
+                                    )}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div className="space-y-1">
+                            <Label className="text-[10px] font-bold uppercase text-muted-foreground ml-0.5">Downtime Minutes *</Label>
+                            <Input
+                                type="number"
+                                min="1"
+                                placeholder="e.g. 15"
+                                value={formDuration}
+                                onChange={(e) => setFormDuration(e.target.value)}
+                                className="bg-background border-border h-9 text-xs"
+                                required
+                            />
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                            <Label className="text-[10px] font-bold uppercase text-muted-foreground ml-0.5">Person In-charge</Label>
+                            <Select value={formIncharge} onValueChange={setFormIncharge}>
+                                <SelectTrigger className="w-full bg-background border-border h-9 text-xs">
+                                    <SelectValue placeholder="Select Incharge" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {employeeOptions.map(o => (
+                                        <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div className="space-y-1">
+                            <Label className="text-[10px] font-bold uppercase text-muted-foreground ml-0.5">HOD</Label>
+                            <Select value={formHod} onValueChange={setFormHod}>
+                                <SelectTrigger className="w-full bg-background border-border h-9 text-xs">
+                                    <SelectValue placeholder="Select HOD" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {hodOptions.map(o => (
+                                        <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
+
+                    <div className="space-y-1">
+                        <Label className="text-[10px] font-bold uppercase text-muted-foreground ml-0.5">Remarks / Notes</Label>
+                        <Textarea
+                            placeholder="Describe the downtime event in detail..."
+                            value={formRemarks}
+                            onChange={(e) => setFormRemarks(e.target.value)}
+                            className="bg-background border-border text-xs min-h-[60px]"
+                        />
+                    </div>
+
+                    <div className="flex w-full justify-end gap-2 pt-4 border-t border-border/20">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setModalOpen(false)}
+                            className="text-xs h-9"
+                            disabled={formSubmitting}
+                        >
                             Cancel
                         </Button>
-                        <Button type="button" onClick={handleDeleteConfirm} disabled={deleteSubmitting} variant="destructive" size="sm" className="text-xs">
-                            {deleteSubmitting ? "Deleting..." : "Yes, Delete"}
+                        <Button
+                            type="submit"
+                            disabled={formSubmitting}
+                            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs h-9 min-w-[90px]"
+                        >
+                            {formSubmitting ? (
+                                <span className="flex items-center gap-1.5 justify-center">
+                                    <RefreshCw className="w-3.5 h-3.5 animate-spin" /> Submitting...
+                                </span>
+                            ) : (
+                                "Submit Log"
+                            )}
                         </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
+                    </div>
+                </form>
+            </CommonDialog>
+
+            {/* DELETE CONFIRMATION DIALOG */}
+            <ConfirmDialog
+                open={deleteOpen}
+                onOpenChange={setDeleteOpen}
+                title="Confirm Deletion"
+                description="Are you sure you want to delete this downtime entry? This action is permanent."
+                onConfirm={handleDeleteConfirm}
+                loading={deleteSubmitting}
+                confirmText="Yes, Delete"
+            >
+                {itemToDelete && (
+                    <div className="text-xs py-2 bg-muted/40 p-3 rounded-lg border border-border/40 text-foreground">
+                        <div><span className="font-bold">Reason:</span> {itemToDelete.reason}</div>
+                        <div><span className="font-bold">Duration:</span> {itemToDelete.duration} mins</div>
+                        <div><span className="font-bold">Line:</span> {itemToDelete.line}</div>
+                    </div>
+                )}
+            </ConfirmDialog>
         </div>
     );
+}
+
+// ==========================================
+// FORM HELPER UTILITIES
+// ==========================================
+function formFeedbackFeedback(type: string) {
+    if (type === "success") return "default";
+    return "destructive";
 }
