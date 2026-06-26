@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import axios from "axios";
-import ReactECharts from "echarts-for-react";
+import { useTheme } from "next-themes";
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, LabelList } from "recharts";
 import Link from "next/link";
 import { ArrowLeft, Plus, Calendar, Clock, GraduationCap, Download, BarChart2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -32,6 +33,7 @@ interface TrainingTopicOption {
 }
 
 export default function SafetyTrainingPage() {
+  const { resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [showFormDialog, setShowFormDialog] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -196,62 +198,6 @@ export default function SafetyTrainingPage() {
     } finally {
       setIsSubmitting(false);
     }
-  };
-
-  // ECharts options
-  const chartOption = {
-    backgroundColor: "transparent",
-    tooltip: {
-      trigger: "axis",
-      axisPointer: { type: "shadow" }
-    },
-    grid: {
-      left: "3%",
-      right: "4%",
-      bottom: "10%",
-      top: "12%",
-      containLabel: true,
-    },
-    xAxis: {
-      type: "category",
-      data: groupedChartData.map((item) => item.name),
-      axisLabel: {
-        rotate: 15,
-        interval: 0,
-        fontSize: 10,
-        color: "#64748b",
-        formatter: (value: string) =>
-          value.length > 15 ? value.substring(0, 12) + "..." : value,
-      },
-      axisLine: { lineStyle: { color: "#cbd5e1" } },
-    },
-    yAxis: {
-      type: "value",
-      name: "Men Hours",
-      nameTextStyle: { color: "#64748b", fontSize: 10 },
-      axisLabel: { color: "#64748b" },
-      splitLine: { lineStyle: { type: "dashed", color: "#e2e8f0" } },
-    },
-    series: [
-      {
-        name: "Men Hours",
-        type: "bar",
-        label: {
-          show: true,
-          position: "top",
-          fontSize: 11,
-          fontWeight: "bold",
-          color: "#475569",
-          formatter: "{c} hrs"
-        },
-        barWidth: "30%",
-        data: groupedChartData.map((item) => item.value),
-        itemStyle: {
-          borderRadius: [4, 4, 0, 0],
-          color: "#3b82f6"
-        }
-      },
-    ],
   };
 
   // Table columns configuration
@@ -453,7 +399,58 @@ export default function SafetyTrainingPage() {
         </CardHeader>
         <CardContent className="pt-5 h-80">
           {filteredTrainingList.length > 0 ? (
-            <ReactECharts option={chartOption} style={{ height: "100%", width: "100%" }} />
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={groupedChartData}
+                margin={{ top: 20, right: 20, left: 10, bottom: 20 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke={mounted && resolvedTheme === "dark" ? "#334155" : "#e2e8f0"} vertical={false} />
+                <XAxis
+                  dataKey="name"
+                  tick={{ fill: mounted && resolvedTheme === "dark" ? "#94a3b8" : "#64748b", fontSize: 10 }}
+                  tickLine={{ stroke: mounted && resolvedTheme === "dark" ? "#334155" : "#cbd5e1" }}
+                  axisLine={{ stroke: mounted && resolvedTheme === "dark" ? "#334155" : "#cbd5e1" }}
+                  tickFormatter={(value) =>
+                    value && value.length > 15 ? value.substring(0, 12) + "..." : value
+                  }
+                />
+                <YAxis
+                  tick={{ fill: mounted && resolvedTheme === "dark" ? "#94a3b8" : "#64748b", fontSize: 10 }}
+                  tickLine={{ stroke: mounted && resolvedTheme === "dark" ? "#334155" : "#cbd5e1" }}
+                  axisLine={{ stroke: mounted && resolvedTheme === "dark" ? "#334155" : "#cbd5e1" }}
+                  label={{
+                    value: "Men Hours",
+                    angle: -90,
+                    position: "insideLeft",
+                    offset: -10,
+                    style: { textAnchor: "middle", fill: mounted && resolvedTheme === "dark" ? "#94a3b8" : "#64748b", fontSize: 10 },
+                  }}
+                />
+                <Tooltip
+                  formatter={(value: any) => [`${value} hrs`, "Men Hours"]}
+                  contentStyle={{
+                    background: mounted && resolvedTheme === "dark" ? "#1e293b" : "#fff",
+                    borderColor: mounted && resolvedTheme === "dark" ? "#334155" : "#e2e8f0",
+                    color: mounted && resolvedTheme === "dark" ? "#f8fafc" : "#0f172a",
+                    borderRadius: "8px",
+                    fontSize: "12px",
+                  }}
+                />
+                <Bar
+                  dataKey="value"
+                  fill="#3b82f6"
+                  radius={[4, 4, 0, 0]}
+                  maxBarSize={40}
+                >
+                  <LabelList
+                    dataKey="value"
+                    position="top"
+                    formatter={(value: any) => `${value} hrs`}
+                    style={{ fill: mounted && resolvedTheme === "dark" ? "#f8fafc" : "#475569", fontSize: 10, fontWeight: "bold" }}
+                  />
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
           ) : (
             <div className="h-full flex flex-col items-center justify-center text-muted-foreground text-xs font-medium space-y-2">
               <BarChart2 className="w-8 h-8 text-muted-foreground/60" />

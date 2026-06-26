@@ -3,7 +3,8 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import axios from "axios";
-import ReactECharts from "echarts-for-react";
+import { useTheme } from "next-themes";
+import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Legend } from "recharts";
 import {
   Shield,
   Calendar,
@@ -52,6 +53,7 @@ interface Section {
 }
 
 export default function SafetyHub() {
+  const { resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [isLoading, setLoading] = useState(true);
   const [openEmergencyDialog, setOpenEmergencyDialog] = useState(false);
@@ -166,62 +168,6 @@ export default function SafetyHub() {
     document.body.removeChild(link);
   };
 
-  // ECharts Configurations
-  const getOverallChartOption = () => {
-    if (!sumchartData || !sumchartData.cval) return {};
-
-    return {
-      color: sumchartData.colorcode || [],
-      title: {
-        text: "Safety Incidents summary",
-        left: "center",
-        top: "center",
-        textStyle: {
-          fontSize: 12,
-          fontWeight: "bold",
-          color: "#475569"
-        }
-      },
-      tooltip: {
-        trigger: "item",
-        formatter: "{b}: <b>{c}</b> ({d}%)"
-      },
-      legend: {
-        orient: "vertical",
-        right: "0%",
-        top: "center",
-        textStyle: {
-          color: "#64748b"
-        }
-      },
-      series: [
-        {
-          name: "Incidents Summary",
-          type: "pie",
-          radius: ["60%", "75%"],
-          avoidLabelOverlap: false,
-          itemStyle: {
-            borderRadius: 6,
-            borderColor: "transparent",
-            borderWidth: 2
-          },
-          label: {
-            show: true,
-            position: "outside",
-            formatter: "{b}: {c}",
-            color: "#64748b"
-          },
-          labelLine: {
-            show: true,
-            length: 10,
-            length2: 5
-          },
-          data: sumchartData.cval
-        }
-      ]
-    };
-  };
-
   const getCategoryMetrics = (cat: any) => {
     if (!cat || !cat.data) return { closedVal: 0, pendingVal: 0, totalVal: 0, percent: 0 };
 
@@ -241,39 +187,6 @@ export default function SafetyHub() {
     const percent = totalVal > 0 ? Math.round((closedVal / totalVal) * 100) : 0;
 
     return { closedVal, pendingVal, totalVal, percent };
-  };
-
-  const getCategoryPieChartOption = (categoryName: string) => {
-    const cat = observdata[categoryName];
-    const { closedVal, pendingVal, percent } = getCategoryMetrics(cat);
-
-    return {
-      color: cat?.colorcode || ["#10b981", "#ef4444"],
-      tooltip: {
-        trigger: "item",
-        formatter: "{b}: {c}"
-      },
-      series: [
-        {
-          name: categoryName,
-          type: "pie",
-          radius: ["65%", "85%"],
-          avoidLabelOverlap: false,
-          label: {
-            show: true,
-            position: "center",
-            formatter: `${percent}%`,
-            fontSize: 13,
-            fontWeight: "bold",
-            color: "#475569"
-          },
-          data: [
-            { name: "Closed", value: closedVal },
-            { name: "Pending", value: pendingVal }
-          ]
-        }
-      ]
-    };
   };
 
   const sections: Section[] = [
@@ -485,10 +398,42 @@ export default function SafetyHub() {
             </CardHeader>
             <CardContent className="h-[300px]">
               {sumchartData?.cval && sumchartData.cval.length > 0 ? (
-                <ReactECharts
-                  option={getOverallChartOption()}
-                  style={{ width: "100%", height: "100%" }}
-                />
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={sumchartData.cval}
+                      cx="40%"
+                      cy="50%"
+                      innerRadius="60%"
+                      outerRadius="75%"
+                      paddingAngle={2}
+                      dataKey="value"
+                    >
+                      {sumchartData.cval.map((entry: any, index: number) => (
+                        <Cell
+                          key={`cell-${index}`}
+                          fill={sumchartData.colorcode?.[index % sumchartData.colorcode.length] || "#94a3b8"}
+                        />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      formatter={(value: any, name: any) => [`${value} incidents`, name]}
+                      contentStyle={{
+                        background: mounted && resolvedTheme === "dark" ? "#1e293b" : "#fff",
+                        borderColor: mounted && resolvedTheme === "dark" ? "#334155" : "#e2e8f0",
+                        color: mounted && resolvedTheme === "dark" ? "#f8fafc" : "#0f172a",
+                        borderRadius: "8px",
+                        fontSize: "12px",
+                      }}
+                    />
+                    <Legend
+                      layout="vertical"
+                      align="right"
+                      verticalAlign="middle"
+                      formatter={(value) => <span className="text-xs font-semibold text-muted-foreground">{value}</span>}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
               ) : (
                 <div className="h-full flex items-center justify-center text-muted-foreground text-xs font-medium">
                   No records to display for safety performance
@@ -521,11 +466,39 @@ export default function SafetyHub() {
                             Resolved: <span className="text-emerald-600 font-bold">{closedVal}</span> / {totalVal}
                           </p>
                         </div>
-                        <div className="w-24 h-16 shrink-0">
-                          <ReactECharts
-                            option={getCategoryPieChartOption(key)}
-                            style={{ width: "100%", height: "100%" }}
-                          />
+                        <div className="w-24 h-16 shrink-0 relative flex items-center justify-center">
+                          <div className="absolute text-[10px] font-bold text-foreground">
+                            {getCategoryMetrics(cat).percent}%
+                          </div>
+                          <ResponsiveContainer width="100%" height="100%">
+                            <PieChart>
+                              <Pie
+                                data={[
+                                  { name: "Closed", value: getCategoryMetrics(cat).closedVal },
+                                  { name: "Pending", value: getCategoryMetrics(cat).pendingVal }
+                                ]}
+                                cx="50%"
+                                cy="50%"
+                                innerRadius="65%"
+                                outerRadius="85%"
+                                dataKey="value"
+                                stroke="none"
+                              >
+                                <Cell fill={cat?.colorcode?.[0] || "#10b981"} />
+                                <Cell fill={cat?.colorcode?.[1] || "#ff9800"} />
+                              </Pie>
+                              <Tooltip
+                                formatter={(value: any, name: any) => [value, name]}
+                                contentStyle={{
+                                  background: mounted && resolvedTheme === "dark" ? "#1e293b" : "#fff",
+                                  borderColor: mounted && resolvedTheme === "dark" ? "#334155" : "#e2e8f0",
+                                  color: mounted && resolvedTheme === "dark" ? "#f8fafc" : "#0f172a",
+                                  borderRadius: "6px",
+                                  fontSize: "10px",
+                                }}
+                              />
+                            </PieChart>
+                          </ResponsiveContainer>
                         </div>
                       </div>
                     );
