@@ -41,6 +41,7 @@ interface CommonTableProps<T> {
     initialPageSize?: number;
     rowClassName?: (row: T) => string;
     showTotal?: boolean;
+    loading?: boolean;
 }
 
 export default function CommonTable<T>({
@@ -54,6 +55,7 @@ export default function CommonTable<T>({
     initialPageSize = 10,
     rowClassName,
     showTotal = false,
+    loading = false,
 }: CommonTableProps<T>) {
     // COLUMN VISIBILITY STATE
     const [visibleKeys, setVisibleKeys] = useState<Set<string>>(() => {
@@ -393,7 +395,19 @@ export default function CommonTable<T>({
                         )}
                     </TableHeader>
                     <TableBody>
-                        {paginatedData.length > 0 ? (
+                        {loading ? (
+                            <TableRow>
+                                <TableCell
+                                    colSpan={visibleColumns.length}
+                                    className="text-center py-10 text-xs text-muted-foreground font-medium"
+                                >
+                                    <div className="flex flex-col items-center justify-center space-y-2">
+                                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
+                                        <p className="text-[10px] text-muted-foreground">Loading data...</p>
+                                    </div>
+                                </TableCell>
+                            </TableRow>
+                        ) : paginatedData.length > 0 ? (
                             paginatedData.map((row, rIdx) => (
                                 <TableRow
                                     key={rIdx}
