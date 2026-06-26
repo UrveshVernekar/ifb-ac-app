@@ -3,7 +3,20 @@
 
 import React, { useState, useEffect, useMemo } from "react";
 import axios from "axios";
-import ReactECharts from "echarts-for-react";
+import {
+    ResponsiveContainer,
+    ComposedChart,
+    BarChart,
+    LineChart,
+    Bar,
+    Line,
+    XAxis,
+    YAxis,
+    Tooltip,
+    Legend,
+    CartesianGrid,
+    Cell
+} from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -180,180 +193,267 @@ export default function KPIReportPage() {
         }
     }, [line, fyYear, refreshTrigger, mounted]);
 
-    const getUpperLimit = (values: number[]) => {
-        if (!values || values.length === 0) return 100;
-        const max = Math.max(...values);
-        if (max <= 0) return 100;
-        const magnitude = Math.pow(10, Math.floor(Math.log10(max)));
-        const coefficient = max / magnitude;
-        const niceCoefficient = coefficient <= 1 ? 1 : coefficient <= 2 ? 2 : coefficient <= 5 ? 5 : 10;
-        return niceCoefficient * magnitude;
+    const renderProductionChart = (pData: any) => {
+        const chartData = pData.labels.map((label: string, idx: number) => ({
+            name: label,
+            Plan: pData.plan[idx] || 0,
+            Actual: pData.actual[idx] || 0,
+            Achievement: pData.achievement[idx] || 0,
+        }));
+
+        return (
+            <ResponsiveContainer width="100%" height={350}>
+                <ComposedChart data={chartData} margin={{ top: 20, right: 10, left: 10, bottom: 20 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke={splitLineColor} vertical={false} />
+                    <XAxis
+                        dataKey="name"
+                        tick={{ fill: textColor, fontSize: 10 }}
+                        tickLine={{ stroke: lineColor }}
+                        axisLine={{ stroke: lineColor }}
+                    />
+                    <YAxis
+                        yAxisId="left"
+                        orientation="left"
+                        tick={{ fill: textColor, fontSize: 10 }}
+                        tickLine={{ stroke: lineColor }}
+                        axisLine={{ stroke: lineColor }}
+                        label={{
+                            value: "Count",
+                            angle: -90,
+                            position: "insideLeft",
+                            style: { textAnchor: "middle", fill: textColor }
+                        }}
+                    />
+                    <YAxis
+                        yAxisId="right"
+                        orientation="right"
+                        domain={[0, 100]}
+                        tick={{ fill: textColor, fontSize: 10 }}
+                        tickLine={{ stroke: lineColor }}
+                        axisLine={{ stroke: lineColor }}
+                        tickFormatter={(val) => `${val}%`}
+                        label={{
+                            value: "Achievement",
+                            angle: 90,
+                            position: "insideRight",
+                            style: { textAnchor: "middle", fill: textColor }
+                        }}
+                    />
+                    <Tooltip
+                        contentStyle={{
+                            backgroundColor: tooltipBg,
+                            borderColor: tooltipBorder,
+                            color: isDark ? "#f4f4f5" : "#18181b",
+                            borderRadius: "8px",
+                            fontSize: "12px",
+                        }}
+                    />
+                    <Legend
+                        verticalAlign="bottom"
+                        height={36}
+                        formatter={(value) => <span className="text-xs font-semibold text-muted-foreground">{value}</span>}
+                    />
+                    <Bar yAxisId="left" dataKey="Plan" name="Plan" fill="#3b82f6" radius={[3, 3, 0, 0]} maxBarSize={30} />
+                    <Bar yAxisId="left" dataKey="Actual" name="Actual" fill="#f87171" radius={[3, 3, 0, 0]} maxBarSize={30} />
+                    <Line yAxisId="right" type="monotone" dataKey="Achievement" name="Achievement" stroke="#10b981" strokeWidth={3} dot={{ r: 3 }} />
+                </ComposedChart>
+            </ResponsiveContainer>
+        );
     };
 
-    const getProductionChartOptions = (pData: any, isMonthly = false) => {
-        const maxVal = getUpperLimit([...pData.plan, ...pData.actual]);
-        return {
-            backgroundColor: "transparent",
-            tooltip: {
-                trigger: "axis",
-                axisPointer: { type: "shadow" },
-            },
-            legend: {
-                data: ["Plan", "Actual", "Achievement"],
-                bottom: 0,
-                textStyle: { color: textColor }
-            },
-            grid: { top: 30, left: 50, right: 50, bottom: 45 },
-            xAxis: {
-                type: "category",
-                data: pData.labels,
-                axisLine: { lineStyle: { color: lineColor } },
-                axisLabel: { color: textColor }
-            },
-            yAxis: [
-                {
-                    type: "value",
-                    name: "Count",
-                    min: 0,
-                    max: maxVal,
-                    splitLine: { lineStyle: { color: splitLineColor } },
-                    axisLabel: { color: textColor }
-                },
-                {
-                    type: "value",
-                    name: "Achievement",
-                    min: 0,
-                    max: 100,
-                    axisLabel: { formatter: "{value}%", color: textColor },
-                    splitLine: { show: false }
-                }
-            ],
-            series: [
-                {
-                    name: "Plan",
-                    type: "bar",
-                    data: pData.plan,
-                    itemStyle: { color: "#3b82f6", borderRadius: [3, 3, 0, 0] },
-                },
-                {
-                    name: "Actual",
-                    type: "bar",
-                    data: pData.actual,
-                    itemStyle: { color: "#f87171", borderRadius: [3, 3, 0, 0] },
-                },
-                {
-                    name: "Achievement",
-                    type: "line",
-                    smooth: true,
-                    yAxisIndex: 1,
-                    data: pData.achievement,
-                    itemStyle: { color: "#10b981" },
-                    lineStyle: { width: 3 }
-                }
-            ]
-        };
+    const renderUphChart = () => {
+        const chartData = uphData.labels.map((label: string, idx: number) => ({
+            name: label,
+            "UPH Plan": uphData.uphTarget[idx] || 0,
+            "UPH Actual": uphData.uph[idx] || 0,
+            "UPPH Plan": uphData.upphTarget[idx] || 0,
+            "UPPH Actual": uphData.upph[idx] || 0,
+        }));
+
+        return (
+            <ResponsiveContainer width="100%" height={350}>
+                <ComposedChart data={chartData} margin={{ top: 20, right: 10, left: 10, bottom: 20 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke={splitLineColor} vertical={false} />
+                    <XAxis
+                        dataKey="name"
+                        tick={{ fill: textColor, fontSize: 10 }}
+                        tickLine={{ stroke: lineColor }}
+                        axisLine={{ stroke: lineColor }}
+                    />
+                    <YAxis
+                        yAxisId="left"
+                        orientation="left"
+                        tick={{ fill: textColor, fontSize: 10 }}
+                        tickLine={{ stroke: lineColor }}
+                        axisLine={{ stroke: lineColor }}
+                        label={{
+                            value: "UPH",
+                            angle: -90,
+                            position: "insideLeft",
+                            style: { textAnchor: "middle", fill: textColor }
+                        }}
+                    />
+                    <YAxis
+                        yAxisId="right"
+                        orientation="right"
+                        tick={{ fill: textColor, fontSize: 10 }}
+                        tickLine={{ stroke: lineColor }}
+                        axisLine={{ stroke: lineColor }}
+                        label={{
+                            value: "UPPH",
+                            angle: 90,
+                            position: "insideRight",
+                            style: { textAnchor: "middle", fill: textColor }
+                        }}
+                    />
+                    <Tooltip
+                        contentStyle={{
+                            backgroundColor: tooltipBg,
+                            borderColor: tooltipBorder,
+                            color: isDark ? "#f4f4f5" : "#18181b",
+                            borderRadius: "8px",
+                            fontSize: "12px",
+                        }}
+                    />
+                    <Legend
+                        verticalAlign="bottom"
+                        height={36}
+                        formatter={(value) => <span className="text-xs font-semibold text-muted-foreground">{value}</span>}
+                    />
+                    <Bar yAxisId="left" dataKey="UPH Plan" name="UPH Plan" fill="#3b82f6" radius={[3, 3, 0, 0]} maxBarSize={30} />
+                    <Bar yAxisId="left" dataKey="UPH Actual" name="UPH Actual" fill="#f87171" radius={[3, 3, 0, 0]} maxBarSize={30} />
+                    <Line yAxisId="right" type="monotone" dataKey="UPPH Plan" name="UPPH Plan" stroke="#10b981" strokeWidth={2.5} dot={{ r: 3 }} />
+                    <Line yAxisId="right" type="monotone" dataKey="UPPH Actual" name="UPPH Actual" stroke="#8b5cf6" strokeWidth={3} dot={{ r: 3 }} />
+                </ComposedChart>
+            </ResponsiveContainer>
+        );
     };
 
-    const getUphChartOptions = () => {
-        return {
-            backgroundColor: "transparent",
-            tooltip: { trigger: "axis", backgroundColor: tooltipBg, borderColor: tooltipBorder, textStyle: { color: titleColor } },
-            legend: {
-                data: ["UPH Plan", "UPH Actual", "UPPH Plan", "UPPH Actual"],
-                bottom: 0,
-                textStyle: { color: textColor }
-            },
-            grid: { top: 30, left: 50, right: 50, bottom: 45 },
-            xAxis: {
-                type: "category",
-                data: uphData.labels,
-                axisLine: { lineStyle: { color: lineColor } },
-                axisLabel: { color: textColor }
-            },
-            yAxis: [
-                {
-                    type: "value",
-                    name: "UPH",
-                    min: 0,
-                    max: 250,
-                    splitLine: { lineStyle: { color: splitLineColor } },
-                    axisLabel: { color: textColor }
-                },
-                {
-                    type: "value",
-                    name: "UPPH",
-                    min: 0,
-                    max: getUpperLimit([...uphData.upphTarget, ...uphData.upph]),
-                    axisLabel: { color: textColor },
-                    splitLine: { show: false }
-                }
-            ],
-            series: [
-                { name: "UPH Plan", type: "bar", data: uphData.uphTarget, itemStyle: { color: "#3b82f6", borderRadius: [3, 3, 0, 0] } },
-                { name: "UPH Actual", type: "bar", data: uphData.uph, itemStyle: { color: "#f87171", borderRadius: [3, 3, 0, 0] } },
-                { name: "UPPH Plan", type: "line", smooth: true, yAxisIndex: 1, data: uphData.upphTarget, itemStyle: { color: "#10b981" } },
-                { name: "UPPH Actual", type: "line", smooth: true, yAxisIndex: 1, data: uphData.upph, itemStyle: { color: "#8b5cf6" } }
-            ]
-        };
+    const renderRatesChart = (rData: any, title: string, color = "#3b82f6", isLine = false) => {
+        const chartData = rData.labels.map((label: string, idx: number) => ({
+            name: label,
+            value: rData.rates[idx] || 0,
+        }));
+
+        return (
+            <ResponsiveContainer width="100%" height={300}>
+                {isLine ? (
+                    <LineChart data={chartData} margin={{ top: 20, right: 10, left: 10, bottom: 20 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke={splitLineColor} vertical={false} />
+                        <XAxis
+                            dataKey="name"
+                            tick={{ fill: textColor, fontSize: 10 }}
+                            tickLine={{ stroke: lineColor }}
+                            axisLine={{ stroke: lineColor }}
+                        />
+                        <YAxis
+                            domain={[0, 100]}
+                            tick={{ fill: textColor, fontSize: 10 }}
+                            tickLine={{ stroke: lineColor }}
+                            axisLine={{ stroke: lineColor }}
+                            tickFormatter={(val) => `${val}%`}
+                        />
+                        <Tooltip
+                            contentStyle={{
+                                backgroundColor: tooltipBg,
+                                borderColor: tooltipBorder,
+                                color: isDark ? "#f4f4f5" : "#18181b",
+                                borderRadius: "8px",
+                                fontSize: "12px",
+                            }}
+                            formatter={(val) => [`${val}%`, title]}
+                        />
+                        <Legend
+                            verticalAlign="bottom"
+                            height={36}
+                            formatter={(value) => <span className="text-xs font-semibold text-muted-foreground">{value}</span>}
+                        />
+                        <Line type="monotone" dataKey="value" name={title} stroke={color} strokeWidth={3} dot={{ r: 3 }} />
+                    </LineChart>
+                ) : (
+                    <BarChart data={chartData} margin={{ top: 20, right: 10, left: 10, bottom: 20 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke={splitLineColor} vertical={false} />
+                        <XAxis
+                            dataKey="name"
+                            tick={{ fill: textColor, fontSize: 10 }}
+                            tickLine={{ stroke: lineColor }}
+                            axisLine={{ stroke: lineColor }}
+                        />
+                        <YAxis
+                            domain={[0, 100]}
+                            tick={{ fill: textColor, fontSize: 10 }}
+                            tickLine={{ stroke: lineColor }}
+                            axisLine={{ stroke: lineColor }}
+                            tickFormatter={(val) => `${val}%`}
+                        />
+                        <Tooltip
+                            contentStyle={{
+                                backgroundColor: tooltipBg,
+                                borderColor: tooltipBorder,
+                                color: isDark ? "#f4f4f5" : "#18181b",
+                                borderRadius: "8px",
+                                fontSize: "12px",
+                            }}
+                            formatter={(val) => [`${val}%`, title]}
+                        />
+                        <Legend
+                            verticalAlign="bottom"
+                            height={36}
+                            formatter={(value) => <span className="text-xs font-semibold text-muted-foreground">{value}</span>}
+                        />
+                        <Bar dataKey="value" name={title} fill={color} radius={[3, 3, 0, 0]} maxBarSize={30} />
+                    </BarChart>
+                )}
+            </ResponsiveContainer>
+        );
     };
 
-    const getRatesChartOptions = (rData: any, title: string, color = "#3b82f6", isLine = false) => {
-        return {
-            backgroundColor: "transparent",
-            tooltip: { trigger: "axis", backgroundColor: tooltipBg, borderColor: tooltipBorder, textStyle: { color: titleColor } },
-            legend: { data: [title], bottom: 0, textStyle: { color: textColor } },
-            grid: { top: 30, left: 50, right: 30, bottom: 45 },
-            xAxis: {
-                type: "category",
-                data: rData.labels,
-                axisLine: { lineStyle: { color: lineColor } },
-                axisLabel: { color: textColor }
-            },
-            yAxis: {
-                type: "value",
-                min: 0,
-                max: 100,
-                axisLabel: { formatter: "{value}%", color: textColor },
-                splitLine: { lineStyle: { color: splitLineColor } }
-            },
-            series: [{
-                name: title,
-                type: isLine ? "line" : "bar",
-                smooth: isLine,
-                data: rData.rates,
-                itemStyle: { color: color, borderRadius: isLine ? [0] : [3, 3, 0, 0] },
-                lineStyle: { width: 3 }
-            }]
-        };
+    const renderOeeChart = () => {
+        const chartData = oeeData.labels.map((label: string, idx: number) => ({
+            name: label,
+            "OEE Plan": oeeData.target[idx] || 0,
+            "OEE Actual": oeeData.oee[idx] || 0,
+        }));
+
+        return (
+            <ResponsiveContainer width="100%" height={350}>
+                <LineChart data={chartData} margin={{ top: 20, right: 10, left: 10, bottom: 20 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke={splitLineColor} vertical={false} />
+                    <XAxis
+                        dataKey="name"
+                        tick={{ fill: textColor, fontSize: 10 }}
+                        tickLine={{ stroke: lineColor }}
+                        axisLine={{ stroke: lineColor }}
+                    />
+                    <YAxis
+                        domain={[0, 100]}
+                        tick={{ fill: textColor, fontSize: 10 }}
+                        tickLine={{ stroke: lineColor }}
+                        axisLine={{ stroke: lineColor }}
+                        tickFormatter={(val) => `${val}%`}
+                    />
+                    <Tooltip
+                        contentStyle={{
+                            backgroundColor: tooltipBg,
+                            borderColor: tooltipBorder,
+                            color: isDark ? "#f4f4f5" : "#18181b",
+                            borderRadius: "8px",
+                            fontSize: "12px",
+                        }}
+                    />
+                    <Legend
+                        verticalAlign="bottom"
+                        height={36}
+                        formatter={(value) => <span className="text-xs font-semibold text-muted-foreground">{value}</span>}
+                    />
+                    <Line type="monotone" dataKey="OEE Plan" name="OEE Plan" stroke="#3b82f6" strokeWidth={3} dot={{ r: 3 }} />
+                    <Line type="monotone" dataKey="OEE Actual" name="OEE Actual" stroke="#ec4899" strokeWidth={3} dot={{ r: 3 }} />
+                </LineChart>
+            </ResponsiveContainer>
+        );
     };
 
-    const getOeeChartOptions = () => {
-        return {
-            backgroundColor: "transparent",
-            tooltip: { trigger: "axis", backgroundColor: tooltipBg, borderColor: tooltipBorder, textStyle: { color: titleColor } },
-            legend: { data: ["OEE Plan", "OEE Actual"], bottom: 0, textStyle: { color: textColor } },
-            grid: { top: 30, left: 50, right: 30, bottom: 45 },
-            xAxis: {
-                type: "category",
-                data: oeeData.labels,
-                axisLine: { lineStyle: { color: lineColor } },
-                axisLabel: { color: textColor }
-            },
-            yAxis: {
-                type: "value",
-                min: 0,
-                max: 100,
-                axisLabel: { formatter: "{value}%", color: textColor },
-                splitLine: { lineStyle: { color: splitLineColor } }
-            },
-            series: [
-                { name: "OEE Plan", type: "line", smooth: true, data: oeeData.target, itemStyle: { color: "#3b82f6" }, lineStyle: { width: 3 } },
-                { name: "OEE Actual", type: "line", smooth: true, data: oeeData.oee, itemStyle: { color: "#ec4899" }, lineStyle: { width: 3 } }
-            ]
-        };
-    };
-
-    const getCostChartOptions = () => {
+    const renderCostChart = () => {
         const consumableData = costData.consumable || [];
         const powerData = costData.power || [];
         const manpowerData = costData.manpower || [];
@@ -362,106 +462,79 @@ export default function KPIReportPage() {
         const unitCostData = costData.unitCost || [];
         const labels = costData.labels || [];
 
-        const totalCostsPerMonth = labels.map((_: any, index: number) => {
-            return (
-                (consumableData[index] || 0) +
-                (powerData[index] || 0) +
-                (manpowerData[index] || 0) +
-                (scrapData[index] || 0)
-            );
-        });
+        const chartData = labels.map((label: string, idx: number) => ({
+            name: label,
+            "Consumable Cost": consumableData[idx] || 0,
+            "Power Cost": powerData[idx] || 0,
+            "Manpower Cost": manpowerData[idx] || 0,
+            "Scrap Cost": scrapData[idx] || 0,
+            "Target Cost/Unit": targetData[idx] || 0,
+            "Actual Cost/Unit": unitCostData[idx] || 0,
+        }));
 
-        const max1 = getUpperLimit(totalCostsPerMonth);
-        const max2 = getUpperLimit([...targetData, ...unitCostData]);
-        return {
-            backgroundColor: "transparent",
-            tooltip: { trigger: "axis", backgroundColor: tooltipBg, borderColor: tooltipBorder, textStyle: { color: titleColor } },
-            legend: {
-                data: [
-                    "Consumable Cost",
-                    "Power Cost",
-                    "Manpower Cost",
-                    "Scrap Cost",
-                    "Target Cost/Unit",
-                    "Actual Cost/Unit"
-                ],
-                bottom: 0,
-                textStyle: { color: textColor }
-            },
-            grid: { top: 30, left: 55, right: 55, bottom: 80 },
-            xAxis: {
-                type: "category",
-                data: labels,
-                axisLine: { lineStyle: { color: lineColor } },
-                axisLabel: { color: textColor }
-            },
-            yAxis: [
-                {
-                    type: "value",
-                    name: "Total Cost",
-                    min: 0,
-                    max: max1,
-                    axisLabel: { formatter: "₹{value}", color: textColor },
-                    splitLine: { lineStyle: { color: splitLineColor } }
-                },
-                {
-                    type: "value",
-                    name: "Unit Cost",
-                    min: 0,
-                    max: max2,
-                    axisLabel: { formatter: "₹{value}", color: textColor },
-                    splitLine: { show: false }
-                }
-            ],
-            series: [
-                {
-                    name: "Consumable Cost",
-                    type: "bar",
-                    stack: "Cost",
-                    data: consumableData,
-                    itemStyle: { color: "#3b82f6" },
-                },
-                {
-                    name: "Power Cost",
-                    type: "bar",
-                    stack: "Cost",
-                    data: powerData,
-                    itemStyle: { color: "#eab308" },
-                },
-                {
-                    name: "Manpower Cost",
-                    type: "bar",
-                    stack: "Cost",
-                    data: manpowerData,
-                    itemStyle: { color: "#8b5cf6" },
-                },
-                {
-                    name: "Scrap Cost",
-                    type: "bar",
-                    stack: "Cost",
-                    data: scrapData,
-                    itemStyle: { color: "#f97316", borderRadius: [3, 3, 0, 0] },
-                },
-                {
-                    name: "Target Cost/Unit",
-                    type: "line",
-                    smooth: true,
-                    yAxisIndex: 1,
-                    data: targetData,
-                    itemStyle: { color: "#10b981" },
-                    lineStyle: { width: 2.5, type: "dashed" }
-                },
-                {
-                    name: "Actual Cost/Unit",
-                    type: "line",
-                    smooth: true,
-                    yAxisIndex: 1,
-                    data: unitCostData,
-                    itemStyle: { color: "#f87171" },
-                    lineStyle: { width: 3 }
-                }
-            ]
-        };
+        return (
+            <ResponsiveContainer width="100%" height={350}>
+                <ComposedChart data={chartData} margin={{ top: 20, right: 10, left: 10, bottom: 20 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke={splitLineColor} vertical={false} />
+                    <XAxis
+                        dataKey="name"
+                        tick={{ fill: textColor, fontSize: 10 }}
+                        tickLine={{ stroke: lineColor }}
+                        axisLine={{ stroke: lineColor }}
+                    />
+                    <YAxis
+                        yAxisId="left"
+                        orientation="left"
+                        tick={{ fill: textColor, fontSize: 10 }}
+                        tickLine={{ stroke: lineColor }}
+                        axisLine={{ stroke: lineColor }}
+                        tickFormatter={(val) => `₹${val}`}
+                        label={{
+                            value: "Total Cost",
+                            angle: -90,
+                            position: "insideLeft",
+                            style: { textAnchor: "middle", fill: textColor }
+                        }}
+                    />
+                    <YAxis
+                        yAxisId="right"
+                        orientation="right"
+                        tick={{ fill: textColor, fontSize: 10 }}
+                        tickLine={{ stroke: lineColor }}
+                        axisLine={{ stroke: lineColor }}
+                        tickFormatter={(val) => `₹${val}`}
+                        label={{
+                            value: "Unit Cost",
+                            angle: 90,
+                            position: "insideRight",
+                            style: { textAnchor: "middle", fill: textColor }
+                        }}
+                    />
+                    <Tooltip
+                        contentStyle={{
+                            backgroundColor: tooltipBg,
+                            borderColor: tooltipBorder,
+                            color: isDark ? "#f4f4f5" : "#18181b",
+                            borderRadius: "8px",
+                            fontSize: "12px",
+                        }}
+                    />
+                    <Legend
+                        verticalAlign="bottom"
+                        height={60}
+                        formatter={(value) => <span className="text-xs font-semibold text-muted-foreground">{value}</span>}
+                    />
+                    {/* Stacked Bars */}
+                    <Bar yAxisId="left" dataKey="Consumable Cost" name="Consumable Cost" stackId="cost" fill="#3b82f6" />
+                    <Bar yAxisId="left" dataKey="Power Cost" name="Power Cost" stackId="cost" fill="#eab308" />
+                    <Bar yAxisId="left" dataKey="Manpower Cost" name="Manpower Cost" stackId="cost" fill="#8b5cf6" />
+                    <Bar yAxisId="left" dataKey="Scrap Cost" name="Scrap Cost" stackId="cost" fill="#f97316" radius={[3, 3, 0, 0]} />
+                    {/* Lines on right YAxis */}
+                    <Line yAxisId="right" type="monotone" dataKey="Target Cost/Unit" name="Target Cost/Unit" stroke="#10b981" strokeWidth={2.5} strokeDasharray="5 5" dot={{ r: 3 }} />
+                    <Line yAxisId="right" type="monotone" dataKey="Actual Cost/Unit" name="Actual Cost/Unit" stroke="#f87171" strokeWidth={3} dot={{ r: 3 }} />
+                </ComposedChart>
+            </ResponsiveContainer>
+        );
     };
 
     // SUBMISSIONS
@@ -639,7 +712,7 @@ export default function KPIReportPage() {
                         </CardHeader>
                         <CardContent>
                             {yearlyProd.plan.length > 0 ? (
-                                <ReactECharts option={getProductionChartOptions(yearlyProd)} style={{ height: "350px" }} />
+                                renderProductionChart(yearlyProd)
                             ) : (
                                 <div className="flex h-[350px] items-center justify-center text-xs text-muted-foreground">No yearly data logs</div>
                             )}
@@ -653,7 +726,7 @@ export default function KPIReportPage() {
                         </CardHeader>
                         <CardContent>
                             {monthlyProd.plan.length > 0 ? (
-                                <ReactECharts option={getProductionChartOptions(monthlyProd, true)} style={{ height: "350px" }} />
+                                renderProductionChart(monthlyProd)
                             ) : (
                                 <div className="flex h-[350px] items-center justify-center text-xs text-muted-foreground">No monthly data logs</div>
                             )}
@@ -667,7 +740,7 @@ export default function KPIReportPage() {
                         </CardHeader>
                         <CardContent>
                             {uphData.uph.length > 0 ? (
-                                <ReactECharts option={getUphChartOptions()} style={{ height: "350px" }} />
+                                renderUphChart()
                             ) : (
                                 <div className="flex h-[350px] items-center justify-center text-xs text-muted-foreground">No UPH/UPPH logs</div>
                             )}
@@ -681,7 +754,7 @@ export default function KPIReportPage() {
                         </CardHeader>
                         <CardContent>
                             {manpowerData.rates.length > 0 ? (
-                                <ReactECharts option={getRatesChartOptions(manpowerData, "Avg. Absenteeism %", "#3b82f6")} style={{ height: "300px" }} />
+                                renderRatesChart(manpowerData, "Avg. Absenteeism %", "#3b82f6")
                             ) : (
                                 <div className="flex h-[300px] items-center justify-center text-xs text-muted-foreground">No absenteeism logs</div>
                             )}
@@ -695,7 +768,7 @@ export default function KPIReportPage() {
                         </CardHeader>
                         <CardContent>
                             {rtyData.rates.length > 0 ? (
-                                <ReactECharts option={getRatesChartOptions(rtyData, "RTY %", "#10b981", true)} style={{ height: "300px" }} />
+                                renderRatesChart(rtyData, "RTY %", "#10b981", true)
                             ) : (
                                 <div className="flex h-[300px] items-center justify-center text-xs text-muted-foreground">No RTY yield logs</div>
                             )}
@@ -709,7 +782,7 @@ export default function KPIReportPage() {
                         </CardHeader>
                         <CardContent>
                             {oeeData.oee.length > 0 ? (
-                                <ReactECharts option={getOeeChartOptions()} style={{ height: "350px" }} />
+                                renderOeeChart()
                             ) : (
                                 <div className="flex h-[350px] items-center justify-center text-xs text-muted-foreground">No OEE logs</div>
                             )}
@@ -723,7 +796,7 @@ export default function KPIReportPage() {
                         </CardHeader>
                         <CardContent>
                             {costData.consumable && costData.consumable.length > 0 ? (
-                                <ReactECharts option={getCostChartOptions()} style={{ height: "350px" }} />
+                                renderCostChart()
                             ) : (
                                 <div className="flex h-[350px] items-center justify-center text-xs text-muted-foreground">No cost logs</div>
                             )}

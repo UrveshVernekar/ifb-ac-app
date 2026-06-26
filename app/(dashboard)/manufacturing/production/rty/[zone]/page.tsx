@@ -1,11 +1,24 @@
 // app/(dashboard)/manufacturing/production/rty/[zone]/page.tsx
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import axios from "axios";
-import ReactECharts from "echarts-for-react";
+import {
+    ResponsiveContainer,
+    BarChart,
+    Bar,
+    XAxis,
+    YAxis,
+    Tooltip,
+    Legend,
+    CartesianGrid,
+    Cell,
+    PieChart,
+    Pie,
+    LabelList
+} from 'recharts';
 import {
     Card,
     CardContent,
@@ -36,7 +49,7 @@ import {
     RefreshCw,
     Download,
     AlertCircle,
-    PieChart,
+    PieChart as PieIcon,
     ListFilter,
     ChevronLeft,
     ChevronRight,
@@ -94,92 +107,69 @@ const DefectPieChart = ({
     const tooltipBg = isDark ? "#18181b" : "#ffffff";
     const tooltipBorder = isDark ? "#27272a" : "#e4e4e7";
 
-    const top5 = [...(data || [])]
-        .sort((a, b) => b.value - a.value)
-        .slice(0, 5)
-        .map((item, idx) => ({
-            ...item,
-            itemStyle: { color: PIE_COLORS[idx % PIE_COLORS.length] },
-        }));
+    const top5 = React.useMemo(() => {
+        return [...(data || [])]
+            .sort((a, b) => b.value - a.value)
+            .slice(0, 5);
+    }, [data]);
 
-    const total = top5.reduce((sum, d) => sum + (d.value || 0), 0);
+    const total = React.useMemo(() => {
+        return top5.reduce((sum, d) => sum + (d.value || 0), 0);
+    }, [top5]);
 
-    const option = {
-        backgroundColor: "transparent",
-        tooltip: {
-            trigger: "item",
-            backgroundColor: tooltipBg,
-            borderColor: tooltipBorder,
-            textStyle: { color: isDark ? "#f4f4f5" : "#18181b" },
-            formatter: (params: any) =>
-                `<b>${params.name}</b><br/>Count: <b>${params.value}</b> (${params.percent}%)`,
-        },
-        legend: {
-            orient: "horizontal",
-            bottom: 0,
-            left: "center",
-            textStyle: { color: textColor, fontSize: 11 },
-            formatter: (name: string) => {
-                const item = top5.find((d) => d.name === name);
-                return item
-                    ? `${name.length > 24 ? name.substring(0, 24) + "…" : name} (${item.value})`
-                    : name;
-            },
-        },
-        graphic: [
-            {
-                type: "text",
-                left: "center",
-                top: "38%",
-                style: {
-                    text: `${total}`,
-                    fontSize: 28,
-                    fontWeight: "bold",
-                    fill: isDark ? "#f4f4f5" : "#18181b",
-                    textAlign: "center",
-                },
-            },
-            {
-                type: "text",
-                left: "center",
-                top: "50%",
-                style: {
-                    text: "Total",
-                    fontSize: 12,
-                    fill: textColor,
-                    textAlign: "center",
-                },
-            },
-        ],
-        series: [
-            {
-                name: `${zone.toUpperCase()} Top Defects`,
-                type: "pie",
-                radius: ["42%", "65%"],
-                center: ["50%", "46%"],
-                avoidLabelOverlap: true,
-                itemStyle: {
-                    borderRadius: 6,
-                    borderColor: isDark ? "#18181b" : "#ffffff",
-                    borderWidth: 2,
-                },
-                label: { show: false },
-                emphasis: {
-                    label: {
-                        show: true,
-                        fontSize: 13,
-                        fontWeight: "bold",
-                        color: isDark ? "#f4f4f5" : "#18181b",
-                    },
-                    itemStyle: { shadowBlur: 10, shadowOffsetX: 0, shadowColor: "rgba(0,0,0,0.3)" },
-                },
-                labelLine: { show: false },
-                data: top5,
-            },
-        ],
-    };
-
-    return <ReactECharts option={option} style={{ height: "320px", width: "100%" }} />;
+    return (
+        <div className="relative w-full h-[320px] flex flex-col items-center justify-center">
+            {/* Center Text Graphic */}
+            <div className="absolute text-center" style={{ top: "35%", transform: "translateY(-50%)" }}>
+                <span className="text-3xl font-bold block" style={{ color: isDark ? "#f4f4f5" : "#18181b" }}>
+                    {total}
+                </span>
+                <span className="text-xs block" style={{ color: textColor }}>
+                    Total
+                </span>
+            </div>
+            <ResponsiveContainer width="100%" height="80%">
+                <PieChart>
+                    <Pie
+                        data={top5}
+                        cx="50%"
+                        cy="45%"
+                        innerRadius="50%"
+                        outerRadius="75%"
+                        paddingAngle={2}
+                        dataKey="value"
+                    >
+                        {top5.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                        ))}
+                    </Pie>
+                    <Tooltip
+                        formatter={(value: any, name: any) => [`${value} defects`, name]}
+                        contentStyle={{
+                            backgroundColor: tooltipBg,
+                            borderColor: tooltipBorder,
+                            color: isDark ? "#f4f4f5" : "#18181b",
+                            borderRadius: "8px",
+                            fontSize: "12px",
+                        }}
+                    />
+                </PieChart>
+            </ResponsiveContainer>
+            
+            {/* Legend at the bottom */}
+            <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 mt-2 max-h-[20%] overflow-y-auto w-full px-4">
+                {top5.map((item, idx) => (
+                    <div key={item.name} className="flex items-center gap-1.5 text-[11px]" style={{ color: textColor }}>
+                        <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: PIE_COLORS[idx % PIE_COLORS.length] }} />
+                        <span className="font-medium truncate max-w-[120px]" title={item.name}>
+                            {item.name}
+                        </span>
+                        <span className="font-bold">({item.value})</span>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
 };
 
 const DefectBarChart = ({
@@ -195,58 +185,59 @@ const DefectBarChart = ({
     const tooltipBorder = isDark ? "#27272a" : "#e4e4e7";
     const splitLineColor = isDark ? "#27272a" : "#f4f4f5";
 
-    const sorted = [...(data || [])].sort((a, b) => b.value - a.value).slice(0, 10);
+    const sorted = React.useMemo(() => {
+        return [...(data || [])].sort((a, b) => b.value - a.value).slice(0, 10);
+    }, [data]);
 
-    const option = {
-        backgroundColor: "transparent",
-        tooltip: {
-            trigger: "axis",
-            axisPointer: { type: "shadow" },
-            backgroundColor: tooltipBg,
-            borderColor: tooltipBorder,
-            textStyle: { color: isDark ? "#f4f4f5" : "#18181b" },
-        },
-        grid: {
-            left: "2%",
-            right: "5%",
-            bottom: "5%",
-            top: "5%",
-            containLabel: true,
-        },
-        xAxis: {
-            type: "value",
-            splitLine: { lineStyle: { color: splitLineColor, type: "dashed" } },
-            axisLabel: { color: textColor, fontSize: 10 },
-        },
-        yAxis: {
-            type: "category",
-            data: sorted.map((d) =>
-                d.name.length > 28 ? d.name.substring(0, 28) + "…" : d.name
-            ),
-            inverse: true,
-            axisLabel: { color: textColor, fontSize: 10 },
-            axisLine: { lineStyle: { color: isDark ? "#3f3f46" : "#e4e4e7" } },
-        },
-        series: [
-            {
-                type: "bar",
-                data: sorted.map((d, idx) => ({
-                    value: d.value,
-                    itemStyle: { color: PIE_COLORS[idx % PIE_COLORS.length], borderRadius: [0, 4, 4, 0] },
-                })),
-                label: {
-                    show: true,
-                    position: "right",
-                    color: textColor,
-                    fontSize: 10,
-                    fontWeight: "bold",
-                    formatter: (params: any) => params.value,
-                },
-            },
-        ],
-    };
-
-    return <ReactECharts option={option} style={{ height: "280px", width: "100%" }} />;
+    return (
+        <ResponsiveContainer width="100%" height={280}>
+            <BarChart
+                layout="vertical"
+                data={sorted}
+                margin={{ top: 10, right: 20, left: 10, bottom: 10 }}
+            >
+                <CartesianGrid strokeDasharray="3 3" stroke={splitLineColor} horizontal={false} />
+                <XAxis
+                    type="number"
+                    tick={{ fill: textColor, fontSize: 10 }}
+                    tickLine={{ stroke: isDark ? "#3f3f46" : "#e4e4e7" }}
+                    axisLine={{ stroke: isDark ? "#3f3f46" : "#e4e4e7" }}
+                />
+                <YAxis
+                    type="category"
+                    dataKey="name"
+                    width={100}
+                    tick={{ fill: textColor, fontSize: 9 }}
+                    tickLine={{ stroke: isDark ? "#3f3f46" : "#e4e4e7" }}
+                    axisLine={{ stroke: isDark ? "#3f3f46" : "#e4e4e7" }}
+                    tickFormatter={(value) => (value && value.length > 15 ? value.substring(0, 15) + '…' : value)}
+                />
+                <Tooltip
+                    contentStyle={{
+                        backgroundColor: tooltipBg,
+                        borderColor: tooltipBorder,
+                        color: isDark ? "#f4f4f5" : "#18181b",
+                        borderRadius: "8px",
+                        fontSize: "12px",
+                    }}
+                />
+                <Bar
+                    dataKey="value"
+                    radius={[0, 4, 4, 0]}
+                    maxBarSize={15}
+                >
+                    {sorted.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                    ))}
+                    <LabelList
+                        dataKey="value"
+                        position="right"
+                        style={{ fill: textColor, fontSize: 10, fontWeight: "bold" }}
+                    />
+                </Bar>
+            </BarChart>
+        </ResponsiveContainer>
+    );
 };
 
 export default function ZoneRtyPage() {

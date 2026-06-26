@@ -5,7 +5,22 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import axios from "axios";
-import ReactECharts from "echarts-for-react";
+import {
+    ResponsiveContainer,
+    ComposedChart,
+    BarChart,
+    Bar,
+    Line,
+    XAxis,
+    YAxis,
+    Tooltip,
+    Legend,
+    CartesianGrid,
+    Cell,
+    PieChart,
+    Pie,
+    LabelList
+} from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -59,73 +74,59 @@ interface ApiResponse {
     defectDetails?: Record<string, any[]>;
 }
 
-// Speedometer Gauge Component
+const PIE_COLORS = [
+    "#3b82f6",
+    "#ef4444",
+    "#f59e0b",
+    "#22c55e",
+    "#a855f7",
+    "#06b6d4",
+    "#f97316",
+    "#ec4899",
+    "#14b8a6",
+    "#6366f1",
+];
+
+// Speedometer Gauge Component using Recharts Pie
 const SpeedometerChart = ({ value, theme }: { value: number; theme: string }) => {
     const isDark = theme === "dark";
     const color = value >= 85 ? "#22c55e" : value >= 70 ? "#eab308" : "#ef4444";
     const trackColor = isDark ? "#27272a" : "#e2e8f0";
     const textColor = isDark ? "#f4f4f5" : "#1a202c";
 
-    const option = {
-        backgroundColor: "transparent",
-        series: [
-            {
-                type: "gauge",
-                center: ["50%", "58%"],
-                radius: "115%",
-                startAngle: 210,
-                endAngle: -30,
-                min: 0,
-                max: 100,
-                splitNumber: 0,
-                axisLine: {
-                    lineStyle: {
-                        width: 25,
-                        color: [[1, trackColor]],
-                    },
-                },
-                axisTick: { show: false },
-                splitLine: { show: false },
-                axisLabel: { show: false },
-                pointer: { show: false },
-                detail: { show: false },
-            },
-            {
-                type: "gauge",
-                center: ["50%", "58%"],
-                radius: "115%",
-                startAngle: 210,
-                endAngle: -30,
-                min: 0,
-                max: 100,
-                splitNumber: 0,
-                axisLine: {
-                    lineStyle: {
-                        width: 25,
-                        color: [
-                            [value / 100, color],
-                            [1, trackColor],
-                        ],
-                    },
-                },
-                axisTick: { show: false },
-                splitLine: { show: false },
-                axisLabel: { show: false },
-                pointer: { show: false },
-                detail: {
-                    valueAnimation: true,
-                    offsetCenter: [0, "-5%"],
-                    fontSize: 36,
-                    fontWeight: 700,
-                    color: textColor,
-                    formatter: "{value}%",
-                },
-                data: [{ value }],
-            },
-        ],
-    };
+    const chartData = [
+        { value: value, fill: color },
+        { value: 100 - value, fill: trackColor }
+    ];
 
-    return <ReactECharts option={option} style={{ height: "200px", width: "100%" }} />;
+    return (
+        <div className="relative w-full h-[200px] flex items-center justify-center overflow-hidden">
+            <div className="absolute text-center mt-12">
+                <span className="text-3xl font-black block" style={{ color: textColor }}>
+                    {value}%
+                </span>
+            </div>
+            <ResponsiveContainer width="100%" height={240}>
+                <PieChart margin={{ top: 0, bottom: 0 }}>
+                    <Pie
+                        data={chartData}
+                        cx="50%"
+                        cy="65%"
+                        startAngle={210}
+                        endAngle={-30}
+                        innerRadius={60}
+                        outerRadius={85}
+                        dataKey="value"
+                        stroke="none"
+                    >
+                        {chartData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.fill} />
+                        ))}
+                    </Pie>
+                </PieChart>
+            </ResponsiveContainer>
+        </div>
+    );
 };
 
 // DAILY RTY TREND CHART
@@ -140,83 +141,79 @@ const RtyTrendChart = ({ data, theme }: { data: any; theme: string }) => {
     const actuals = data?.actuals || [];
     const targets = data?.targets || [];
 
-    const option = {
-        backgroundColor: "transparent",
-        tooltip: {
-            trigger: "axis",
-            axisPointer: { type: "cross" },
-            backgroundColor: tooltipBg,
-            borderColor: tooltipBorder,
-            textStyle: { color: isDark ? "#f4f4f5" : "#18181b" },
-        },
-        legend: {
-            data: ["Target", "RTY %"],
-            textStyle: { color: textColor },
-            top: 5,
-        },
-        grid: {
-            left: "3%",
-            right: "3%",
-            bottom: "10%",
-            top: "15%",
-            containLabel: true,
-        },
-        xAxis: {
-            type: "category",
-            data: labels,
-            axisLabel: { color: textColor, fontSize: 10 },
-            axisLine: { lineStyle: { color: isDark ? "#3f3f46" : "#e4e4e7" } },
-        },
-        yAxis: {
-            type: "value",
-            min: 50,
-            max: 100,
-            splitLine: { lineStyle: { color: splitLineColor, type: "dashed" } },
-            axisLabel: { color: textColor, formatter: "{value}%" },
-        },
-        series: [
-            {
-                name: "RTY %",
-                type: "bar",
-                data: actuals,
-                barWidth: "30%",
-                itemStyle: {
-                    borderRadius: [4, 4, 0, 0],
-                    color: (params: any) => {
-                        const val = params.value;
-                        const targetVal = targets[params.dataIndex] || 95;
-                        if (val === 0) return isDark ? "#3f3f46" : "#d1d5db";
-                        if (val >= targetVal) return "#22c55e"; // green
-                        if (val >= targetVal - 5) return "#f59e0b"; // yellow
-                        return "#ef4444"; // red
-                    },
-                },
-                label: {
-                    show: true,
-                    position: "top",
-                    fontSize: 10,
-                    fontWeight: "bold",
-                    color: isDark ? "#f4f4f5" : "#18181b",
-                    formatter: (params: any) => params.value > 0 ? `${params.value}%` : "",
-                },
-            },
-            {
-                name: "Target",
-                type: "line",
-                data: targets,
-                smooth: true,
-                lineStyle: { width: 3, type: "dashed", color: "#3b82f6" },
-                itemStyle: { color: "#3b82f6" },
-                symbol: "circle",
-                symbolSize: 6,
-            },
-        ],
-    };
+    const chartData = React.useMemo(() => {
+        if (!data || !labels) return [];
+        return labels.map((label: string, idx: number) => ({
+            name: label,
+            actual: actuals[idx] || 0,
+            target: targets[idx] || 95,
+        }));
+    }, [data, labels, actuals, targets]);
 
-    return <ReactECharts option={option} style={{ height: "320px", width: "100%" }} />;
+    return (
+        <ResponsiveContainer width="100%" height={320}>
+            <ComposedChart data={chartData} margin={{ top: 20, right: 10, left: 10, bottom: 10 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke={splitLineColor} vertical={false} />
+                <XAxis
+                    dataKey="name"
+                    tick={{ fill: textColor, fontSize: 10 }}
+                    tickLine={{ stroke: isDark ? "#3f3f46" : "#e4e4e7" }}
+                    axisLine={{ stroke: isDark ? "#3f3f46" : "#e4e4e7" }}
+                />
+                <YAxis
+                    domain={[50, 100]}
+                    tick={{ fill: textColor, fontSize: 10 }}
+                    tickLine={{ stroke: isDark ? "#3f3f46" : "#e4e4e7" }}
+                    axisLine={{ stroke: isDark ? "#3f3f46" : "#e4e4e7" }}
+                    tickFormatter={(val) => `${val}%`}
+                />
+                <Tooltip
+                    contentStyle={{
+                        backgroundColor: tooltipBg,
+                        borderColor: tooltipBorder,
+                        color: isDark ? "#f4f4f5" : "#18181b",
+                        borderRadius: "8px",
+                        fontSize: "12px",
+                    }}
+                />
+                <Legend
+                    verticalAlign="top"
+                    height={36}
+                    formatter={(value) => <span className="text-xs font-semibold text-muted-foreground">{value}</span>}
+                />
+                <Bar dataKey="actual" name="RTY %" maxBarSize={30} radius={[4, 4, 0, 0]}>
+                    {chartData.map((entry: any, index: number) => {
+                        const val = entry.actual;
+                        const targetVal = entry.target;
+                        let color = "#ef4444";
+                        if (val === 0) color = isDark ? "#3f3f46" : "#d1d5db";
+                        else if (val >= targetVal) color = "#22c55e";
+                        else if (val >= targetVal - 5) color = "#f59e0b";
+                        return <Cell key={`cell-${index}`} fill={color} />;
+                    })}
+                    <LabelList
+                        dataKey="actual"
+                        position="top"
+                        formatter={(value: any) => value > 0 ? `${value}%` : ""}
+                        style={{ fill: isDark ? "#f4f4f5" : "#18181b", fontSize: 10, fontWeight: "bold" }}
+                    />
+                </Bar>
+                <Line
+                    type="monotone"
+                    dataKey="target"
+                    name="Target"
+                    stroke="#3b82f6"
+                    strokeWidth={3}
+                    strokeDasharray="5 5"
+                    dot={{ r: 3, fill: "#3b82f6" }}
+                    activeDot={{ r: 5 }}
+                />
+            </ComposedChart>
+        </ResponsiveContainer>
+    );
 };
 
-// ZONE-WISE FPY STATUS STACHED CHART
+// ZONE-WISE FPY STATUS STACKED CHART
 const ZoneFpyChart = ({ series, xAxisLabels, theme }: { series: any[]; xAxisLabels: string[]; theme: string }) => {
     const isDark = theme === "dark";
     const textColor = isDark ? '#a1a1aa' : '#71717a';
@@ -224,115 +221,86 @@ const ZoneFpyChart = ({ series, xAxisLabels, theme }: { series: any[]; xAxisLabe
     const tooltipBg = isDark ? '#18181b' : '#ffffff';
     const tooltipBorder = isDark ? '#27272a' : '#e4e4e7';
 
+    const chartData = React.useMemo(() => {
+        if (!xAxisLabels) return [];
+        return xAxisLabels.map((label: string, idx: number) => {
+            const row: any = { name: label };
+            series?.forEach((s: any) => {
+                const val = s.data[idx];
+                row[s.name] = (val && typeof val === 'object') ? val.value : val;
+            });
+            return row;
+        });
+    }, [series, xAxisLabels]);
+
     if (!series || series.length === 0) return <div className="text-center text-muted-foreground py-8">No data available</div>;
 
-    const stackInfo: Record<string, { stackStart: number[]; stackEnd: number[] }> = {};
-    const seriesData = JSON.parse(JSON.stringify(series)); // deep clone
-
-    const datesCount = xAxisLabels.length;
-
-    for (let i = 0; i < datesCount; ++i) {
-        for (let j = 0; j < seriesData.length; ++j) {
-            const stackName = seriesData[j].stack;
-            if (!stackName) continue;
-
-            if (!stackInfo[stackName]) {
-                stackInfo[stackName] = { stackStart: [], stackEnd: [] };
-            }
-
-            const info = stackInfo[stackName];
-            const value = seriesData[j].data[i];
-
-            if (value != null && value !== "-") {
-                if (info.stackStart[i] == null) {
-                    info.stackStart[i] = j;
-                }
-                info.stackEnd[i] = j;
-            }
-        }
-    }
-
-    for (let j = 0; j < seriesData.length; ++j) {
-        const serie = seriesData[j];
-        if (serie.type !== "bar") continue;
-
-        const data = serie.data;
-        const info = stackInfo[serie.stack];
-
-        for (let i = 0; i < data.length; ++i) {
-            const isEnd = info?.stackEnd[i] === j;
-            const topRadius = isEnd ? 8 : 0;
-
-            data[i] = {
-                value: data[i],
-                itemStyle: {
-                    borderRadius: [topRadius, topRadius, 0, 0],
-                },
-            };
-        }
-    }
-
-    const option = {
-        backgroundColor: "transparent",
-        tooltip: {
-            trigger: "axis",
-            axisPointer: { type: "shadow" },
-            backgroundColor: tooltipBg,
-            borderColor: tooltipBorder,
-            textStyle: { color: isDark ? "#f4f4f5" : "#18181b" },
-        },
-        legend: {
-            type: "scroll",
-            textStyle: { color: textColor },
-            top: 0,
-        },
-        grid: {
-            left: "3%",
-            right: "3%",
-            bottom: "10%",
-            top: "15%",
-            containLabel: true,
-        },
-        xAxis: {
-            type: "category",
-            data: xAxisLabels,
-            axisLabel: { color: textColor, fontSize: 10 },
-            axisLine: { lineStyle: { color: isDark ? "#3f3f46" : "#e4e4e7" } },
-        },
-        yAxis: {
-            type: "value",
-            name: "FPY %",
-            nameTextStyle: { color: textColor },
-            splitLine: { lineStyle: { color: splitLineColor, type: "dashed" } },
-            axisLabel: { color: textColor, formatter: "{value}%" },
-        },
-        series: seriesData.map((serie: any) => {
-            const isLine = serie.type === "line";
-            return {
-                ...serie,
-                smooth: isLine ? true : undefined,
-                label: isLine
-                    ? {
-                        show: true,
-                        position: "top",
+    return (
+        <ResponsiveContainer width="100%" height={320}>
+            <ComposedChart data={chartData} margin={{ top: 20, right: 10, left: 10, bottom: 10 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke={splitLineColor} vertical={false} />
+                <XAxis
+                    dataKey="name"
+                    tick={{ fill: textColor, fontSize: 10 }}
+                    tickLine={{ stroke: isDark ? "#3f3f46" : "#e4e4e7" }}
+                    axisLine={{ stroke: isDark ? "#3f3f46" : "#e4e4e7" }}
+                />
+                <YAxis
+                    tick={{ fill: textColor, fontSize: 10 }}
+                    tickLine={{ stroke: isDark ? "#3f3f46" : "#e4e4e7" }}
+                    axisLine={{ stroke: isDark ? "#3f3f46" : "#e4e4e7" }}
+                    tickFormatter={(val) => `${val}%`}
+                    label={{
+                        value: "FPY %",
+                        angle: -90,
+                        position: "insideLeft",
+                        style: { textAnchor: "middle", fill: textColor }
+                    }}
+                />
+                <Tooltip
+                    contentStyle={{
+                        backgroundColor: tooltipBg,
+                        borderColor: tooltipBorder,
                         color: isDark ? "#f4f4f5" : "#18181b",
-                        fontSize: 10,
-                        fontWeight: "bold",
-                        formatter: (params: any) => params.value != null ? `${params.value.toFixed(1)}%` : "",
+                        borderRadius: "8px",
+                        fontSize: "12px",
+                    }}
+                />
+                <Legend
+                    type="scroll"
+                    verticalAlign="top"
+                    height={36}
+                    formatter={(value) => <span className="text-xs font-semibold text-muted-foreground">{value}</span>}
+                />
+                {series.map((serie: any, idx: number) => {
+                    const isLine = serie.type === "line";
+                    const color = PIE_COLORS[idx % PIE_COLORS.length];
+                    if (isLine) {
+                        return (
+                            <Line
+                                key={serie.name}
+                                type="monotone"
+                                dataKey={serie.name}
+                                stroke={color || "#3b82f6"}
+                                strokeWidth={3}
+                                dot={{ r: 3 }}
+                                activeDot={{ r: 5 }}
+                            />
+                        );
+                    } else {
+                        return (
+                            <Bar
+                                key={serie.name}
+                                dataKey={serie.name}
+                                stackId="fpy"
+                                fill={color}
+                            />
+                        );
                     }
-                    : {
-                        show: xAxisLabels.length <= 10,
-                        position: "inside",
-                        color: "#fff",
-                        fontSize: 9,
-                        fontWeight: "bold",
-                        formatter: (params: any) => params.value > 0 ? `${params.value.toFixed(0)}%` : "",
-                    },
-            };
-        }),
-    };
-
-    return <ReactECharts option={option} style={{ height: "320px", width: "100%" }} />;
+                })}
+            </ComposedChart>
+        </ResponsiveContainer>
+    );
 };
 
 export default function RtyDashboardPage() {
