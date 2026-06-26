@@ -146,11 +146,18 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    @apply bg-muted/50 rounded-full;
+    background-color: color-mix(in oklch, var(--muted-foreground) 35%, transparent);
+    border-radius: 9999px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    @apply bg-muted;
+    background-color: color-mix(in oklch, var(--muted-foreground) 60%, transparent);
+  }
+
+  /* Support standard scrollbar properties for Firefox and modern standards */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in oklch, var(--muted-foreground) 35%, transparent) transparent;
   }
 }
 
