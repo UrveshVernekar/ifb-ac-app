@@ -20,7 +20,8 @@ import {
   ClipboardCheck,
   ChevronRight,
   Download,
-  AlertCircle
+  AlertCircle,
+  Calendar1
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -236,6 +237,15 @@ export default function SafetyHub() {
         //   description: "Access site-specific emergency response maps, guides, and layouts",
         //   status: "live"
         // },
+        {
+          title: "Safety Calendar",
+          icon: Calendar1,
+          iconColor: "text-rose-500",
+          bgColor: "bg-rose-500/10 border-rose-500/20",
+          path: "/safety/calendar",
+          description: "Track daily compliance and hazard mitigation.",
+          status: "live"
+        },
         {
           title: "EHS SOPs",
           icon: BookOpen,
