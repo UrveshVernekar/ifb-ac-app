@@ -3,12 +3,13 @@
 import React, { useState, useRef, useEffect } from "react";
 import axios from "axios";
 import Link from "next/link";
-import { ArrowLeft, Upload, FileImage, Trash2, ShieldAlert, Check } from "lucide-react";
+import { ArrowLeft, Upload, FileImage, Trash2, ShieldAlert, Check, Calendar, Download } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import CommonDialog from "@/components/shared/CommonDialog";
 
 export default function SafetyAlertPage() {
   const [mounted, setMounted] = useState(false);
@@ -17,14 +18,39 @@ export default function SafetyAlertPage() {
   const [selectedDate, setSelectedDate] = useState("");
   const [isUploading, setIsUploading] = useState(false);
 
+  // States for viewing recent alerts
+  const [recentAlerts, setRecentAlerts] = useState<any[]>([]);
+  const [isLoadingRecent, setIsLoadingRecent] = useState(false);
+  const [activeLightboxAlert, setActiveLightboxAlert] = useState<any | null>(null);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const API_HOST = process.env.NEXT_PUBLIC_API_BASE_URL || "http://10.0.7.26:3003/api";
+
+  const fetchRecentAlerts = async () => {
+    setIsLoadingRecent(true);
+    try {
+      const response = await axios.get(`${API_HOST}/safety/safety-alert/recent`);
+      if (response.data && response.data.success) {
+        setRecentAlerts(response.data.data || []);
+      }
+    } catch (error) {
+      console.error("Error fetching recent alerts:", error);
+    } finally {
+      setIsLoadingRecent(false);
+    }
+  };
 
   useEffect(() => {
     setMounted(true);
     setSelectedDate(new Date().toISOString().split("T")[0]);
   }, []);
+
+  useEffect(() => {
+    if (mounted) {
+      fetchRecentAlerts();
+    }
+  }, [mounted]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -75,6 +101,7 @@ export default function SafetyAlertPage() {
       if (response.data?.success) {
         toast.success(response.data?.data?.message || "Safety Alert broadcasted successfully!");
         handleRemoveFile();
+        fetchRecentAlerts();
       } else {
         toast.error(response.data?.message || "Upload failed");
       }
@@ -89,7 +116,7 @@ export default function SafetyAlertPage() {
   if (!mounted) return null;
 
   return (
-    <div className="space-y-6 max-w-3xl mx-auto p-4 sm:p-6">
+    <div className="space-y-6 max-w-7xl mx-auto p-4 sm:p-6">
       {/* HEADER */}
       <div className="flex items-center gap-3">
         <Link href="/safety">
@@ -194,6 +221,114 @@ export default function SafetyAlertPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* RECENT ALERTS SECTION */}
+      <Card className="border-border/60 shadow-md">
+        <CardHeader className="bg-gradient-to-r from-indigo-500/10 to-transparent border-b border-border/40 pb-4">
+          <CardTitle className="text-sm font-bold tracking-wide text-foreground uppercase flex items-center gap-2">
+            <Calendar className="w-4 h-4 text-indigo-500" />
+            Recent Safety Alerts
+          </CardTitle>
+          <CardDescription className="text-xs">
+            View the last 5 uploaded safety alerts. Click on any alert to view it full screen.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="pt-6">
+          {isLoadingRecent ? (
+            <div className="flex justify-center items-center py-10">
+              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+            </div>
+          ) : recentAlerts.length === 0 ? (
+            <div className="text-center py-10 border-2 border-dashed border-muted-foreground/20 rounded-xl text-muted-foreground text-xs">
+              No safety alerts uploaded yet.
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
+              {recentAlerts.map((alert) => {
+                const formattedDate = new Date(alert.date).toLocaleDateString("en-GB", {
+                  day: "2-digit",
+                  month: "short",
+                  year: "numeric",
+                });
+                return (
+                  <div
+                    key={alert.fileName}
+                    className="group cursor-pointer border border-border/50 hover:border-indigo-500 rounded-xl overflow-hidden bg-card hover:shadow-md transition-all p-2 flex flex-col gap-2"
+                    onClick={() => setActiveLightboxAlert(alert)}
+                  >
+                    <div className="w-full aspect-[4/3] rounded-lg overflow-hidden bg-muted/20 relative">
+                      <img
+                        src={alert.url}
+                        alt={`Safety Alert ${formattedDate}`}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src =
+                            "https://placeholder.co/180x120?text=Alert+Image";
+                        }}
+                      />
+                    </div>
+                    <div className="flex flex-col min-w-0">
+                      <span className="text-xs font-bold text-foreground truncate">
+                        {formattedDate}
+                      </span>
+                      <span className="text-[10px] text-muted-foreground truncate">
+                        {alert.fileName}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Lightbox Dialog */}
+      {activeLightboxAlert && (
+        <CommonDialog
+          open={!!activeLightboxAlert}
+          onOpenChange={(open) => {
+            if (!open) setActiveLightboxAlert(null);
+          }}
+          title={`Safety Alert - ${new Date(activeLightboxAlert.date).toLocaleDateString("en-GB", {
+            day: "2-digit",
+            month: "short",
+            year: "numeric",
+          })}`}
+          description={activeLightboxAlert.fileName}
+          className="sm:max-w-[700px]"
+          footer={
+            <div className="flex justify-end gap-2 w-full">
+              <a
+                href={activeLightboxAlert.url}
+                download={activeLightboxAlert.fileName}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-xs gap-1.5 text-white">
+                  <Download className="w-3.5 h-3.5" /> Download
+                </Button>
+              </a>
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-xs"
+                onClick={() => setActiveLightboxAlert(null)}
+              >
+                Close
+              </Button>
+            </div>
+          }
+        >
+          <div className="relative w-full overflow-hidden rounded-lg bg-black/40 flex justify-center py-2 border border-border/40">
+            <img
+              src={activeLightboxAlert.url}
+              alt="Full Screen Safety Alert"
+              className="max-w-full max-h-[50vh] object-contain rounded"
+            />
+          </div>
+        </CommonDialog>
+      )}
     </div>
   );
 }
