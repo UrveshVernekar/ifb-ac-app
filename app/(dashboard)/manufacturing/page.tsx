@@ -14,6 +14,7 @@ import {
     ArrowRight,
     Gauge,
     ShieldCheck,
+    Wrench,
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -79,6 +80,14 @@ export default function ManufacturingHub() {
                     bgColor: "bg-amber-500/10 border-amber-500/20",
                     path: "/manufacturing/kpi-report",
                     description: "One-stop area-wise key performance indicator reporting"
+                },
+                {
+                    title: "Toolroom Management",
+                    icon: Wrench,
+                    iconColor: "text-indigo-500",
+                    bgColor: "bg-indigo-500/10 border-indigo-500/20",
+                    path: "/manufacturing/toolroom",
+                    description: "Manage tools, preventive maintenance schedules, and breakdown logs"
                 }
             ]
         },

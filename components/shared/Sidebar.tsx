@@ -1,7 +1,7 @@
 // components/shared/Sidebar.tsx
 'use client';
 
-import { Factory, ChevronRight, ChevronLeft, Shield, Calendar, Gauge, Wrench, Users } from 'lucide-react';
+import { Factory, ChevronRight, ChevronLeft, Shield, Calendar, Gauge, Wrench, Users, Network } from 'lucide-react';
 import SidebarItem from './SidebarItem';
 import Image from 'next/image';
 import { TooltipProvider } from '@/components/ui/tooltip';
@@ -41,6 +41,11 @@ const menuItems = [
         label: 'HR',
         icon: Users,
         href: '/hr'
+    },
+    {
+        label: 'IMS',
+        icon: Network,
+        href: '/ims'
     },
 ];
 
