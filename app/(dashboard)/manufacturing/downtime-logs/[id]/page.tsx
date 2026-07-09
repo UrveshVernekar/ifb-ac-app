@@ -35,7 +35,11 @@ import {
     Play,
     Lock,
     HelpCircle,
-    X
+    X,
+    Paperclip,
+    UploadCloud,
+    FileText,
+    Download
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -76,6 +80,76 @@ export default function DowntimeDetailsPage({ params }: { params: Promise<{ id: 
     const [tempActions, setTempActions] = useState<ActionItem[]>([{ id: null, action: "", incharge: "", target: "", status: "OPEN" }]);
     const [permActions, setPermActions] = useState<ActionItem[]>([{ id: null, action: "", incharge: "", target: "", status: "OPEN" }]);
     const [filledBy, setFilledBy] = useState("");
+
+    const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+    const [existingFiles, setExistingFiles] = useState<{ name: string; size: number; uploadedAt: string }[]>([]);
+
+    const allowedExtensions = [
+        "doc", "docx",
+        "xls", "xlsx",
+        "ppt", "pptx",
+        "pdf",
+        "jpg", "jpeg", "png"
+    ];
+
+    const fetchExistingFiles = async () => {
+        try {
+            const { data } = await axios.get(`${API_HOST}/production/downtime/analysis/files?downtimeId=${id}`);
+            if (data.success) {
+                setExistingFiles(data.files || []);
+            }
+        } catch (error) {
+            console.error("Failed to fetch existing files", error);
+        }
+    };
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (!e.target.files) return;
+        const files = Array.from(e.target.files);
+        const validFiles: File[] = [];
+        const invalidFiles: string[] = [];
+
+        files.forEach(file => {
+            const ext = file.name.split('.').pop()?.toLowerCase() || '';
+            if (allowedExtensions.includes(ext)) {
+                validFiles.push(file);
+            } else {
+                invalidFiles.push(file.name);
+            }
+        });
+
+        if (invalidFiles.length > 0) {
+            alert(`Unsupported file type(s): ${invalidFiles.join(', ')}. Only Word, Excel, PPT, PDF, and JPG/PNG images are supported.`);
+        }
+
+        if (validFiles.length > 0) {
+            setSelectedFiles(prev => [...prev, ...validFiles]);
+        }
+    };
+
+    const handleDownload = (filename: string) => {
+        const downloadUrl = `${API_HOST}/production/downtime/analysis/download?downtimeId=${id}&filename=${encodeURIComponent(filename)}`;
+        window.open(downloadUrl, '_blank');
+    };
+
+    const handleDeleteFile = async (filename: string) => {
+        if (!window.confirm(`Are you sure you want to delete "${filename}"?`)) return;
+        try {
+            const { data } = await axios.post(`${API_HOST}/production/downtime/analysis/delete-file`, {
+                downtimeId: id,
+                filename
+            });
+            if (data.success) {
+                setActionFeedback({ type: "success", message: "File deleted successfully!" });
+                fetchExistingFiles();
+            } else {
+                setActionFeedback({ type: "error", message: data.message || "Failed to delete file" });
+            }
+        } catch (error) {
+            console.error("Failed to delete file", error);
+            setActionFeedback({ type: "error", message: "Error deleting file" });
+        }
+    };
 
     // Load initial data
     const fetchRecordAndOptions = async () => {
@@ -130,6 +204,7 @@ export default function DowntimeDetailsPage({ params }: { params: Promise<{ id: 
                 }
 
                 setFilledBy(rec.filled_by || "");
+                await fetchExistingFiles();
             } else {
                 setError("Downtime record not found.");
             }
@@ -197,6 +272,20 @@ export default function DowntimeDetailsPage({ params }: { params: Promise<{ id: 
         try {
             const { data } = await axios.post(`${API_HOST}/production/downtime/analysis`, payload);
             if (data.success) {
+                if (selectedFiles.length > 0) {
+                    const formDataUpload = new FormData();
+                    formDataUpload.append("downtimeId", id);
+                    selectedFiles.forEach((file) => {
+                        formDataUpload.append("files", file);
+                    });
+                    
+                    await axios.post(`${API_HOST}/production/downtime/analysis/upload-files`, formDataUpload, {
+                        headers: {
+                            "Content-Type": "multipart/form-data"
+                        }
+                    });
+                    setSelectedFiles([]);
+                }
                 setActionFeedback({ type: "success", message: "5 Why analysis saved successfully!" });
                 fetchRecordAndOptions();
             } else {
@@ -543,6 +632,116 @@ export default function DowntimeDetailsPage({ params }: { params: Promise<{ id: 
                     </CardContent>
                 </Card>
             ))}
+
+            {/* Attachments Section */}
+            <Card className="border-border/60 bg-card shadow-sm">
+                <CardHeader className="pb-2">
+                    <CardTitle className="text-md font-bold uppercase tracking-tight flex items-center gap-1.5">
+                        <Paperclip className="w-4 h-4 text-blue-500" /> Attachments & Documents
+                    </CardTitle>
+                    <CardDescription className="text-xs">Upload Word, Excel, PPT, PDF or images for counter measures</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4 pt-1">
+                    {canEdit && (
+                        <div className="space-y-2">
+                            <Label htmlFor="file-upload" className="cursor-pointer">
+                                <div className="flex flex-col items-center justify-center border border-dashed border-border rounded-lg p-6 hover:bg-muted/30 transition-colors">
+                                    <UploadCloud className="w-8 h-8 text-muted-foreground mb-2" />
+                                    <span className="text-xs font-semibold text-foreground">Click to select files</span>
+                                    <span className="text-[10px] text-muted-foreground mt-1">
+                                        Word, Excel, PPT, PDF, and Images (.jpg, .jpeg, .png)
+                                    </span>
+                                </div>
+                            </Label>
+                            <input
+                                id="file-upload"
+                                type="file"
+                                multiple
+                                className="hidden"
+                                onChange={handleFileChange}
+                                accept=".doc,.docx,.xls,.xlsx,.ppt,.pptx,.pdf,.jpg,.jpeg,.png"
+                            />
+                            
+                            {selectedFiles.length > 0 && (
+                                <div className="space-y-1.5 mt-3">
+                                    <span className="text-xs font-bold text-muted-foreground block">
+                                        Files to upload (Click 'Save Analysis' to upload):
+                                    </span>
+                                    <div className="space-y-1">
+                                        {selectedFiles.map((file, idx) => (
+                                            <div key={idx} className="flex items-center justify-between p-2 bg-muted/50 rounded-md border text-xs">
+                                                <div className="flex items-center gap-2 truncate">
+                                                    <FileText className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                                                    <span className="truncate font-medium">{file.name}</span>
+                                                    <span className="text-[10px] text-muted-foreground flex-shrink-0">({Math.round(file.size / 1024)} KB)</span>
+                                                </div>
+                                                <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    onClick={() => setSelectedFiles(prev => prev.filter((_, i) => i !== idx))}
+                                                    className="h-7 w-7 text-rose-500 hover:text-rose-600 hover:bg-rose-500/10"
+                                                >
+                                                    <X className="w-3.5 h-3.5" />
+                                                </Button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    <div className="space-y-2 mt-4">
+                        <span className="text-xs font-bold text-muted-foreground block">
+                            Uploaded Files ({existingFiles.length}):
+                        </span>
+                        {existingFiles.length === 0 ? (
+                            <span className="text-xs text-muted-foreground block italic">No attachments for this record.</span>
+                        ) : (
+                            <div className="space-y-1">
+                                {existingFiles.map((file, idx) => (
+                                    <div key={idx} className="flex items-center justify-between p-2 rounded-md border text-xs hover:bg-muted/10 transition-colors">
+                                        <div className="flex items-center gap-2 truncate">
+                                            <FileText className="w-4 h-4 text-blue-500 flex-shrink-0" />
+                                            <div className="flex flex-col truncate">
+                                                <span className="truncate font-medium text-foreground">{file.name}</span>
+                                                <span className="text-[10px] text-muted-foreground">
+                                                    {Math.round(file.size / 1024)} KB • Uploaded {new Date(file.uploadedAt).toLocaleString()}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-1.5">
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="icon"
+                                                onClick={() => handleDownload(file.name)}
+                                                className="h-7 w-7 text-blue-500 hover:text-blue-600 hover:bg-blue-500/10"
+                                                title="Download"
+                                            >
+                                                <Download className="w-3.5 h-3.5" />
+                                            </Button>
+                                            {canEdit && (
+                                                <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    onClick={() => handleDeleteFile(file.name)}
+                                                    className="h-7 w-7 text-rose-500 hover:text-rose-600 hover:bg-rose-500/10"
+                                                    title="Delete"
+                                                >
+                                                    <Trash2 className="w-3.5 h-3.5" />
+                                                </Button>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </CardContent>
+            </Card>
 
             {/* Filled By */}
             <Card className="border-border/60 bg-card shadow-sm">
